@@ -8,15 +8,15 @@ TEXFLAGS=--shell-escape
 BIBFLAGS=
 texdoc=procedural
 
-TIKZ_PICTURES :=$(wildcard figures/*.tex)
-TIKZ_EPS :=$(foreach fig,$(basename $(TIKZ_PICTURES)),$(fig).eps)
+TIKZ_SOURCE :=$(wildcard figures/*.tex)
+TIKZ_PDF :=$(foreach fig,$(basename $(TIKZ_SOURCE)),$(fig)pdf)
 
 .PHONY: clean bib count all
 
 # Make all items
-all : $(texdoc).pdf $(TIKZ_EPS)
+all : $(texdoc).pdf
 
-$(texdoc).pdf : $(texdoc).tex
+$(texdoc).pdf : $(texdoc).tex $(TIKZ_PDF)
 	$(TEX) $(TEXFLAGS) $(texdoc)
 
 # Generate reference requirements
