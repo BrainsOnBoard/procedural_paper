@@ -4,12 +4,15 @@
 % Automatic formatting of SI units
 \usepackage[binary-units]{siunitx}
 
+% Visible TODO notes
+\newcommand{\todo}[1]{\textbf{\textsc{\textcolor{red}{(TODO: #1)}}}}
+
 \templatetype{pnasresearcharticle} % Choose template 
 % {pnasresearcharticle} = Template for a two-column research article
 % {pnasmathematics} %= Template for a one-column mathematics article
 % {pnasinvited} %= Template for a PNAS invited submission
 
-\title{Large-scale procedural spiking neural network simulations on the desktop}
+\title{Large-scale brain simulations on the desktop using procedural connectivity}
 
 % Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
 \author[a,1]{James C Knight}
@@ -33,7 +36,7 @@ J.K. performed the experiments and the analysis of the results that are presente
 \correspondingauthor{\textsuperscript{1}To whom correspondence should be addressed. E-mail: J.C.Knight\@sussex.ac.uk}
 
 % Keywords are not mandatory, but authors are strongly encouraged to provide them. If provided, please include two to five keywords, separated by the pipe symbol, e.g:
-\keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ ...} 
+\keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
 
 \begin{abstract}
 Large-scale simulations of spiking neural networks have become important tools in helping us improve the dynamics and, ultimately, the function of the brain.
@@ -59,7 +62,36 @@ To demonstrate the value of this approach, we present the results of simulations
 % If your first paragraph (i.e. with the \dropcap) contains a list environment (quote, quotation, theorem, definition, enumerate, itemize...), the line after the list may have some extra indentation. If this is the case, add \parshape=0 to the end of the list environment.
 \dropcap{T}his PNAS journal template is provided to help you write your work in the correct journal format.  Instructions for use are provided below. 
 
-Note: please start your introduction without including the word ``Introduction'' as a section heading (except for math articles in the Physical Sciences section); this heading is implied in the first paragraphs. 
+\begin{itemize}
+    \item lots of synapses!
+    \item simulations of large-scale brain models require large amounts of memory and, due to this, are typically simulated on large distributed computer systems.
+    \item neuromorphic hardware - solves this with lots of on-chip memory and reductions in precision / not supporting fan-in
+    \item SpiNNaker solves this with lots of on-chip memory and SDRAM distributed across system
+    \item SpiNNaker 2 aims to scale this up with faster more modern SDRAM - however ratio to compute/memory is marginally worse
+    \item In future, more exotic memory technologies may prove to be the solution
+    \item GPU in totally different space architecturaly - very poor compute/memory ratio - 10 instructions to 1 byte memory
+    \item However, procedural approach
+\end{itemize}
+
+
+Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} have been specifically developed for simulating spiking neural networks and take inspiration from the brain to address the issues of memory bandwidth and capacity.
+One particular relevant feature of the brain is that its memory is located throughout the system -- primarily in the synapses -- rather than being centrally located.
+In neuromorphic systems this often translates to a large proportion of each chip being dedicated to memory, either in the form of analogue `floating gates' or digital SRAM cells.
+However, while SRAM is fast, it can only be fabricated at relatively low density meaning that many of these systems economize either by reducing the maximum number of synapses per neuron (256 ODIN) or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
+Recent research has suggested that reduced weight precision may only have a minimal affect on the accuracy of spiking classifiers and that stochastic computation can be used to counteract the affects of limited precision in neural simulation~\citep{Hopkins2020} and learning~\citep{Frenkel2019,Seo2011}.
+However, in the context of large-scale brain simulation, reducing the degree of connectivity to fit within the constraints of such a system inevitably changes its dynamics~\citep{VanAlbada2015}.
+Similarly to the other neuromorphic systems, SpiNNaker~\citep{Furber2014} has a large amount of SRAM on each chip is a Rhodes2019
+
+Typical GPU architectures have relatively small amounts on on-chip memory (typically a small amount on each core configurable as either a scratch-pad or a first level-cache and a larger amount shared between all cores used as a second level cache) with the majority of the GPU die dedicated to arithmetic logic units~(ALUs).
+GPUs use dedictated hardware to rapidly switch between tasks meaning that, as long as there is sufficient computation to be performed, the latency of accessing external memory can be `hidden' behind computation.
+Using our previous naive metric, a `Nvidia Titan RTX'~\todo{cite} GPU has \num{4608} `CUDA cores' which can run at a sustained clock speed of \SI{1.350}{\giga\hertz} and can perform the majority of \SI{32}{\bit} operations in 1 clock cycle.
+Data is delivered to these cores from high-speed GDDR6 memory with a bandwidth of \SI{672}{\giga\byte\per\second}meaning that each CUDA core needs to perform approximately 10 arithmetic operations for every byte of data accessed from main memory to successfully hide the memory latency.
+Based on these characteristics, it would therefore seem that GPUs are singularly ill-suited to spiking neural network simulation.
+However, in our previous work~\citep{Knight2018} we showed that, although the memory bandwidth per core is limited, the total memory bandwidth is still siginficantly higher than even the most expensive CPU meaning that moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
+Nonetheless, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, beyond this scaling will be bound by the same communication overheads as CPU-based distributed systems.
+
+In this work we present an approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amounts of computational power available on GPU architectures can be used to reduce the memory and memory bandwidth requirements and make large-scale brain simulations plausible on a single workstation.
+ 
 
 \section*{Guide to using this template on Overleaf}
 
