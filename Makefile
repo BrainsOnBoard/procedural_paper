@@ -8,6 +8,7 @@ TEXFLAGS=--shell-escape
 BIBFLAGS=
 texdoc=procedural
 
+FIGURES :=$(wildcard figures/*.*)
 TIKZ_SOURCE :=$(wildcard figures/*.tex)
 TIKZ_PDF :=$(foreach fig,$(basename $(TIKZ_SOURCE)),$(fig)pdf)
 
@@ -16,7 +17,7 @@ TIKZ_PDF :=$(foreach fig,$(basename $(TIKZ_SOURCE)),$(fig)pdf)
 # Make all items
 all : $(texdoc).pdf
 
-$(texdoc).pdf : $(texdoc).tex $(TIKZ_PDF)
+$(texdoc).pdf : $(texdoc).tex $(FIGURES)
 	$(TEX) $(TEXFLAGS) $(texdoc)
 
 # Generate reference requirements
