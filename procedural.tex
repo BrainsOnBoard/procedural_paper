@@ -60,45 +60,60 @@ To demonstrate the value of this approach, we present the results of simulations
 \ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
 
 % If your first paragraph (i.e. with the \dropcap) contains a list environment (quote, quotation, theorem, definition, enumerate, itemize...), the line after the list may have some extra indentation. If this is the case, add \parshape=0 to the end of the list environment.
-\dropcap{T}his PNAS journal template is provided to help you write your work in the correct journal format.  Instructions for use are provided below. 
+\dropcap{W}hile there are numerous computational models of neurons~\todo{cite}, the majority of them can be simulated by solving an Ordinary Differential Equation~(ODE) every simulation timestep.
+Solving ODEs is a key part of many scientific workloads and, as such, there are existing solutions to 
+Additionally, if we consider the brain of a mouse, it `only' has \num{71E6} neurons which, even if we were to model them using the 4 state variable Hodgkin Huxley model~\todo{cite} with each state variable represented using a \SI{32}{\bit} type could be stored in around \SI{1}{\giga\byte}.
+However, anatomical data from across mammalian species suggests that each neuron in the cortex has on average \num{8000} incoming synaptic connections~\citep{beaulieu1989number,pakkenberg2003aging,braitenberg2013cortex} and, in total, mice have approximately \num{1E12} synapses.
+While simulating synaptic plasticity -- the family of mechanisms believed to be responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
+Simulating such synapses essentially consists of reading a sparse `row' of synapses associated with a presynaptic spike and adding the synaptic weights of each synapse to a bin -- a form of weighted histogram update problem.
+Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
 
-\begin{itemize}
-    \item lots of synapses!
-    \item simulations of large-scale brain models require large amounts of memory and, due to this, are typically simulated on large distributed computer systems.
-    \item neuromorphic hardware - solves this with lots of on-chip memory and reductions in precision / not supporting fan-in
-    \item SpiNNaker solves this with lots of on-chip memory and SDRAM distributed across system
-    \item SpiNNaker 2 aims to scale this up with faster more modern SDRAM - however ratio to compute/memory is marginally worse
-    \item In future, more exotic memory technologies may prove to be the solution
-    \item GPU in totally different space architecturaly - very poor compute/memory ratio - 10 instructions to 1 byte memory
-    \item However, procedural approach
-\end{itemize}
-
+Large-scale brain models are currently typically simulated on large distributed systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
+By careful design and by distributing simulations across many thousands of nodes, such simulators can keep memory requirements of each node can kept constant~\citep{Jordan2018}.
+However, 
 
 Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} have been specifically developed for simulating spiking neural networks and take inspiration from the brain to address the issues of memory bandwidth and capacity.
-One particular relevant feature of the brain is that its memory is located throughout the system -- primarily in the synapses -- rather than being centrally located.
-In neuromorphic systems this often translates to a large proportion of each chip being dedicated to memory, either in the form of analogue `floating gates' or digital SRAM cells.
-However, while SRAM is fast, it can only be fabricated at relatively low density meaning that many of these systems economize either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
-Recent research has suggested that reduced weight precision may only have a minimal affect on the accuracy of spiking classifiers and that stochastic computation can be used to counteract the affects of limited precision in neural simulation~\citep{Hopkins2020} and learning~\citep{Frenkel2019,Seo2011}.
+One particular relevant feature of the brain is that its memory elements -- the synapses -- are located throughout the system rather than being centrally located.
+In neuromorphic systems, this often translates to a large proportion of each chip being dedicated to memory, either in the form of analogue `floating gates' or digital SRAM cells.
+However, while SRAM is fast, it can only be fabricated at relatively low density meaning that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
 However, in the context of large-scale brain simulation, reducing the degree of connectivity to fit within the constraints of such a system inevitably changes its dynamics~\citep{VanAlbada2015}.
-Similarly to the other neuromorphic systems, SpiNNaker~\citep{Furber2014} has a large amount of SRAM on each chip is a Rhodes2019
+Unlike the majority of other other neuromorphic systems, SpiNNaker~\citep{Furber2014} is entirely programmable and, as well as having a relatively large amount of SRAM on each chip, also has external SDRAM distributed across the system which is typically used for the storage of synaptic connectivity.
+The ratio of SDRAM bandwidth to computation was specifically designed 
+It was recently demonstrated that \citep{Rhodes2019}
+However, as an academic project, SpiNNaker has been 20 years in development so is using a relatively low-tech \SI{130}{\nano\metre} fabrication technology.
+This means that a physically large system is required for even moderately-sized simulations.
+A next generation SpiNNaker system is currently under development~\citep{Mayr2019} which aims to scale-down a similar architecture to a more modern \SI{22}{\nano\metre} fabrication technology.
+Current performance estimates are that a single chip of the new system will offer equivalent performance to a entire board of current SpiNNaker system.\todo{am attempting to obtain a memory bandwidth figure which will hopefully make this argument stronger}.
+Nonetheless, large-scale brain simulations will still require a large multi-chip system.
+SpiNNaker 1 - \SI{200}{\mega\hertz}, \SI{600}{\mega\byte\per\second}, 16 app cores - 5 cycles per byte BUT output in SRAM.
 
 Typical GPU architectures have relatively small amounts on on-chip memory (typically a small amount on each core configurable as either a scratch-pad or a first level-cache and a larger amount shared between all cores used as a second level cache) with the majority of the GPU die dedicated to arithmetic logic units~(ALUs).
 GPUs use dedictated hardware to rapidly switch between tasks meaning that, as long as there is sufficient computation to be performed, the latency of accessing external memory can be `hidden' behind computation.
 Using our previous naive metric, a `Nvidia Titan RTX'~\todo{cite} GPU has \num{4608} `CUDA cores' which can run at a sustained clock speed of \SI{1.350}{\giga\hertz} and can perform the majority of \SI{32}{\bit} operations in 1 clock cycle.
 Data is delivered to these cores from high-speed GDDR6 memory with a bandwidth of \SI{672}{\giga\byte\per\second}meaning that each CUDA core needs to perform approximately 10 arithmetic operations for every byte of data accessed from main memory to successfully hide the memory latency.
 Based on these characteristics, it would therefore seem that GPUs are singularly ill-suited to spiking neural network simulation.
-However, in our previous work~\citep{Knight2018} we showed that, although the memory bandwidth per core is limited, the total memory bandwidth is still siginficantly higher than even the most expensive CPU meaning that moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
+However, in our previous work~\citep{Knight2018} we showed that, although the memory bandwidth per core is limited, the total memory bandwidth is still siginficantly higher than even the most expensive CPU meaning that moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.\todo{real-time not likely}
 Nonetheless, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, beyond this scaling will be bound by the same communication overheads as CPU-based distributed systems.
 
 In this work we present an approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amounts of computational power available on GPU architectures can be used to reduce the memory and memory bandwidth requirements and make large-scale brain simulations plausible on a single workstation.
 
 \section*{Results}
+\subsection*{Procedural connectivity}
+\begin{figure*}
+     \centering
+    \includegraphics{figures/performance_scaling}
+    \caption{Performance scaling .}
+    \label{fig:performance_scaling}
+\end{figure*}
+
+\subsection*{Kernel merging}
+aaaaa
+
 \subsection*{The multi-area model}
 Due to lack of both computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits~\citep{Izhikevich2008,Potjans2012} at the level of individual cells or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
 However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can be captured by modelling interconnected microcircuits at the level of individual cells.
 
 By using a supercomputer to simulate a model based on the latest connectivity data and The multi-scale model of the macaque visual cortex~\citep{Schmidt2018} developed by 
-
 
 \section*{Discussion}
 \begin{itemize}
