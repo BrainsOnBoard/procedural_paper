@@ -74,7 +74,7 @@ def plot_line(data, devices, algorithms, pal):
 def plot_bars(data, devices, algorithms, pal):
     fig, axis = plt.subplots(figsize=plot_settings.small_figure)
 
-    hatch_patterns = [None, "....", "////"]
+    hatch_patterns = [None, "....", "----"]
     assert len(hatch_patterns) == len(algorithms)
 
     time_rows = [0, 2, 4, 6]
@@ -113,7 +113,7 @@ def plot_bars(data, devices, algorithms, pal):
             axis.bar(bar_x, device_data[time_rows, a], color=pal[d], hatch=hatch_patterns[a])
 
     axis.set_xticks(group_x)
-    axis.set_xticklabels(data[time_rows,0], ha="center")
+    axis.set_xticklabels(["$10^{%u}$" % np.log10(d) for d in data[time_rows,0]], ha="center")
     axis.set_yscale("log")
     axis.set_xlabel("Number of neurons")
     axis.set_ylabel("Simulation time [s]")
@@ -127,7 +127,7 @@ def plot_bars(data, devices, algorithms, pal):
     legend_text = []
     legend_actors.extend(Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices))
     legend_text.extend(d for d in devices)
-    legend_actors.extend(Rectangle((0, 0), 1, 1, hatch=h) for h in hatch_patterns)
+    legend_actors.extend(Rectangle((0, 0), 1, 1, hatch=h, fc="white", ec="black") for h in hatch_patterns)
     legend_text.extend(a for a in algorithms)
 
     fig.legend(flip(legend_actors, 4), flip(legend_text, 4),
