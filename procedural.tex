@@ -91,6 +91,11 @@ In this work we present an approach which converts large-scale brain simulation 
 
 \section*{Results}
 \subsection*{Procedural connectivity}
+Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models, described using `snippets' of C-like code into CUDA code for GPU simulation.
+We further extended this approach to allow the same code generation approach to be used for efficient, parallel model initialisation~\citep{Knight2018} by describing algorithms for initialising individual state variables and synaptic connectivity schemes using simular snippets of C-like code.
+Parallelising initialisation in this manner significantly speeds up model initialision, but also indicates just how well-suited these initialisation algorithms are to GPI 
+In fact, it seems somewhat illogical to simply run these algorithms once to fill the memory of the GPU with data and subsequently 
+
 \begin{figure*}
      \centering
     \includegraphics{figures/performance_scaling}
@@ -98,8 +103,10 @@ In this work we present an approach which converts large-scale brain simulation 
     \label{fig:performance_scaling}
 \end{figure*}
 
+
 \subsection*{Kernel merging}
-While procedural connectivity allows us to simulate large numbers of synapses without the large memory requirements,
+While procedural connectivity allows us to simulate large numbers of synapses without the large memory requirements, there are additional problems when using code generation to .
+GeNN previously generated a highly optimise
 
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits~\citep{Izhikevich2008,Potjans2012} at the level of individual cells or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
