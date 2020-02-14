@@ -90,11 +90,15 @@ Nonetheless, individual GPUs do not have enough memory to simulate truly large-s
 In this work we present an approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce the memory and memory bandwidth requirements and make large-scale brain simulations on a single workstation possible.
 
 \section*{Results}
+In the following subsections we will first present two novel features of our GeNN simulator~\citep{Yavuz2016} which allow it be used for simulating large-scale models on a single GPU.
+Finally, we will demonstrate the power of both features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU and demonstratint that, not only are the results correct, but the simulation runs faster than simulations previously run on a supercomputer system.
+
+
 \subsection*{Procedural connectivity}
-Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models, described using `snippets' of C-like code into CUDA code for GPU simulation.
-We further extended this approach to allow the same code generation approach to be used for efficient, parallel model initialisation~\citep{Knight2018} by describing algorithms for initialising individual state variables and synaptic connectivity schemes using simular snippets of C-like code.
-Parallelising initialisation in this manner significantly speeds up model initialision, but also indicates just how well-suited these initialisation algorithms are to GPI 
-In fact, it seems somewhat illogical to simply run these algorithms once to fill the memory of the GPU with data and subsequently 
+Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
+We previously extended GeNN to allow the same approach to be applied to generating efficient, parallel model initialisation code from code snippets describing the algorithms to use for initialising individual state variables and synaptic connectivity~\citep{Knight2018}.
+Parallelising initialisation in this manner sped up model initialisation by around $20\times$ on a desktop PC, but also indicates just how well-suited these initialisation algorithms are to GPU.
+In fact, it seems somewhat illogical to run these algorithms once only to fill the limited memory of the GPU with data and subsequently read it back throughout the simulation 
 
 \begin{figure*}
      \centering
@@ -103,10 +107,14 @@ In fact, it seems somewhat illogical to simply run these algorithms once to fill
     \label{fig:performance_scaling}
 \end{figure*}
 
+To demonstrate the performance and scalability of this new approach, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently  widely used as a scalable benchmark~\citep{Brette2007}.
+The network consists of \num{10000} integrate-and-fire neurons, split between an excitatory population of \num{8000} cells and an inhibitory population of \num{2000} cells.
+
+
 
 \subsection*{Kernel merging}
-While procedural connectivity allows us to simulate large numbers of synapses without the large memory requirements, there are additional problems when using code generation to .
-GeNN previously generated a highly optimise
+While the procedural connectivity approach presented in the previous section allows us to simulate models which would otherwise not fit within the memory of a single GPU, there are additional problems when using code generation to generate simulation code for models with large numbers of neuron and synapse populations.
+
 
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits~\citep{Izhikevich2008,Potjans2012} at the level of individual cells or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
