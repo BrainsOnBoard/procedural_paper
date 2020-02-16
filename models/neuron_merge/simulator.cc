@@ -15,11 +15,14 @@ int main()
         initializeSparse();
 
         // Loop through timesteps
-        while (t < 1000.0) {
-            stepTime();
+        {
+            Timer b("Simulation:");
+            while (t < 1000.0) {
+                stepTime();
+            }
         }
 
-        std::cout << neuronUpdateTime << "ms" << std::endl;
+        std::cout << neuronUpdateTime << "s" << std::endl;
     }
     catch (std::exception &e)
     {
