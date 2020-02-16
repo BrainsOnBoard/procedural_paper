@@ -7,6 +7,8 @@ void modelDefinition(NNmodel &model)
     model.setTiming(true);
     model.setDefaultVarLocation(VarLocation::DEVICE);
     
+    GENN_PREFERENCES.generateEmptyStatePushPull = false;
+
     //---------------------------------------------------------------------------
     // Build model
     //---------------------------------------------------------------------------
@@ -16,7 +18,7 @@ void modelDefinition(NNmodel &model)
     CurrentSourceModels::GaussianNoise::ParamValues csParams(1.0, 0.25);
 
     // Create IF_curr neuron
-    const unsigned int numPops = 10;
+    const unsigned int numPops = 1000;
     const unsigned int popSize = 1000000 / numPops;
     for(unsigned int i = 0; i < numPops; i++) {
         model.addNeuronPopulation<NeuronModels::LIF>("Excitatory" + std::to_string(i), popSize, lifParamVals, lifInitVals);
