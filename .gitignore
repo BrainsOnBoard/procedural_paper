@@ -3,7 +3,6 @@
 *.blg
 *.log
 *.out
-/procedural.pdf
 *-eps-converted-to.pdf
 *.pyc
 
