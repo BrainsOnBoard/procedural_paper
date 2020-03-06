@@ -125,6 +125,8 @@ fig, axes = plt.subplots(1, 2, sharey=True, figsize=(plot_settings.large_figure[
 plot_line(axes[0], data, devices, algorithms, pal)
 plot_bars(axes[1], data, devices, algorithms, pal, False)
 
+axes[0].set_title("A", loc="left")
+axes[1].set_title("B", loc="left")
 # Show figure legend with devices beneath figure
 legend_actors = [Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices)]
 fig.legend(legend_actors, devices, ncol=len(devices), frameon=False, loc="lower center")
