@@ -1,5 +1,5 @@
-Num populations,Latest sim tim [s],Latest buildmodel time [s],Latest compile time [s],GeNN 4.1.0 sim time [s],GeNN 4.1.0 buildmodel time [s],GeNN 4.1.0 compile time [s]
-1,0.21,6,3,0.21,5,3
-10,0.21,6,3,0.21,20,9
-100,0.21,6,5,0.45,833,402
-1000,0.21,6,44,,,
+Num populations,Latest sim tim [s],Latest compile time [s],Latest memory SOL [%],Latest compute SOL [%],Latest instruction stall count,GeNN 4.1.0 sim time [s],GeNN 4.1.0 compile time [s],GeNN 4.1.0  memory SOL [%],GeNN 4.1.0 compute SOL [%],GeNN 4.1.0 instruction stall count
+1,0.21,3,89,6,1,0.21,3,89,7,0
+10,0.21,3,88,7,1,0.21,9,90,8,1
+100,0.21,5,89,9,1,0.45,402,28,10,33
+200,0.21,8,88,9,1,0.81,1908,15,11,40
