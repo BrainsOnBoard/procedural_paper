@@ -101,7 +101,7 @@ Parallelising initialisation in this manner sped up model initialisation by arou
 In fact, it seems somewhat illogical to run these algorithms once only to fill the limited memory of the GPU with data and subsequently read it back throughout the simulation 
 
 \begin{figure*}
-     \centering
+    \centering
     \includegraphics{figures/performance_scaling}
     \caption{Performance scaling on a range of modern GPUs. \textbf{A} The best performing approach at each scale.
     \textbf{B} Raw performance of each approach.}
@@ -111,7 +111,16 @@ In fact, it seems somewhat illogical to run these algorithms once only to fill t
 To demonstrate the performance and scalability of this new approach, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently  widely used as a scalable benchmark~\citep{Brette2007}.
 The network consists of \num{10000} integrate-and-fire neurons, split between an excitatory population of \num{8000} cells and an inhibitory population of \num{2000} cells.
 
-
+\begin{figure*}
+    \centering
+    \includegraphics{figures/merging_scaling}
+    \caption{Performance of a simulation of \num{1000000} LIF neurons partitioned into varying numbers of populations. 
+    \textbf{A} Compilation time using GCC \todo{version}.
+    \textbf{B} Simulation time for an \SI{1}{\second} simulation.
+    \textbf{C} 'Speed of light' metric reported for the memory sub-system by NVIDIA Nsight compute profiler.
+    \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler.}
+    \label{fig:merging_scaling}
+\end{figure*}
 
 \subsection*{Kernel merging}
 While the procedural connectivity approach presented in the previous section allows us to simulate models which would otherwise not fit within the memory of a single GPU, there are additional problems when using code generation to generate simulation code for models with large numbers of neuron and synapse populations.

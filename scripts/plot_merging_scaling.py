@@ -14,14 +14,17 @@ axes[0,0].set_title("A", loc="left")
 latest_actor = axes[0,0].plot(data[:,0], data[:,2])[0]
 release_actor = axes[0,0].plot(data[:,0], data[:,7])[0]
 axes[0,0].set_ylabel("Compilation time [s]")
+axes[0,0].xaxis.grid(False)
+axes[0,0].yaxis.grid(False)
 sns.despine(ax=axes[0,0])
-#axis.xaxis.grid(False)
 
 # Plot simulation time
 axes[0,1].set_title("B", loc="left")
 axes[0,1].plot(data[:,0], data[:,1])
 axes[0,1].plot(data[:,0], data[:,6])
 axes[0,1].set_ylabel("Simulation time [s]")
+axes[0,1].xaxis.grid(False)
+axes[0,1].yaxis.grid(False)
 sns.despine(ax=axes[0,1])
 
 # Plot SOL time
@@ -33,6 +36,8 @@ axes[1,0].plot(data[:,0], data[:,8])
 axes[1,0].set_xlabel("Num populations")
 axes[1,0].set_ylabel("Memory 'speed of light' [%]")
 axes[1,0].set_ylim((0, 100))
+axes[1,0].xaxis.grid(False)
+axes[1,0].yaxis.grid(False)
 sns.despine(ax=axes[1,0])
 
 # Plot instruction stall count
@@ -41,6 +46,8 @@ axes[1,1].plot(data[:,0], data[:,5])
 axes[1,1].plot(data[:,0], data[:,10])
 axes[1,1].set_xlabel("Num populations")
 axes[1,1].set_ylabel("Instruction stall count")
+axes[1,1].xaxis.grid(False)
+axes[1,1].yaxis.grid(False)
 sns.despine(ax=axes[1,1])
 
 fig.legend([latest_actor, release_actor], ["Latest version", "GeNN 4.1.0"], 
