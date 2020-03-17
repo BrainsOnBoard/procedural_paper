@@ -12,7 +12,7 @@ import plot_settings
 
 def create_pop_data_array(populations, simulators, values):
     # Create suitable numpy array
-    data = np.empty(len(populations), dtype=[("pop", "a10"), ("sim", "a10"), ("value", float)])
+    data = np.empty(len(populations), dtype=[("pop", "U10"), ("sim", "U10"), ("value", float)])
     
     # Populate it and return
     data["pop"][:] = populations
@@ -238,6 +238,22 @@ def plot_area(genn_recording_path, name, axis):
     axis.set_ylim((0.0, np.sum(layer_counts)))
     axis.set_xlabel("Time [s]")
 
+def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
+    # Combine GeNN and NEST rates and plot split violin plot
+    data = np.hstack((nest_data, genn_data))
+    sns.violinplot(x=data["pop"] if vertical else data["value"], 
+                   y=data["value"] if vertical else data["pop"], 
+                   hue=data["sim"], split=True, inner="quartile", ax=axis)
+    remove_junk(axis)
+    axis.get_legend().remove()
+
+    if vertical:
+        axis.set_ylabel(label)
+        axis.set_ylim(lim)
+    else:
+        axis.set_xlabel(label)
+        axis.set_xlim(lim)
+
 # Read GeNN and NEST recording paths
 assert len(argv) == 3
 genn_recording_path = argv[1]
@@ -255,28 +271,27 @@ genn_rates, genn_irregularity, genn_corr_coeff = calc_stats(genn_recording_path)
 # Create plot
 fig = plt.figure(figsize=(plot_settings.large_figure[0], plot_settings.medium_figure[1]), frameon=False)
 
-# Create outer gridspec dividing plot area into 4
-gsp = gs.GridSpec(1, 4)
+# Create outer gridspec dividing plot area into 3 (2/3 for raster plots, 1/3 for violin plots)
+gsp = gs.GridSpec(1, 3)
 
-# Create sub-gridspecs for each panel of violin plots
-violin_plot_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=gsp[3])
+# Create sub-gridspecs for panels within outer gridspec
+violin_plot_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=gsp[2], hspace=0.7)
+raster_plot_gsp = gs.GridSpecFromSubplotSpec(1, 3, subplot_spec=gsp[0:2])
 
 # Create axes within outer gridspec
-v1_axis = plt.Subplot(fig, gsp[0])
-v2_axis = plt.Subplot(fig, gsp[1])
-fef_axis = plt.Subplot(fig, gsp[2])
-
-# Add axes within outer gridspec
-fig.add_subplot(v1_axis)
-fig.add_subplot(v2_axis)
-fig.add_subplot(fef_axis)
+v1_axis = plt.Subplot(fig, raster_plot_gsp[0])
+v2_axis = plt.Subplot(fig, raster_plot_gsp[1])
+fef_axis = plt.Subplot(fig, raster_plot_gsp[2])
 
 # Create axes within violin plot gridspec
 rate_violin_axis = plt.Subplot(fig, violin_plot_gsp[0])
 corr_coeff_violin_axis = plt.Subplot(fig, violin_plot_gsp[1])
 irregularity_violin_axis = plt.Subplot(fig, violin_plot_gsp[2])
 
-# Add axes within violin plot gridspec
+# Add axes
+fig.add_subplot(v1_axis)
+fig.add_subplot(v2_axis)
+fig.add_subplot(fef_axis)
 fig.add_subplot(rate_violin_axis)
 fig.add_subplot(corr_coeff_violin_axis)
 fig.add_subplot(irregularity_violin_axis)
@@ -286,32 +301,19 @@ plot_area(genn_recording_path, "V1", v1_axis)
 plot_area(genn_recording_path, "V2", v2_axis)
 plot_area(genn_recording_path, "FEF", fef_axis)
 
+vertical = True 
+
 # Combine GeNN and NEST rates and plot split violin plot
-rates = np.hstack((nest_rates, genn_rates))
-sns.violinplot(x=rates["value"], y=rates["pop"], hue=rates["sim"],
-               split=True, inner="quartile", ax=rate_violin_axis)
-remove_junk(rate_violin_axis)
-rate_violin_axis.get_legend().remove()
-rate_violin_axis.set_xlabel("Rate [spikes/s]")
-rate_violin_axis.set_xlim((0.0, 12.0))
+plot_violin(nest_rates, genn_rates, rate_violin_axis, 
+            vertical, "Rate [spikes/s]", (0.0, 12.0))
 
 # Combine GeNN and NEST correlation coefficients and plot split violin plot
-corr_coeff = np.hstack((nest_corr_coeff, genn_corr_coeff))
-sns.violinplot(x=corr_coeff["value"], y=corr_coeff["pop"], hue=corr_coeff["sim"],
-               split=True, inner="quartile", ax=corr_coeff_violin_axis)
-remove_junk(corr_coeff_violin_axis)
-corr_coeff_violin_axis.get_legend().remove()
-corr_coeff_violin_axis.set_xlabel("Correlation coefficient")
-corr_coeff_violin_axis.set_xlim((0.0, 0.01))
+plot_violin(nest_corr_coeff, genn_corr_coeff, corr_coeff_violin_axis, 
+            vertical, "Correlation coefficient", (0.0, 0.01))
 
 # Combine GeNN and NEST irregularity and plot split violin plot
-irregularity = np.hstack((nest_irregularity, genn_irregularity))
-sns.violinplot(x=irregularity["value"], y=irregularity["pop"], hue=irregularity["sim"],
-               split=True, inner="quartile", ax=irregularity_violin_axis)
-remove_junk(irregularity_violin_axis)
-irregularity_violin_axis.get_legend().remove()
-irregularity_violin_axis.set_xlabel("Irregularity")
-irregularity_violin_axis.set_xlim((0.0, 2.0))
+plot_violin(nest_irregularity, genn_irregularity, irregularity_violin_axis, 
+            vertical, "Irregularity", (0.0, 2.0))
 
 # Label axes
 v1_axis.set_title("A: V1", loc="left")
