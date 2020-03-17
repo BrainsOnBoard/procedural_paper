@@ -239,17 +239,27 @@ def plot_area(genn_recording_path, name, axis):
     axis.set_xlabel("Time [s]")
 
 def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
-    # Combine GeNN and NEST rates and plot split violin plot
+    # Combine GeNN and NEST rates
     data = np.hstack((nest_data, genn_data))
+    
+    # Calculate order
+    order = np.sort(np.unique(data["pop"]))
+
+    # Plot split violin plot
     sns.violinplot(x=data["pop"] if vertical else data["value"], 
                    y=data["value"] if vertical else data["pop"], 
-                   hue=data["sim"], split=True, inner="quartile", ax=axis)
+                   hue=data["sim"], split=True, inner="quartile", 
+                   ax=axis, order=order)
+
+    # Remove junk
     remove_junk(axis)
     axis.get_legend().remove()
 
+    # Configure axes
     if vertical:
         axis.set_ylabel(label)
         axis.set_ylim(lim)
+        plt.setp(axis.get_xticklabels(), ha="center", rotation=90)
     else:
         axis.set_xlabel(label)
         axis.set_xlim(lim)
