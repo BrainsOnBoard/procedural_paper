@@ -1,4 +1,5 @@
 from glob import glob
+from correlation_toolbox import helper as ch
 from matplotlib import gridspec as gs
 from matplotlib import pyplot as plt
 import json
@@ -23,6 +24,73 @@ def remove_junk(axis):
     sns.despine(ax=axis)
     axis.xaxis.grid(False)
     axis.yaxis.grid(False)
+
+def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
+    """
+    Compute the LvR value of the given data_array.
+    See Shinomoto et al. 2009 for details.
+
+    Parameters
+    ----------
+    data_array : numpy.ndarray
+        Arrays with spike data.
+        column 0: neuron_ids, column 1: spike times
+    t_ref : float
+        Refractory period of the neurons.
+    t_min : float
+        Minimal time for the calculation.
+    t_max : float
+        Maximal time for the calculation.
+    num_neur: int
+        Number of recorded neurons. Needs to provided explicitly
+        to avoid corruption of results by silent neurons not
+        present in the given data.
+
+    Returns
+    -------
+    mean : float
+        Population-averaged LvR.
+    LvR : numpy.ndarray
+        Single-cell LvR values
+    """
+    i_min = np.searchsorted(data_array[0], t_min)
+    i_max = np.searchsorted(data_array[0], t_max)
+    LvR = np.array([])
+    data_array = data_array[:,i_min:i_max]
+    for i in np.unique(data_array[1]):
+        intervals = np.diff(data_array[0, np.where(data_array[1] == i)[0]])
+        if intervals.size > 1:
+            val = np.sum((1. - 4 * intervals[0:-1] * intervals[1:] / (intervals[0:-1] + intervals[
+                         1:]) ** 2) * (1 + 4 * t_ref / (intervals[0:-1] + intervals[1:])))
+            LvR = np.append(LvR, val * 3 / (intervals.size - 1.))
+        else:
+            LvR = np.append(LvR, 0.0)
+    if len(LvR) < num_neur:
+        LvR = np.append(LvR, np.zeros(num_neur - len(LvR)))
+    return np.mean(LvR), LvR
+
+def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
+    # Get unique neuron ids
+    ids = np.unique(data_array[1])
+    
+    # Extract spike train i.e. sorted array of spike times for each neuron
+    # **NOTE** this is a version of correlation_toolbox.helper.sort_gdf_by_id, 
+    # modified to suit our data format
+    ids = np.arange(ids[0], ids[0]+subsample+1000)
+    dat = []
+    for i in ids:
+        dat.append(np.sort(data_array[0, np.where(data_array[1] == i)[0]]))
+
+    # Calculate correlation coefficient
+    # **NOTE** this comes from the compute_corrcoeff.py in original paper repository
+    bins, hist = ch.instantaneous_spike_count(dat, resolution, tmin=t_min, tmax=t_max)
+    rates = ch.strip_binned_spiketrains(hist)[:subsample]
+    cc = np.corrcoef(rates)
+    cc = np.extract(1-np.eye(cc[0].size), cc)
+    cc[np.where(np.isnan(cc))] = 0.
+    
+    # Return mean correlation coefficient
+    return np.mean(cc)
     
 def load_nest_pop_data(filename, areas=None):
     # Load JSON format
@@ -64,12 +132,19 @@ def load_nest_pop_data(filename, areas=None):
         return data
 
 def calc_stats(genn_recording_path, duration_s=2.0):
+    # Does preprocessed data exist?
+    rates_exists = path.exists("genn_rates.npy")
+    irregularity_exists = path.exists("genn_irregularity.npy")
+    corr_coeff_exists = path.exists("genn_corr_coeff.npy")
+
     # Get list of all data files
     spike_files = list(glob(path.join(genn_recording_path, "*.npy")))
     
     # Loop through spike files
     populations = []
     rates = []
+    irregularity = []
+    correlation = []
     for s in spike_files:
         # Load spike data
         data = np.load(s)
@@ -83,10 +158,44 @@ def calc_stats(genn_recording_path, duration_s=2.0):
         # Count neurons
         num_neurons = int(np.amax(data[1]))
         
+        # Add stats to lists
         populations.append(pop_name)
-        rates.append(num_spikes / (num_neurons * duration_s))
+        
+        # Calculate rates if data doesn't exist
+        if not rates_exists:
+            rates.append(num_spikes / (num_neurons * duration_s))
+        
+        # Calculate irregularity if data doesn't exist
+        if not irregularity_exists:
+            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0])
+        
+        # Calculate correlation coefficient if data doesn't exist
+        if not corr_coeff_exists:
+            correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
     
-    return create_pop_data_array(populations, "genn", rates)
+    # Load rates if they exist, otherwise recalculate
+    if rates_exists:
+        genn_rates = np.load("genn_rates.npy")
+    else:
+        genn_rates = create_pop_data_array(populations, "genn", rates)
+        np.save("genn_rates.npy", genn_rates)
+    
+    # Load irregularity if exists, otherwise recalculate
+    if irregularity_exists:
+        genn_irregularity = np.load("genn_irregularity.npy")
+    else:
+        genn_irregularity = create_pop_data_array(populations, "genn", irregularity)
+        np.save("genn_irregularity.npy", genn_irregularity)
+    
+    # Load correlation coefficients if exists, otherwise recalculate
+    if corr_coeff_exists:
+        genn_corr_coeff = np.load("genn_corr_coeff.npy")
+    else:
+        genn_corr_coeff = create_pop_data_array(populations, "genn", correlation)
+        np.save("genn_corr_coeff.npy", genn_corr_coeff)
+    
+    # Return stats
+    return genn_rates, genn_irregularity, genn_corr_coeff
 
 def plot_area(genn_recording_path, name, axis):
     # Find files containing spikes for this area
@@ -141,7 +250,7 @@ nest_corr_coeff = load_nest_pop_data(path.join(nest_recording_path, "Analysis", 
 nest_irregularity = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "pop_LvR.json"), areas)
 
 # Calculate stats from GeNN data
-genn_rates = calc_stats(genn_recording_path)
+genn_rates, genn_irregularity, genn_corr_coeff = calc_stats(genn_recording_path)
 
 # Create plot
 fig = plt.figure(figsize=(plot_settings.large_figure[0], plot_settings.medium_figure[1]), frameon=False)
@@ -177,22 +286,32 @@ plot_area(genn_recording_path, "V1", v1_axis)
 plot_area(genn_recording_path, "V2", v2_axis)
 plot_area(genn_recording_path, "FEF", fef_axis)
 
-# Combine GeNn and NEST rates and plot violin plot
+# Combine GeNN and NEST rates and plot split violin plot
 rates = np.hstack((nest_rates, genn_rates))
 sns.violinplot(x=rates["value"], y=rates["pop"], hue=rates["sim"],
                split=True, inner="quartile", ax=rate_violin_axis)
 remove_junk(rate_violin_axis)
 rate_violin_axis.get_legend().remove()
+rate_violin_axis.set_xlabel("Rate [spikes/s]")
+rate_violin_axis.set_xlim((0.0, 12.0))
 
-sns.violinplot(x=nest_corr_coeff["value"], y=nest_corr_coeff["pop"],
-               ax=corr_coeff_violin_axis)
+# Combine GeNN and NEST correlation coefficients and plot split violin plot
+corr_coeff = np.hstack((nest_corr_coeff, genn_corr_coeff))
+sns.violinplot(x=corr_coeff["value"], y=corr_coeff["pop"], hue=corr_coeff["sim"],
+               split=True, inner="quartile", ax=corr_coeff_violin_axis)
 remove_junk(corr_coeff_violin_axis)
-#corr_coeff_violin_axis.get_legend().remove()
+corr_coeff_violin_axis.get_legend().remove()
+corr_coeff_violin_axis.set_xlabel("Correlation coefficient")
+corr_coeff_violin_axis.set_xlim((0.0, 0.01))
 
-sns.violinplot(x=nest_irregularity["value"], y=nest_irregularity["pop"],
-               ax=irregularity_violin_axis)
+# Combine GeNN and NEST irregularity and plot split violin plot
+irregularity = np.hstack((nest_irregularity, genn_irregularity))
+sns.violinplot(x=irregularity["value"], y=irregularity["pop"], hue=irregularity["sim"],
+               split=True, inner="quartile", ax=irregularity_violin_axis)
 remove_junk(irregularity_violin_axis)
-#irregularity_violin_axis.get_legend().remove()
+irregularity_violin_axis.get_legend().remove()
+irregularity_violin_axis.set_xlabel("Irregularity")
+irregularity_violin_axis.set_xlim((0.0, 2.0))
 
 # Label axes
 v1_axis.set_title("A: V1", loc="left")
@@ -203,6 +322,8 @@ corr_coeff_violin_axis.set_title("E", loc="left")
 irregularity_violin_axis.set_title("F", loc="left")
 
 fig.tight_layout(pad=0)
-
+if not plot_settings.presentation:
+    fig.savefig("../figures/multi_area.pdf")
+    
 # Show plot
 plt.show()
