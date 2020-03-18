@@ -44,15 +44,14 @@ J.K. performed the experiments and the analysis of the results that are presente
 \keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
 
 \begin{abstract}
-Large-scale simulations of spiking neural networks have become important tools in helping us improve the dynamics and, ultimately, the function of the brain.
-However, even small mammals such as mice have around \num{1E12} synaptic connections~\citep{Herculano-Houzel2010}, the strengths of which are typically modelled as individual floating point values.
-If single precision floating point were used to store these values, several terabytes of memory would be required.
-As such memory requirements are beyond what is plausible for a single machine, simulations of large-scale spiking neural network currently are typically simulated on large distributed systems.
-Large parts of such models are typically described by simple algorithms which describe connectivity and the strength of synaptic connections.
-In this work, we describe our extensions to GeNN~\citep{Yavuz2016} -- our GPU-based spiking neural network simulator -- to enable it to `procedurally' generate connectivity and synaptic weights as spikes are received rather than retrieving them in memory.
+Large-scale simulations of spiking neural networks have become important tools in helping us improve our understanding of the dynamics of brain circuits, and ultimately brain function.
+However, even small mammals such as mice have on the order of \num{1E12} synaptic connections~\citep{Herculano-Houzel2010} which are typically charaterized by at least one floating point value per synapse, usually related to their synaptic conductance.
+If single precision floating point variables were used to store individual conductance values for all synapses of a mouse brain, several terabytes of memory would be required.
+Because such memory requirements are beyond what is plausible for a single desktop machine, simulations of large-scale spiking neural networks are currently typically simulated on large distributed high performance computing systems. This is costly and limits this level of modelling to a select few research groups who have access to appropriate supercomputing resources.
+However, large parts of current brain models are normally described by means of simple algorithms which determine the connectivity and the strengths of synaptic connections. 
+In this work, we describe extensions to GeNN~\citep{Yavuz2016} -- our GPU-based spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights 'on the go' as spikes are triggered, rather than generating large connectivity matrices up front and retrieving them from memory when needed, which is how practiaclly all simulations are run today.
 We find that high-end GPUs are well-suited to this approach as they provide a large amount of raw computational power which is often under-utilised when simulating spiking neural networks due to the limited memory bandwidth available to each parallel computing element.
-To demonstrate the value of this approach, we present the results of simulations of a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU and show that the results are correct and the simulation runs faster than previous simulations which ran on over 1000 supercomputer nodes.
-
+To demonstrate the value of this approach, we have implemented a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses. With our new method this model can be simulated on a single GPU. We demonstrate that the results match results obtained on a supercomputer and that the simulation runs faster on a singleh high-end GPU than a previous simulation which was executed on over 1000 supercomputer nodes.
 \end{abstract}
 
 \dates{This manuscript was compiled on \today}
@@ -64,40 +63,40 @@ To demonstrate the value of this approach, we present the results of simulations
 \thispagestyle{firststyle}
 \ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
 
-\dropcap{W}hile the brain of a mouse has around \num{70E6} neurons, their numbers are dwarved by the \num{1E12} synapses which connect them.
+\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
-Computationally, simulating spikes propagating through synapses involves reading a `row' of synapses connecting a spiking presynaptic neuron to its postsynaptic partners and adding the `weight' of each synapse in the row to a `bin' containing the postsynatic neuron's input for a simulation timestep.
+In computer simulations of spiking neural networks, propagating spikes through synapses involves reading a `row' of synapses connecting a spiking presynaptic neuron to its postsynaptic partners and adding the `weight' of each synapse in the row to a `bin' containing the postsynatic neuron's input for the next simulation timestep.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
+Typically, the information which neurons are connected by a synapse and with what weight, is generated before a simulation is run and stored in large matrices in random access memories. 
+This creates high memory requirements for large-scale brain models, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
+By careful design, these simulators can maintain the memory requirements for each node constant, even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
+However, high performance computer systems are bulky, expensive and consume large amounts of power, meaning that they are typically shared resources that are only accessible to a limited number of researchers and for strongly time-limited investigations.
 
-Because of the high memory requirements of large-scale brain models, they are typically simulated on large distributed systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
-By careful design, such simulators can maintain a constant memory requirements for each node can kept constant even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
-However, such systems are large, expensive and consume large amounts of power meaning that they are typically shared between many researchers from many institutions.
-
-Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating spiking neural networks.
-One particular relevant feature of the brain is that its memory elements -- the synapses -- are located throughout the system rather than being centrally located.
-In neuromorphic systems, this often translates to a large proportion of each chip being dedicated to memory.
+Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically as an alternative for simulating large spiking neural networks.
+One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons -- throughout the entire system.
+In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
 However, while such on-chip memory is fast, it can only be fabricated at relatively low density meaning that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
-While such strategies allow some classes of spiking neural networks to be simulated very efficiently, in the context of large-scale brain simulation, reducing the degree of connectivity to fit within the constraints of such a system inevitably changes its dynamics~\citep{VanAlbada2015}.
-Unlike the majority of other other neuromorphic systems, SpiNNaker~\citep{Furber2014} is entirely programmable and combines a large amount of on-chip meory with external memories, distributed across the system for the storage of synaptic connectivity.
+Such strategies allow some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity in large-scale brain simulations to fit within the constraints of current neuromorphic systems inevitably changes their dynamics~\citep{VanAlbada2015}.
+Unlike the majority of other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic super-computer is entirely programmable and combines a large amount of on-chip memory with external memories, distributed across the system for the storage of synaptic connectivity.
 SpiNNaker's external memory bandwidth, on-chip memory capacity and the computational power of each core are all tailored to large-scale brain simulation meaning that the output bins of the synapse processing algorithm can fit in on-chip memory and there is enough external memory bandwidth to fetch synaptic rows fast enough for real-time simulation of large-scale models~\citep{Rhodes2019}.
 \todo{good argument against SpiNNaker}
+This is a promising approach for future research but because of its prototype nature its availability is limited, and a physically large system is still required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
 %However, a physically large system is required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019})
 %A next generation SpiNNaker system is currently under development~\citep{Mayr2019} and, by employing a newer fabrication technology (\SI{22}{\nano\meter} rather than \SI{130}{\nano\meter}), a single chip of the new system will offer equivalent performance to 48 of the current chips.
 %Nonetheless, large-scale brain simulations will still require a large multi-chip system.
 
-GPU architectures have relatively small amounts of on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
-GPUs use dedictated hardware to rapidly switch between tasks meaning that, as long as there is sufficient computation to be performed, the latency of accessing external memory can be `hidden' behind computation.
-For example, each CUDA core of a modern GPU needs to perform approximately 10 arithmetic operations per byte of data accessed from memory in order to successfully hide the memory latency.
-However, processing a synapse is likely to require accessing approximately \SI{8}{\byte} of memory and performing many fewer than 80 instructions, making this operating highly memory bound.
-Nonetheless, in our previous work~\citep{Knight2018} we showed that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
-Nonetheless, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, beyond this scaling will be dictated by the same communication overheads as other distributed systems.
+Modern GPUs have relatively small amounts of on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
+GPUs use dedictated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
+For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
+Unfortunately, processing a synapse in a spiking neural network simulation is likely to require accessing approximately \SI{8}{\byte} of memory and performing many fewer than the required 80 instructions. This makes synaptic updates highly memory bound.
+Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
+Individual GPUs do, however, not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems beyond such small GPU clusters.
 
-In this work we present an approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce the memory and memory bandwidth requirements and make large-scale brain simulations on a single workstation possible.
+In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable truly large-scale brain simulations on a single  GPU workstation.
 
 \section*{Results}
-In the following subsections we will first present two novel features of our GeNN simulator~\citep{Yavuz2016} which allow it be used for simulating large-scale models on a single GPU.
-Finally, we will demonstrate the power of both features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU and demonstratint that, not only are the results correct, but the simulation runs faster than simulations previously run on a supercomputer system.
-
+In the following we will first two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow to use it for simulating large-scale models on a single GPU.
+We will then demonstrate the power the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU. We find that we not only obtain the same results as in the previous simulation on a high-performance supercomputer, but our simulation also runs faster.
 
 \subsection*{Procedural connectivity}
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
