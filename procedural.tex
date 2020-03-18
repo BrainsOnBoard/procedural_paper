@@ -6,6 +6,9 @@
 % Automatic formatting of SI units
 \usepackage[binary-units]{siunitx}
 
+% Set options for code listings
+\lstset{language=C++}
+
 % Visible TODO notes
 \newcommand{\todo}[1]{\textbf{\textsc{\textcolor{red}{(TODO: #1)}}}}
 
@@ -116,7 +119,7 @@ The network consists of \num{10000} integrate-and-fire neurons, split between an
 \begin{figure*}
     \centering
     \includegraphics{figures/merging_scaling}
-    \caption{Performance of a simulation of \num{1000000} LIF neurons partitioned into varying numbers of populations. 
+    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers of populations. 
     \textbf{A} Compilation time using GCC 7.5.0.
     \textbf{B} Simulation time for an \SI{1}{\second} simulation.
     \textbf{C} 'Speed of light' metric reported for the memory sub-system by NVIDIA Nsight compute profiler.
@@ -131,8 +134,9 @@ GeNN and -- to the best of our knowledge~\citep{Blundell2018} -- all other SNN s
 This approach allows optimizations such as the hard-coding of constant parameters to be easily performed and, although generating code for models with many populations will result in large code size, C++ CPU code  can be easily divided between multiple modules and compiled in parallel, minimizing the effect on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\todo{cite}).
 Therefore, in GeNN, multiple neuron populations are simulated within each kernel resulting in code such as the following example which illustrates how 3 populations of 1000 neurons could be simulated in a single kernel:
+
 \begin{lstlisting}
-__global__ void updateNeurons()
+void updateNeurons()
 {
   if(thread < 1000) {
     // Update neuron population A
@@ -146,9 +150,38 @@ __global__ void updateNeurons()
 }
 
 \end{lstlisting}
+
 This works well for models with small numbers of populations but, as figure~\ref{fig:merging_scaling}A illustrates, compilation time increases super-linearly with the number of populations (i.e. the size of the neuron kernel) -- quickly becoming impractical.
+Additionally, and even more critically, figure~\ref{fig:merging_scaling}B shows that simulations of the same model, artificially divided into more populations, run much slower.
+Each thread in this model reads \SI{32}{\byte} of data and, as we discussed previously, hiding the latency of these memory accesses would require approximately 320 arithmetic operations.
+Sampling from the uniform distribution and updating a LIF neuron requires many fewer operations than this so we would expect this kernel to be memory bound.
+Figure~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\todo{cite} -- shows that this to be true with the memory system being around \SI{90}{\percent} utilised for small numbers of populations.
+However, if the model is partitioned into large numbers of populations, the kernel stops being able to efficiently use the memory.
+Investigating the performance counters
 
+\begin{lstlisting}
+struct NeuronUpdateGroup
+{
+  unsigned int numNeurons;
+  float* V; 
+};
 
+NeuronUpdateGroup neuronUpdateGroup
+{
+  {1000, d_VA},
+  {1000, d_VB},
+  {1000, d_VC}
+};
+
+void updateNeurons()
+{
+  if(thread < 3000) {
+    // Determine which population thread
+    // should be processing and update using 
+    // variables in neuronUpdateGroup
+  }
+}
+\end{lstlisting}
 
 \begin{figure*}
     \centering
