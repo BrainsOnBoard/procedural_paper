@@ -224,7 +224,8 @@ def plot_area(name, axis):
         # Plot spikes
         is_inhibitory = n[-1] == "I"
         axis.scatter(data[0][indices] / 1000.0, data[1][indices] + start_id, s=2,
-                     edgecolors="none", color="firebrick" if is_inhibitory else "navy")
+                     rasterized=True, edgecolors="none", 
+                     color="firebrick" if is_inhibitory else "navy")
 
         # Update offset
         start_id += num
@@ -278,7 +279,8 @@ nest_irregularity = load_nest_pop_data(path.join(nest_recording_path, "Analysis"
 genn_rates, genn_irregularity, genn_corr_coeff = calc_stats(10.5)
 
 # Create plot
-fig = plt.figure(figsize=(plot_settings.large_figure[0], plot_settings.medium_figure[1]), frameon=False)
+fig = plt.figure(figsize=(plot_settings.large_figure[0], plot_settings.medium_figure[1]), 
+                 frameon=False)
 
 # Create outer gridspec dividing plot area into 3 (2/3 for raster plots, 1/3 for violin plots)
 gsp = gs.GridSpec(1, 3)
