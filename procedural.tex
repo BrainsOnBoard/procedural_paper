@@ -44,17 +44,17 @@ J.K. performed the experiments and the analysis of the results that are presente
 \keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
 
 \begin{abstract}
-Large-scale simulations of spiking neural networks are important for improving our understanding of the dynamics of brain circuits, and ultimately brain function.
+Large-scale simulations of spiking neural networks are important for improving our understanding of the dynamics and ultimately function of brains.
 However, even small mammals such as mice have approximately \num{1E12} synaptic connections which are typically charaterized by at least one floating point value per synapse.
-This amounts to several terabytes of connection data, an unrealistic memory requirement for a single desktop machine.
+This amounts to several terabytes of connection data -- an unrealistic memory requirement for a single desktop machine.
 Simulations of large spiking neural networks are therefore typically executed on large distributed supercomputers.
 This is costly and limits large-scale modelling to a select few research groups with the appropriate resources.
-However, large parts of current brain models are described by simple algorithms which determine the existence and conductance of synaptic connections. 
+%However, large parts of current brain models are described by simple algorithms which determine the existence and conductance of synaptic connections. 
 In this work, we describe extensions to GeNN -- our GPU-based spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
 We find that GPUs are well-suited to this approach because of their raw computational power, which due to memory bandwidth limitations is often under-utilised when simulating spiking neural networks.
 We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
 Using our new method, this model can be simulated on a single GPU.
-Our results match results obtained on a supercomputer and the simulation runs faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
+Our results match those obtained on a supercomputer and the simulation runs faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
 \end{abstract}
 
 \dates{This manuscript was compiled on \today}
@@ -110,15 +110,28 @@ We will then demonstrate the power of these new features by simulating a recent 
 We find that we not only obtain the same results as in the previous simulation on a high-performance supercomputer, but our simulation also runs faster.
 
 \subsection*{Procedural connectivity}
-Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU accelerated simulation.
-We previously extended GeNN to allow the same approach for generating efficient, parallelised model initialisation code from code snippets that describe the algorithms for initialising individual state variables and synaptic connectivity~\citep{Knight2018}.
-Parallelising initialisation in this manner not only sped up model setup by around $20\times$ on a desktop PC, but also shows just how well-suited typical initialisation algorithms are for GPU acceleration.
-In fact, based on this observation the typical workflow of running these algorithms once only to fill the limited memory of the GPU with data and subsequently reading it back throughout the simulation at the expense of similarly limited memory bandwidth seems ill-informed.
-Instead, what if we used some of the 
+Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
+We previously extended GeNN to allow the same approach to be used for generating efficient, parallel model initialisation code from code snippets describing state variable and synaptic connectivity initialisation algorithms~\citep{Knight2018}.
+Offloading initialisation to the GPU sped up model initialisation by around $20\times$ on a desktop PC~\citep{Knight2018}, suggesting that these initialisation algorithms are well-suited to GPU implementation.
+\todo{something explaining why this is for synapses}
+In fact, it seems somewhat illogical to run these algorithms only once to fill the limited memory of the GPU with data only to read it back throughout the simulation when the simulation kernels.
 
-To demonstrate the performance and scalability of this new approach, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently  widely used as a scalable benchmark~\citep{Brette2007}.
-The network consists of \num{10000} integrate-and-fire neurons, split between an excitatory population of \num{8000} cells and an inhibitory population of \num{2000} cells.
+What if we could instead `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered?
+If we could do this in less than than the 80 instructions required to hide the memory latency in the current approach, this new approach could be \emph{faster} as well as requiring no memory to story connectivity and synaptic weights.
+Although this idea has not been previously applied to modern hardware, Eugene Izhivich used a similar approach for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses~\todo{cite}.
+Sadly, while this remains an incredible achievement, simulating this model for 1 second of biological time required 50 days of simulation.
+However high-end GPUs have thousands of times more compute power than the CPUs available in 2005 and, due to the limited memory bandwidth which is available to each of their parallel computing elements, we believe are particularly well-suited to this approach.
 
+To demonstrate the performance and scalability of our `procedurally' generate connectivity, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently widely used as a scalable benchmark~\citep{Brette2007}.
+The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
+The populations are connected all-to-all with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ probability of a synapse existing between a pair of neurons -- this can be described as a Bernoulli distribution $\text{Bern}[P_{\text{conn}}]$.
+The Bernoulli distribution can be sampled by repeatedly drawing from the uniform distribution $\text{Unif}[0, 1]$ and comparing each sample to $P_{\text{conn}}$, but this is innefficient for sparse connectivity.
+Instead we sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which describes how the number of Bernoulli trials required to get a success (i.e. a synapse) is distributed.
+The geometric distribution can be sampled in constant time by inverting the cumulative density function~(CDF) of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
+Therefore, as long as we have the ability to generate a unique but repeatable stream of random number for each presynaptic neuron, we can `procedurally' generate the postsynaptic targets for each incoming spike in parallel using independent CUDA threads.
+While suitable random number streams \emph{could} be provided by a convential random number generator~(RNG), this would require a RNG state for each presynaptic neurons which would have a significant memory overhead.
+Instead, we use a `counter-based' Philox4$\times$32-10 RNG~\citep{Salmon2011}.
+Counter-based RNGs are designed for parallel applications and essentially consist of a function which takes a counter as an input (in this case a \SI{128}{\bit} number) and outputs random numbers.
 \begin{figure*}
     \centering
     \includegraphics{figures/merging_scaling}
@@ -162,10 +175,11 @@ Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight co
 However, when the model is partitioned into large numbers of populations, the kernel stops being able to efficiently use the memory and become latency bound (neither memory \emph{or} compute are used efficiently).
 Investigating further using the profiler showed that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls as shown in Fig.~\ref{fig:merging_scaling}D.
 Stalls are events which prevent the GPU from doing any work during a clock cycle and the profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''\todo{cite} -- which makes sense when we are generating kernels with hundreds of thousands of lines of code.
+\todo{is more detail required here as to why?}
 
 To address these issues, we developed a new code generator for GeNN which first `merges' the model description, grouping populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and the parameters which differ between merged populations:
-
+%
 \begin{lstlisting}
 struct NeuronUpdateGroup
 {
@@ -174,28 +188,32 @@ struct NeuronUpdateGroup
 };
 
 \end{lstlisting}
+%
 An array of these structures is then declared for each merged population and each element is initialised with pointers to state variables and parameter values:
-
+%
 \begin{lstlisting}
 NeuronUpdateGroup neuronUpdateGroup[3];
-neuronUpdateGroup[0] = {1000, d_VA};
-neuronUpdateGroup[1] = {1000, d_VB};
-neuronUpdateGroup[2] = {1000, d_VC};
+neuronUpdateGroup[0] = {1000, VA};
+neuronUpdateGroup[1] = {1000, VB};
+neuronUpdateGroup[2] = {1000, VC};
 \end{lstlisting}
+%
 In order for a thread to determine which neuron in which population it should be simulating, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population.
-Each thread performs a simple binary search within this to find the index of the neuron and population it is to simulate:
-
+Each thread performs a simple binary search within this to find the index of the neuron and population it should simulate:
+%
 \begin{lstlisting}
 unsigned int startThread[3] = {0, 1000, 2000};
 void updateNeurons()
 {
   if(thread < 3000) {
     // Binary search startThread to determing
-    // which population thread should be processed.
-    // Update using variables in neuronUpdateGroup
+    // which population thread should be 
+    // processed. Then update using variables 
+    // in neuronUpdateGroup
   }
 }
 \end{lstlisting}
+%
 As Fig.~\ref{fig:merging_scaling} shows, this approach entirely solves the issues with compilation time and simulation performance caused by large numbers of populations.
 Therefore, we apply this approach to initialisation and simulation kernels for both neuron and synapse populations.
 
@@ -239,7 +257,22 @@ By using a supercomputer to simulate a model based on the latest connectivity da
     \item Parameter values for scaling and merging experiments
 \end{itemize}
 \subsection*{Neuron models}
-Example text for subsection.
+The membrane voltage ($V_{j}$) of each neuron is modelled as a leaky integrate-and-fire~(LIF) unit:
+%
+\begin{align}
+    \tau_{m} \frac{dV_{j}}{dt} = & (V_{j} - V_{rest}) + R_{m} I_{{in}_{j}} \label{eq:lif_neuron}
+\end{align}
+%
+where $\tau_{m}$ and $R_{m}$ represent the time constant and resistance of the neuron's cell membrane, $V_{rest}$ defines the membrane voltage the neuron returns to if it receives no synaptic input and $I_{{in}_{j}}$ represents the input current to the neuron.
+When the membrane voltage crosses a threshold~($V_{thresh}$) a spike is emitted, the membrane voltage is reset back to $V_{rest}$ and a countdown timer is started which, while running, disables the integration of further input thus providing a simulated refractory period.
+Incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$:
+%
+\begin{align}
+    \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + I_{p_{j}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f})\label{eq:exp_neuron_input_current}
+\end{align}
+%
+where $\tau_{syn}$ represents the time constant with which any spikes (modelled as Dirac delta functions $\delta$) from $n$ presynaptic input neurons occuring at time $t$ are integrated.
+In addition to its synaptic input, each neuron in the network also receives an independent Poisson input current $I_{p_{j}}$ (also exponentially shaped by equation~\ref{eq:exp_neuron_input_current}) which represents input from adjacent cortical regions.
 }
 
 \showmatmethods{} % Display the Materials and Methods section
