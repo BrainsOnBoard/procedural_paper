@@ -102,8 +102,9 @@ Finally, we will demonstrate the power of both features by simulating a recent m
 \subsection*{Procedural connectivity}
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
 We previously extended GeNN to allow the same approach to be applied to generating efficient, parallel model initialisation code from code snippets describing the algorithms to use for initialising individual state variables and synaptic connectivity~\citep{Knight2018}.
-Parallelising initialisation in this manner sped up model initialisation by around $20\times$ on a desktop PC, but also indicates just how well-suited these initialisation algorithms are to GPU.
-In fact, it seems somewhat illogical to run these algorithms once only to fill the limited memory of the GPU with data and subsequently read it back throughout the simulation 
+Parallelising initialisation in this manner sped up model initialisation by around $20\times$ on a desktop PC, but also indicates just how well-suited these initialisation algorithms are to GPU implementation.
+In fact, it seems somewhat illogical to run these algorithms once only to fill the limited memory of the GPU with data and subsequently read it back throughout the simulation at the expense of equally limited memory bandwidth.
+Instead, what if we used some of the 
 
 \begin{figure*}
     \centering
@@ -151,13 +152,13 @@ void updateNeurons()
 
 \end{lstlisting}
 
-This works well for models with small numbers of populations but, as figure~\ref{fig:merging_scaling}A illustrates, compilation time increases super-linearly with the number of populations (i.e. the size of the neuron kernel) -- quickly becoming impractical.
-Additionally, and even more critically, figure~\ref{fig:merging_scaling}B shows that simulations of the same model, artificially divided into more populations, run much slower.
+This works well for models with small numbers of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, compilation time increases super-linearly with the number of populations (i.e. the size of the neuron kernel) -- quickly becoming impractical.
+Additionally, and even more critically, Fig.~\ref{fig:merging_scaling}B shows that simulations of the same model, artificially divided into more populations, run much slower.
 Each thread in this model reads \SI{32}{\byte} of data and, as we discussed previously, hiding the latency of these memory accesses would require approximately 320 arithmetic operations.
 Sampling from the uniform distribution and updating a LIF neuron requires many fewer operations than this so we would expect this kernel to be memory bound.
-Figure~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\todo{cite} -- shows that this to be true with the memory system being around \SI{90}{\percent} utilised for small numbers of populations.
+Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\todo{cite} -- shows that this to be true with the memory system being around \SI{90}{\percent} utilised for small numbers of populations.
 However, if the model is partitioned into large numbers of populations, the kernel stops being able to efficiently use the memory.
-Investigating the performance counters
+Investigating further using the profiler showed that this drop in performance was accompanied by a large number of ``No instruction'' stalls (events preventing the GPU from doing any work during a given clock cycle) as illustrated in Fig.~\ref{fig:merging_scaling}D.
 
 \begin{lstlisting}
 struct NeuronUpdateGroup
@@ -198,10 +199,14 @@ void updateNeurons()
 \end{figure*}
 
 \subsection*{The multi-area model}
-Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits~\citep{Izhikevich2008,Potjans2012} at the level of individual cells or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
-However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can be captured by modelling interconnected microcircuits at the level of individual cells.
+Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
+However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
+The multi-area model~\citep{Schmidt2018a,Schmidt2018} does just this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque cortex involved in visual processing.
+The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses connecting pairs of areas.
+Synapses between areas are then distributed between the populations which make up each area 
 
 By using a supercomputer to simulate a model based on the latest connectivity data and The multi-scale model of the macaque visual cortex~\citep{Schmidt2018} developed by 
+
 
 \section*{Discussion}
 \begin{itemize}
@@ -209,116 +214,6 @@ By using a supercomputer to simulate a model based on the latest connectivity da
     \item Learning
     \item Hardware for procedural connectivity?
 \end{itemize}
-% 
-% \section*{Guide to using this template on Overleaf}
-% 
-% Please note that whilst this template provides a preview of the typeset manuscript for submission, to help in this preparation, it will not necessarily be the final publication layout. For more detailed information please see the \href{http://www.pnas.org/site/authors/format.xhtml}{PNAS Information for Authors}.
-% 
-% If you have a question while using this template on Overleaf, please use the help menu (``?'') on the top bar to search for \href{https://www.overleaf.com/help}{help and tutorials}. You can also \href{https://www.overleaf.com/contact}{contact the Overleaf support team} at any time with specific questions about your manuscript or feedback on the template.
-% 
-% \subsection*{Author Affiliations}
-% 
-% Include department, institution, and complete address, with the ZIP/postal code, for each author. Use lower case letters to match authors with institutions, as shown in the example. Authors with an ORCID ID may supply this information at submission.
-% 
-% \subsection*{Submitting Manuscripts}
-% 
-% All authors must submit their articles at \href{http://www.pnascentral.org/cgi-bin/main.plex}{PNAScentral}. If you are using Overleaf to write your article, you can use the ``Submit to PNAS'' option in the top bar of the editor window. 
-% 
-% \subsection*{Format}
-% 
-% Many authors find it useful to organize their manuscripts with the following order of sections;  Title, Author Affiliation, Keywords, Abstract, Significance Statement, Results, Discussion, Materials and methods, Acknowledgments, and References. Other orders and headings are permitted.
-% 
-% \subsection*{Manuscript Length}
-% 
-% PNAS generally uses a two-column format averaging 67 characters, including spaces, per line. The maximum length of a Direct Submission research article is six pages and a Direct Submission Plus research article is ten pages including all text, spaces, and the number of characters displaced by figures, tables, and equations.  When submitting tables, figures, and/or equations in addition to text, keep the text for your manuscript under 39,000 characters (including spaces) for Direct Submissions and 72,000 characters (including spaces) for Direct Submission Plus.
-% 
-% \subsection*{References}
-% 
-% References should be cited in numerical order as they appear in text; this will be done automatically via bibtex, e.g. \cite{belkin2002using} and \cite{berard1994embedding,coifman2005geometric}. All references should be included in the main manuscript file.  
-% 
-% \subsection*{Data Archival}
-% 
-% PNAS must be able to archive the data essential to a published article. Where such archiving is not possible, deposition of data in public databases, such as GenBank, ArrayExpress, Protein Data Bank, Unidata, and others outlined in the Information for Authors, is acceptable.
-% 
-% \subsection*{Language-Editing Services}
-% Prior to submission, authors who believe their manuscripts would benefit from professional editing are encouraged to use a language-editing service (see list at www.pnas.org/site/authors/language-editing.xhtml). PNAS does not take responsibility for or endorse these services, and their use has no bearing on acceptance of a manuscript for publication. 
-% 
-% \begin{figure}%[tbhp]
-%     \centering
-%     \includegraphics[width=.8\linewidth]{frog}
-%     \caption{Placeholder image of a frog with a long example caption to show justification setting.}
-%     \label{fig:frog}
-% \end{figure}
-% 
-% 
-% \begin{SCfigure*}[\sidecaptionrelwidth][t]
-%     \centering
-%     \includegraphics[width=11.4cm,height=11.4cm]{frog}
-%     \caption{This caption would be placed at the side of the figure, rather than below it.}\label{fig:side}
-% \end{SCfigure*}
-% 
-% \subsection*{Digital Figures}
-% 
-% Only TIFF, EPS, and high-resolution PDF for Mac or PC are allowed for figures that will appear in the main text, and images must be final size. Authors may submit U3D or PRC files for 3D images; these must be accompanied by 2D representations in TIFF, EPS, or high-resolution PDF format.  Color images must be in RGB (red, green, blue) mode. Include the font files for any text. 
-% 
-% Figures and Tables should be labelled and referenced in the standard way using the \verb|\label{}| and \verb|\ref{}| commands.
-% 
-% Figure \ref{fig:frog} shows an example of how to insert a column-wide figure. To insert a figure wider than one column, please use the \verb|\begin{figure*}...\end{figure*}| environment. Figures wider than one column should be sized to 11.4 cm or 17.8 cm wide. Use \verb|\begin{SCfigure*}...\end{SCfigure*}| for a wide figure with side captions.
-% 
-% \subsection*{Tables}
-% In addition to including your tables within this manuscript file, PNAS requires that each table be uploaded to the submission separately as a “Table” file.  Please ensure that each table .tex file contains a preamble, the \verb|\begin{document}| command, and the \verb|\end{document}| command. This is necessary so that the submission system can convert each file to PDF.
-% 
-% \subsection*{Single column equations}
-% 
-% Authors may use 1- or 2-column equations in their article, according to their preference.
-% 
-% To allow an equation to span both columns, use the \verb|\begin{figure*}...\end{figure*}| environment mentioned above for figures.
-% 
-% Note that the use of the \verb|widetext| environment for equations is not recommended, and should not be used. 
-% 
-% \begin{figure*}[bt!]
-%     \begin{align*}
-%         (x+y)^3&=(x+y)(x+y)^2\\
-%             &=(x+y)(x^2+2xy+y^2) \numberthis \label{eqn:example} \\
-%             &=x^3+3x^2y+3xy^3+x^3. 
-%     \end{align*}
-% \end{figure*}
-% 
-% 
-% \begin{table}%[tbhp]
-%     \centering
-%     \caption{Comparison of the fitted potential energy surfaces and ab initio benchmark electronic energy calculations}
-%     \begin{tabular}{lrrr}
-%         Species & CBS & CV & G3 \\
-%         \midrule
-%         1. Acetaldehyde & 0.0 & 0.0 & 0.0 \\
-%         2. Vinyl alcohol & 9.1 & 9.6 & 13.5 \\
-%         3. Hydroxyethylidene & 50.8 & 51.2 & 54.0\\
-%         \bottomrule
-%     \end{tabular}
-% 
-%     \addtabletext{nomenclature for the TSs refers to the numbered species in the table.}
-% \end{table}
-% 
-% \subsection*{Supporting Information (SI)}
-% 
-% Authors should submit SI as a single separate PDF file, combining all text, figures, tables, movie legends, and SI references.  PNAS will publish SI uncomposed, as the authors have provided it.  Additional details can be found here: \href{http://www.pnas.org/page/authors/journal-policies}{policy on SI}.  For SI formatting instructions click \href{https://www.pnascentral.org/cgi-bin/main.plex?form_type=display_auth_si_instructions}{here}.  The PNAS Overleaf SI template can be found \href{https://www.overleaf.com/latex/templates/pnas-template-for-supplementary-information/wqfsfqwyjtsd}{here}.  Refer to the SI Appendix in the manuscript at an appropriate point in the text. Number supporting figures and tables starting with S1, S2, etc.
-% 
-% Authors who place detailed materials and methods in an SI Appendix must provide sufficient detail in the main text methods to enable a reader to follow the logic of the procedures and results and also must reference the SI methods. If a paper is fundamentally a study of a new method or technique, then the methods must be described completely in the main text.
-% 
-% \subsubsection*{SI Datasets} 
-% 
-% Supply Excel (.xls), RTF, or PDF files. This file type will be published in raw format and will not be edited or composed.
-% 
-% 
-% \subsubsection*{SI Movies}
-% 
-% Supply Audio Video Interleave (avi), Quicktime (mov), Windows Media (wmv), animated GIF (gif), or MPEG files and submit a brief legend for each movie in a Word or RTF file. All movies should be submitted at the desired reproduction size and length. Movies should be no more than 10 MB in size.
-% 
-% 
-% \subsubsection*{3D Figures}
-% 
-% Supply a composable U3D or PRC file so that it may be edited and composed. Authors may submit a PDF file but please note it will be published in raw format and will not be edited or composed.
 
 
 \matmethods{Please describe your materials and methods here. This can be more than one paragraph, and may contain subsections and equations as required. Authors should include a statement in the methods section describing how readers will be able to access the data in the paper. 
