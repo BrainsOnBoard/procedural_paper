@@ -94,26 +94,26 @@ Unfortunately, processing a synapse in a spiking neural network simulation is li
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
 However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems.
 
-In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable truly large-scale brain simulations on a single  GPU workstation.
+In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable truly large-scale brain simulations on a single GPU workstation.
 
 \begin{figure*}
     \centering
     \includegraphics{figures/performance_scaling}
-    \caption{Performance scaling on a range of modern GPUs. \textbf{A} The best performing approach at each scale.
-    \textbf{B} Raw performance of each approach.}
+    \caption{Simulation time performance scaling on a range of modern GPUs (colors). \textbf{A} The best performing approach at each scale on each GPU (indicated by the symbols). For the largest models, the procedural method is always best.
+    \textbf{B} Raw performance of each approach on each GPU. Missing bars indicate insufficient memory to simulate.}
     \label{fig:performance_scaling}
 \end{figure*}
 
 \section*{Results}
-In the following subsections, we will first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow to use it for simulating large-scale models on a single GPU.
+In the following subsections, we will first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow simulating large-scale models on a single GPU with it.
 We will then demonstrate the power of these new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU.
-We find that, we not only obtain the same results as in the previous simulation on a high-performance supercomputer, but our simulation also runs faster.
+We find that we not only obtain the same results as in the previous simulation on a high-performance supercomputer, but our simulation also runs faster.
 
 \subsection*{Procedural connectivity}
-Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
-We previously extended GeNN to allow the same approach to be applied to generating efficient, parallel model initialisation code from code snippets describing the algorithms to use for initialising individual state variables and synaptic connectivity~\citep{Knight2018}.
-Parallelising initialisation in this manner sped up model initialisation by around $20\times$ on a desktop PC, but also indicates just how well-suited these initialisation algorithms are to GPU implementation.
-In fact, it seems somewhat illogical to run these algorithms once only to fill the limited memory of the GPU with data and subsequently read it back throughout the simulation at the expense of equally limited memory bandwidth.
+Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU accelerated simulation.
+We previously extended GeNN to allow the same approach for generating efficient, parallelised model initialisation code from code snippets that describe the algorithms for initialising individual state variables and synaptic connectivity~\citep{Knight2018}.
+Parallelising initialisation in this manner not only sped up model setup by around $20\times$ on a desktop PC, but also shows just how well-suited typical initialisation algorithms are for GPU acceleration.
+In fact, based on this observation the typical workflow of running these algorithms once only to fill the limited memory of the GPU with data and subsequently reading it back throughout the simulation at the expense of similarly limited memory bandwidth seems ill-informed.
 Instead, what if we used some of the 
 
 To demonstrate the performance and scalability of this new approach, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently  widely used as a scalable benchmark~\citep{Brette2007}.
