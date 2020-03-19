@@ -44,18 +44,17 @@ J.K. performed the experiments and the analysis of the results that are presente
 \keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
 
 \begin{abstract}
-Large-scale simulations of spiking neural networks have become important tools in helping us improve our understanding of the dynamics of brain circuits, and ultimately brain function.
-However, even small mammals such as mice have on the order of \num{1E12} synaptic connections~\citep{Herculano-Houzel2010} which are typically charaterized by at least one floating point value per synapse, usually describing their synaptic conductance.
-If single precision floating point variables were used to store individual conductance values for all synapses of a mouse brain, several terabytes of memory would be required.
-Because such memory requirements are beyond what is plausible for a single desktop machine, simulations of large-scale spiking neural networks are currently typically simulated on large distributed high performance computing systems.
-This is costly and limits this level of modelling to a select few research groups who have access to appropriate supercomputing resources.
-However, large parts of current brain models are typically described by simple algorithms which determine the connectivity and conductances of synaptic connections. 
-In this work, we describe extensions to GeNN~\citep{Yavuz2016} -- our GPU-based spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered.;
-This is in contrast to generating large connectivity matrices up front and retrieving them from memory when needed, which is how practiaclly all simulations are run today.
-We find that high-end GPUs are well-suited to this approach as they provide a large amount of raw computational power which is often under-utilised when simulating spiking neural networks due to the limited memory bandwidth available to each parallel computing element.
-To demonstrate the value of this approach, we have implemented a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
-With our new method, this model can be simulated on a single GPU.
-We demonstrate that the results match results obtained on a supercomputer and that the simulation runs faster on a single high-end GPU than a previous simulation which was executed on over 1000 supercomputer nodes.
+Large-scale simulations of spiking neural networks are important for improving our understanding of the dynamics of brain circuits, and ultimately brain function.
+However, even small mammals such as mice have approximately \num{1E12} synaptic connections which are typically charaterized by at least one floating point value per synapse.
+This amounts to several terabytes of connection data, an unrealistic memory requirement for a single desktop machine.
+Simulations of large spiking neural networks are therefore typically executed on large distributed supercomputers.
+This is costly and limits large-scale modelling to a select few research groups with the appropriate resources.
+However, large parts of current brain models are described by simple algorithms which determine the existence and conductance of synaptic connections. 
+In this work, we describe extensions to GeNN -- our GPU-based spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
+We find that GPUs are well-suited to this approach because of their raw computational power, which due to memory bandwidth limitations is often under-utilised when simulating spiking neural networks.
+We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
+Using our new method, this model can be simulated on a single GPU.
+Our results match results obtained on a supercomputer and the simulation runs faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
 \end{abstract}
 
 \dates{This manuscript was compiled on \today}
@@ -67,7 +66,7 @@ We demonstrate that the results match results obtained on a supercomputer and th
 \thispagestyle{firststyle}
 \ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
 
-\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them.
+\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12}~\citep{Herculano-Houzel2010} synapses which connect them.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
 In computer simulations of spiking neural networks, propagating spikes through synapses involves reading a `row' of synapses connecting a spiking presynaptic neuron to its postsynaptic partners and adding the `weight' of each synapse in the row to a `bin' containing the postsynatic neuron's input for the next simulation timestep.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
