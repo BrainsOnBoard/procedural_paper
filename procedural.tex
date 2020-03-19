@@ -112,15 +112,15 @@ We find that we not only obtain the same results as in the previous simulation o
 \subsection*{Procedural connectivity}
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse models -- described using `snippets' of C-like code -- into CUDA code for GPU simulation.
 We previously extended GeNN to allow the same approach to be used for generating efficient, parallel model initialisation code from code snippets describing state variable and synaptic connectivity initialisation algorithms~\citep{Knight2018}.
-Offloading initialisation to the GPU sped up model initialisation by around $20\times$ on a desktop PC~\citep{Knight2018}, suggesting that these initialisation algorithms are well-suited to GPU implementation.
+Offloading initialisation to the GPU sped up model initialisation by around $20\times$ on a desktop PC~\citep{Knight2018}, suggesting that these initialisation algorithms are well-suited to GPU acceleration.
 \todo{something explaining why this is for synapses}
-In fact, it seems somewhat illogical to run these algorithms only once to fill the limited memory of the GPU with data only to read it back throughout the simulation when the simulation kernels.
+In fact, it seems somewhat illogical to run these algorithms only once to fill the limited memory of the GPU with data only to thn read it back throughout the simulation and in so doing overloading the limited memory bandwidth.
 
 What if we could instead `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered?
 If we could do this in less than than the 80 instructions required to hide the memory latency in the current approach, this new approach could be \emph{faster} as well as requiring no memory to story connectivity and synaptic weights.
-Although this idea has not been previously applied to modern hardware, Eugene Izhivich used a similar approach for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses~\todo{cite}.
-Sadly, while this remains an incredible achievement, simulating this model for 1 second of biological time required 50 days of simulation.
-However high-end GPUs have thousands of times more compute power than the CPUs available in 2005 and, due to the limited memory bandwidth which is available to each of their parallel computing elements, we believe are particularly well-suited to this approach.
+Although this idea has not been previously applied to modern hardware, Eugene Izhivich used a similar approach for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite}.
+Sadly, while this remains an incredible achievement, simulating the model for 1 second of biological time required 50 days of simulation.
+However, high-end GPUs have thousands of times more compute power than the CPUs available in 2005 and, due to the limited memory bandwidth available to each of their parallel computing elements, are particularly well-suited to this approach.
 
 To demonstrate the performance and scalability of our `procedurally' generate connectivity, we ran several simulations of a network, initially designed as a medium for experimentation into signal propagation through cortical networks~\citep{Vogels2005}, but subsequently widely used as a scalable benchmark~\citep{Brette2007}.
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
