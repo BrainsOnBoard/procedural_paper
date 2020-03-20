@@ -14,7 +14,7 @@ def flip(items, ncol):
 
 # Names and algorithms - could extract them from CSV but it's a ball-ache
 devices = ["Jetson TX2", "GeForce MX130", "GeForce GTX 1650", "Titan RTX"]
-algorithms = ["Sparse", "Bitmask", "Procedural"]
+algorithms = ["Sparse", "Bitfield", "Procedural"]
 
 # Import data
 # **NOTE** np.loadtxt doesn't handle empty entries
