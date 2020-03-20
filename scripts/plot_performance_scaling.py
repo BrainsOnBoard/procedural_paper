@@ -129,7 +129,7 @@ axes[1].set_title("B", loc="left")
 legend_actors = [Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices)]
 fig.legend(legend_actors, devices, ncol=len(devices), frameon=False, loc="lower center")
 
-plt.tight_layout(pad=0, rect= [0.0, 0.15, 1.0, 1.0])
+plt.tight_layout(pad=0, w_pad=1.0, rect= [0.0, 0.15, 1.0, 1.0])
 if not plot_settings.presentation:
     fig.savefig("../figures/performance_scaling.pdf")
 plt.show()
