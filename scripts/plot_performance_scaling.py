@@ -79,7 +79,7 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
 
     bar_width = 0.8
     group_width = 15.0
-    group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.5), group_width)
+    group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.49999), group_width)
 
     # Loop through devices
     for d, _ in enumerate(devices):
