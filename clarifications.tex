@@ -1,0 +1,142 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\hoffset-3cm
+\hoffset-3cm
+\addtolength{\textwidth}{3cm}
+\addtolength{\textheight}{3cm}
+\setlength{\parindent}{0cm}
+
+\begin{document}
+\section{Maximum row length}
+\fbox{
+  \parbox{\textwidth}{The maximum row length when connecting a presynaptic
+population with $N_{\text{pre}}$ neurons to a postsynaptic population
+with $N_{\text{post}}$ neurons using this connectivity can be obtained by
+evaluating the inverse cumulative distribution function (CDF)
+of $\text{Binom}[N_{\text{syn}}, \frac{N_{\text{post}}}{N_{\text{post}} * N_{\text{pre}}}
+] $ with a suitably high probability (we use $P =
+0.9999^{\frac{1}{N_{\text{pre}}}}$ ).}} \\[0.3cm]
+
+I would suggest to simplify $\frac{N_{\text{post}}}{N_{\text{post}} *
+    N_{\text{pre}}} = \frac{1}{N_{\text{pre}}}$.
+
+  Furthermore, it sould probably be fair to say ``We use $P =
+  0.9999^{\frac{1}{N_{\text{pre}}}
+  }$
+so that the probability not to
+overshoot in all $N_{\text{pre}}$ independently assembled rows is
+$P_{\text{total}} = 0.9999)$.
+  
+\section{Row length problem}
+Here the original text was
+
+\fbox{\parbox{\textwidth}{
+  Once memory is allocated for the data
+structure, the first stage in initializing the connectivity is to
+determine how many of the total synapses Nsyn end up in each
+row by sampling from the multinomial distribution
+$\text{Mult}[N_{\text{pre}} * N_{\text{post}}, \{P_{\text{row}},
+    P_{\text{row}}, \ldots , P_{\text{row}} \}]$ where $P_{\text{row}}
+  = \frac{N_{\text{post}}}{N_{\text{syn}}}$.
+}}\\[0.3cm]
+
+But it should have been: \\
+  Once memory is allocated for the data
+structure, the first stage in initializing the connectivity is to
+determine how many of the total synapses Nsyn end up in each
+row by sampling from the multinomial distribution
+$\text{Mult}[N_{\text{syn}}, \{P_{\text{row}},
+    P_{\text{row}}, \ldots , P_{\text{row}} \}]$ where $P_{\text{row}}
+  = \frac{1}{N_{\text{pre}}}$.
+
+\section{The ``sorted sampling'' section}
+from
+
+https://stats.stackexchange.com/questions/134241/how-to-generate-sorted-uniformly-distributed-values-in-an-interval-efficiently
+
+answer number 6, we have:
+
+\fbox{\parbox{\textwidth}{
+Assuming the data is to be generated in $[0;1]$. The smallest value is
+$\text{Beta}[1,n]$ distributed. (For subsequent cases, reduce n and rescale to
+the remaining interval). To generate a general beta random value, we
+would need to generate two Gamma distributed random values. But
+$1−X \sim \text{Beta}[n,1]$. Then $−\ln (1−X) \sim \text{Exponential}[n]$. We can sample random numbers from this distribution as $\frac{−\ln(U[0;1])}{n}$ for this.
+\begin{align}
+  −\ln(1−x) &= \frac{-\ln(u)}{n} \\
+  1-x &= u^{\frac{1}{n}} \\
+  x &= 1- u^{\frac{1}{n}}
+\end{align}
+Which yields the following algorithm:
+
+ x = a \\
+ for i in range(n, 0, -1): \\
+ \rule{1cm}{0cm}    x += (b-x) * (1 - pow(rand(), 1. / i)) \\
+  \rule{1cm}{0cm}    result.append(x)
+
+There may be numerical instabilities involved, and computing pow and a
+division for every object may turn out to be slower than sorting.
+}}\\[0.3cm]
+
+This translates to GeNN code that is using exactly this strategy for
+the unformely picked post-synaptic IDs in $[0,
+  N_{\text{post}}-1]$. The code is currently:
+\begin{verbatim}
+SET_ROW_BUILD_CODE(
+    "if(c == 0) {\n"
+    "   $(endRow);\n"
+    "}\n"
+    "const scalar u = $(gennrand_uniform);\n"
+    "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
+    "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
+    "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
+    "$(addSynapse, postIdx + $(id_post_begin));\n"
+    "c--;\n");
+SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 
+"$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
+\end{verbatim}
+This is correct as \verb+(1.0-x)+ rescales the sampling to the
+remaining interval and \verb+c+ is reduced each step to reflect that
+less and less samples are to be taken from the reduced interval
+$[0;1-x]$.
+
+However the paper description needs amending. The previous paper had:
+
+\fbox{\parbox{\textwidth}{
+Rather
+than sampling directly from $\text{Unif}[0,N_{\text{post}}]$ we sample from its
+$1^{\text{st}}$ order statistic – $\text{Beta}[1,N_{\text{post}}]$ –
+essentially the next smallest value. In general, the Beta distribution cannot be sampled from
+in constant time. However, if $X \sim \text{Beta}[1,N_{\text{post}}]$,
+$1 − X \sim \text{Beta}[N_{\text{post}}, 1]$ and therefore $−ln(1 − X)
+\sim \text{Exponential}[N_{\text{post}}]$.
+}}\\[0.3cm]
+
+There are problems with that -- the first order statistic
+$\text{Beta}[1,N_{\text{post}}]$ is for sampling $N_{\text{post}}$
+random numbers from $[0;1]$ (not a problem in the code as there this
+is actually what is being done). Furthermore, we are not mentioning
+the rescaling and reduction of $N_{\text{post}}$ in the next
+iteration. I think in  essence it needs to be rewritten.
+
+\subsection{Suggested new version}
+Rather than sampling from the integers from $0$ to $N_{\text{post}}-1$
+we sample from the continuous interval $[0,1[$, rescale by
+    $N_{\text{post}}$ and round down. To get $N_{\text{post}}$ uniform
+    samples from $[0,1[$ in ascending order, one can instead of
+        sampling from the uniform distribution and sorting, sample
+        from the first order statistic Beta to obtain the increment to
+        the next uniform sample. Initially one would sample the first
+        number $x_1$ directly from $\text{Beta}[1,N_{\text{post}}]$, then
+        $x_2= (1- x_1) \cdot \xi_2$ where $\xi_2$ is sampled from
+        $\text{Beta}[1,N_{\text{post}}-1]$ and so on until $x_n=
+        (1-x_{n-1}) \cdot \xi_n$ with  $\xi_n$ is sampled from $\text{Beta}[1,1]$.
+   Furthermore, the Beta distribution cannot be sampled from
+in constant time. However, if $X \sim \text{Beta}[1,N_{\text{post}}]$, then
+$1 - X \sim \text{Beta}[N_{\text{post}}, 1]$ and therefore $−ln(1 - X)
+\sim \text{Exponential}[N_{\text{post}}]$, which can be sampled from
+in constant time using the inversion method (Devroye, 2013, p. 29).
+
+
+\end{document}
