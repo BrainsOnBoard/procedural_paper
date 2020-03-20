@@ -66,8 +66,8 @@ def plot_line(axis, data, devices, algorithms, pal, show_y_axis_label=True):
 
 
 def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
-    hatch_patterns = [None, "....", "----"]
-    assert len(hatch_patterns) == len(algorithms)
+    alphas = [0.0, 0.5, 1.0]
+    assert len(alphas) == len(algorithms)
 
     time_rows = [0, 2, 4, 6]
 
@@ -102,7 +102,8 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
             bar_x = np.arange(bar_start_x, bar_start_x + (group_width * (num_groups - 0.5)), group_width)
 
             # Plot bars
-            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, color=pal[d], hatch=hatch_patterns[a])
+            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, 
+                     color=(pal[d][0], pal[d][1], pal[d][2], alphas[a]), ec=(0.0, 0.0, 0.0, 1.0))
 
     # Configure axis
     axis.set_xticks(group_x)
@@ -117,7 +118,7 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     axis.xaxis.grid(False)
 
     # Add axis legend
-    legend_actors = [Rectangle((0, 0), 1, 1, hatch=h, fc="white", ec="black") for h in hatch_patterns]
+    legend_actors = [Rectangle((0, 0), 1, 1, fc=(0.0, 0.0, 0.0, a), ec=(0.0, 0.0, 0.0, 1.0)) for a in alphas]
     axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
 
 pal = sns.color_palette("deep")
