@@ -77,12 +77,8 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     bar_x = np.empty(num_bars)
     bar_height = np.empty(num_bars)
 
-    # Calculate bar positions of grouped GPU bars
-    bar_pad = 0.1
-    group_pad = 4.0
-    bar_width = 2.0
-
-    group_width = ((bar_width + bar_pad) * group_size) + group_pad
+    bar_width = 0.8
+    group_width = 15.0
     group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.5), group_width)
 
     # Loop through devices
@@ -98,11 +94,11 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
         # Loop through algorithms
         for a, _ in enumerate(algorithms):
             # Calculate bar positions
-            bar_start_x = ((d * len(algorithms)) + a) * (bar_width + bar_pad)
-            bar_x = np.arange(bar_start_x, bar_start_x + (group_width * (num_groups - 0.5)), group_width)
-
+            bar_x = [(group_width * i) + (3.5 * d) + a
+                     for i in range(num_groups)]
+            
             # Plot bars
-            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, 
+            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, linewidth=0.3,
                      color=(pal[d][0], pal[d][1], pal[d][2], alphas[a]), ec=(0.0, 0.0, 0.0, 1.0))
 
     # Configure axis
