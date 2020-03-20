@@ -106,6 +106,7 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     axis.set_xticklabels(["$10^{%u}$" % np.log10(d) for d in data[time_rows,0]], ha="center")
     axis.set_yscale("log")
     axis.set_xlabel("Number of neurons")
+    axis.set_yticks([10 ** i for i in range(5)])
     if show_y_axis_label:
         axis.set_ylabel("Simulation time [s]")
 
