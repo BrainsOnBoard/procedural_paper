@@ -129,7 +129,7 @@ However, high-end GPUs have thousands of times more compute power than the CPUs 
 \begin{figure*}
     \centering
     \includegraphics{figures/merging_scaling}
-    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers of populations. 
+    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers of populations and running on a workstation equipped with a Titan RTX GPU.
     \textbf{A} Compilation time using GCC 7.5.0.
     \textbf{B} Simulation time for an \SI{1}{\second} simulation.
     \textbf{C} Memory throughput reported by NVIDIA Nsight compute profiler 'Speed of light' metric.
@@ -163,6 +163,7 @@ In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulatio
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as a sorted array of indices whereas, in the `bitfield' data structure, they are represented as `1s' in a bitfield with a bit for each postsynaptic neuron.
 None of the devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales its performance is competitive with and sometime better than the standard approach.
+\todo{note that this is using synapses with fixed synaptic weight}
 
 \subsection*{Kernel merging}
 While the procedural connectivity approach presented in the previous section allows us to simulate models which would otherwise not fit within the memory of a single GPU, there are additional problems when using code generation to generate simulation code for models with large numbers of neuron and synapse populations.
@@ -253,13 +254,28 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach entirely solves the issue
 Therefore, we apply this approach to initialisation and simulation kernels for both neuron and synapse populations.
 
 \subsection*{The multi-area model}
-Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
-However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
-The multi-area model~\citep{Schmidt2018a,Schmidt2018} does just this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque cortex involved in visual processing.
-The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses connecting pairs of areas.
-Synapses between areas are then distributed between the populations which make up each area 
+Due to lack of computing power and insufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
+However, data from several species has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells~\todo{find citation}.
+The multi-area model~\citep{Schmidt2018a,Schmidt2018} does just this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for 32 areas of the macaque cortex involved in visual processing.
+The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses connecting pairs of areas.
+Synapses between areas are then distributed between the populations which make up each area \todo{finish}
+This model was simulated using NEST~\citep{Gewaltig2007} on a single rack~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}) of a IBM Blue Gene/Q supercomputer~\citep{Schmidt2018}.
+On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately~\SI{12}{\minute}.
 
-By using a supercomputer to simulate a model based on the latest connectivity data and The multi-scale model of the macaque visual cortex~\citep{Schmidt2018} developed by 
+The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented earlier in this work, the model would be unlikely to compile or simulate at a reasonable speed using GeNN.
+Additionally, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
+Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, delays can be expressed as a \SI{8}{\bit} integer and that the neuron populations are all small enough to index using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte}.
+While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
+
+In this model the density of the synaptic connections between a pair of neuronal populations is specified in terms of a total number of random synapses~($N_{\text{syn}}$).
+In order to use our procedural approach to simulate a model with this connectivity, the subset of the $N_{\text{syn}}$ synapses which end up in each row must be pre-calcualted by sampling from the multinomial distribution $\text{Mult}[N_{\text{pre}} * N_{\text{post}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{syn}}}$.
+This operation cannot be efficiently parallelised so must be performed on the host but, once the length of each row is determined, the postsynaptic targets  of each presynaptic neuron can be `procedurally' generated  in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
+% While this works mathematically, in order to improve the locality of memory accesses, synapses should be sorted into ascending order.
+% This would be trivial to implement in CPU code but, without enough shared memory for each CUDA thread to store a copy of its corresponding row, an in-place sort in global memory would be very slow.
+% It would be possible to use a more complex parallel sorting algorithm such as that proposed by \citet{Awan2016} but, as GPU architectures typically have very high floating point maths throughput, we instead take an alternative approach.
+% Rather than sampling directly from $\text{Unif}[0, N_{\text{post}}]$ we sample from its 1st order statistic -- $\text{Beta}[1, N_{\text{post}}]$ -- essentially the next smallest value.
+% In general, the Beta distribution cannot be sampled from in constant time.
+% However, if $X \sim \text{Beta}[1, N_{\text{post}}]$, $1 - X \sim \text{Beta}[N_{\text{post}}, 1]$ and therefore $-ln(1 - X) \sim \text{Exponential}[N_{\text{post}}]$ -- a much simpler problem as the exponential distribution can be sampled in constant time using the inversion method~\citep[p29]{DevroyeLuc2013}.
 
 
 \section*{Discussion}
