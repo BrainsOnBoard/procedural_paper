@@ -267,16 +267,13 @@ Additionally, each synapse in this model has an independant weight and synaptic 
 Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, delays can be expressed as a \SI{8}{\bit} integer and that the neuron populations are all small enough to index using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte}.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
 
-In this model the density of the synaptic connections between a pair of neuronal populations is specified in terms of a total number of random synapses~($N_{\text{syn}}$).
-In order to use our procedural approach to simulate a model with this connectivity, the subset of the $N_{\text{syn}}$ synapses which end up in each row must be pre-calcualted by sampling from the multinomial distribution $\text{Mult}[N_{\text{pre}} * N_{\text{post}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{syn}}}$.
-This operation cannot be efficiently parallelised so must be performed on the host but, once the length of each row is determined, the postsynaptic targets  of each presynaptic neuron can be `procedurally' generated  in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
-% While this works mathematically, in order to improve the locality of memory accesses, synapses should be sorted into ascending order.
-% This would be trivial to implement in CPU code but, without enough shared memory for each CUDA thread to store a copy of its corresponding row, an in-place sort in global memory would be very slow.
-% It would be possible to use a more complex parallel sorting algorithm such as that proposed by \citet{Awan2016} but, as GPU architectures typically have very high floating point maths throughput, we instead take an alternative approach.
-% Rather than sampling directly from $\text{Unif}[0, N_{\text{post}}]$ we sample from its 1st order statistic -- $\text{Beta}[1, N_{\text{post}}]$ -- essentially the next smallest value.
-% In general, the Beta distribution cannot be sampled from in constant time.
-% However, if $X \sim \text{Beta}[1, N_{\text{post}}]$, $1 - X \sim \text{Beta}[N_{\text{post}}, 1]$ and therefore $-ln(1 - X) \sim \text{Exponential}[N_{\text{post}}]$ -- a much simpler problem as the exponential distribution can be sampled in constant time using the inversion method~\citep[p29]{DevroyeLuc2013}.
+In this model, the density of the synaptic connections between a pair of neuronal populations is specified in terms of a total number ($N_{\text{syn}}$) of random synapses.
+In order to use our procedural approach to simulate a model with this connectivity, the subset of the $N_{\text{syn}}$ synapses which end up in each row must be pre-calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{pre}} N_{\text{post}}} =  \frac{1}{N_{\text{pre}}} $.
+This operation cannot be efficiently parallelised so must be performed on the host but, once the length of each row is determined, the postsynaptic targets  of each presynaptic neuron can be procedurally generated in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
+The weights and delays for each synapse generated in this manner can then be sampled from the normal distribution using the same, repeatable random number generator stream.
 
+In order to validate our GeNN simulations of the multi-area model we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a Titan RTX GPU.
+Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three populations in the model. 
 
 \section*{Discussion}
 \begin{itemize}
@@ -285,15 +282,7 @@ This operation cannot be efficiently parallelised so must be performed on the ho
     \item Hardware for procedural connectivity?
 \end{itemize}
 
-
-\matmethods{Please describe your materials and methods here. This can be more than one paragraph, and may contain subsections and equations as required. Authors should include a statement in the methods section describing how readers will be able to access the data in the paper. 
-\begin{itemize}
-    \item LIF neuron
-    \item Exponential static synapses
-    \item Connectivity
-    \item Parameter values for scaling and merging experiments
-\end{itemize}
-\subsection*{Neuron models}
+\matmethods{\subsection*{Neuron models}
 The membrane voltage ($V_{j}$) of each neuron is modelled as a leaky integrate-and-fire~(LIF) unit:
 %
 \begin{align}
@@ -309,8 +298,7 @@ Incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$:
 \end{align}
 %
 where $\tau_{syn}$ represents the time constant with which any spikes (modelled as Dirac delta functions $\delta$) from $n$ presynaptic input neurons occuring at time $t$ are integrated.
-In addition to its synaptic input, each neuron in the network also receives an independent Poisson input current $I_{p_{j}}$ (also exponentially shaped by equation~\ref{eq:exp_neuron_input_current}) which represents input from adjacent cortical regions.
-}
+In addition to its synaptic input, each neuron in the network also receives an independent Poisson input current $I_{p_{j}}$ (also exponentially shaped by equation~\ref{eq:exp_neuron_input_current}) which represents input from adjacent cortical regions.}
 
 \showmatmethods{} % Display the Materials and Methods section
 
