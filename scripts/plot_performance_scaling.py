@@ -14,7 +14,7 @@ def flip(items, ncol):
 
 # Names and algorithms - could extract them from CSV but it's a ball-ache
 devices = ["Jetson TX2", "GeForce MX130", "GeForce GTX 1650", "Titan RTX"]
-algorithms = ["Sparse", "Bitmask", "Procedural"]
+algorithms = ["Sparse", "Bitfield", "Procedural"]
 
 # Import data
 # **NOTE** np.loadtxt doesn't handle empty entries
@@ -66,8 +66,8 @@ def plot_line(axis, data, devices, algorithms, pal, show_y_axis_label=True):
 
 
 def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
-    hatch_patterns = [None, "....", "----"]
-    assert len(hatch_patterns) == len(algorithms)
+    alphas = [0.0, 0.5, 1.0]
+    assert len(alphas) == len(algorithms)
 
     time_rows = [0, 2, 4, 6]
 
@@ -77,13 +77,9 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     bar_x = np.empty(num_bars)
     bar_height = np.empty(num_bars)
 
-    # Calculate bar positions of grouped GPU bars
-    bar_pad = 0.1
-    group_pad = 4.0
-    bar_width = 2.0
-
-    group_width = ((bar_width + bar_pad) * group_size) + group_pad
-    group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.5), group_width)
+    bar_width = 0.8
+    group_width = 15.0
+    group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.49999), group_width)
 
     # Loop through devices
     for d, _ in enumerate(devices):
@@ -98,17 +94,19 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
         # Loop through algorithms
         for a, _ in enumerate(algorithms):
             # Calculate bar positions
-            bar_start_x = ((d * len(algorithms)) + a) * (bar_width + bar_pad)
-            bar_x = np.arange(bar_start_x, bar_start_x + (group_width * (num_groups - 0.5)), group_width)
-
+            bar_x = [(group_width * i) + (3.5 * d) + a
+                     for i in range(num_groups)]
+            
             # Plot bars
-            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, color=pal[d], hatch=hatch_patterns[a])
+            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, linewidth=0.3,
+                     color=(pal[d][0], pal[d][1], pal[d][2], alphas[a]), ec=(0.0, 0.0, 0.0, 1.0))
 
     # Configure axis
     axis.set_xticks(group_x)
     axis.set_xticklabels(["$10^{%u}$" % np.log10(d) for d in data[time_rows,0]], ha="center")
     axis.set_yscale("log")
     axis.set_xlabel("Number of neurons")
+    axis.set_yticks([10 ** i for i in range(5)])
     if show_y_axis_label:
         axis.set_ylabel("Simulation time [s]")
 
@@ -117,7 +115,7 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     axis.xaxis.grid(False)
 
     # Add axis legend
-    legend_actors = [Rectangle((0, 0), 1, 1, hatch=h, fc="white", ec="black") for h in hatch_patterns]
+    legend_actors = [Rectangle((0, 0), 1, 1, fc=(0.0, 0.0, 0.0, a), ec=(0.0, 0.0, 0.0, 1.0)) for a in alphas]
     axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
 
 pal = sns.color_palette("deep")
@@ -131,7 +129,7 @@ axes[1].set_title("B", loc="left")
 legend_actors = [Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices)]
 fig.legend(legend_actors, devices, ncol=len(devices), frameon=False, loc="lower center")
 
-plt.tight_layout(pad=0, rect= [0.0, 0.15, 1.0, 1.0])
+plt.tight_layout(pad=0, w_pad=1.0, rect= [0.0, 0.15, 1.0, 1.0])
 if not plot_settings.presentation:
     fig.savefig("../figures/performance_scaling.pdf")
 plt.show()
