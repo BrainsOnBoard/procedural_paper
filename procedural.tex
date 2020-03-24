@@ -278,7 +278,9 @@ This operation cannot be efficiently parallelised so must be performed on the ho
 The weights and delays for each synapse generated in this manner can then be sampled from the normal distribution using the same, repeatable random number generator stream.
 
 In order to validate our GeNN simulations of the multi-area model we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a Titan RTX GPU.
-Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three populations in the model. 
+Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three of the modelled areas.
+Next, we compared the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients with those obtained from the supercomputer simulations.
+
 
 \section*{Discussion}
 \begin{itemize}
