@@ -94,7 +94,7 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     
 def load_nest_pop_data(filename, areas=None):
     # Load JSON format
-    data_json = json.load(open(filename, 'r'))
+    data_json = json.load(open(filename, "r"))
     
     # Create default dict for data
     populations = []
@@ -140,6 +140,11 @@ def calc_stats(duration_s):
     # Get list of all data files
     spike_files = list(glob(path.join("genn_recordings", "*.npy")))
     
+    # Load model description and extract population sizes
+    custom_data_model_file = path.join("genn_recordings", "custom_Data_Model_da4e0764b4a3d0c8a3d3687dfa9c5ae4.json")
+    custom_data_model = json.load(open(custom_data_model_file, "r"))
+    population_sizes = custom_data_model["neuron_numbers"]
+  
     # Loop through spike files
     populations = []
     rates = []
@@ -150,13 +155,15 @@ def calc_stats(duration_s):
         data = np.load(s)
          
         # Extract population name
-        pop_name = path.basename(s).split("_")[1].split(".")[0]
+        name_components = path.basename(s).split("_")
+        area_name = name_components[0]
+        pop_name = name_components[1].split(".")[0]
         
         # Count spikes
         num_spikes = len(data[0])
 
         # Count neurons
-        num_neurons = int(np.amax(data[1]))
+        num_neurons = int(population_sizes[area_name][pop_name])
         
         # Add stats to lists
         populations.append(pop_name)
