@@ -2,6 +2,7 @@ from glob import glob
 from correlation_toolbox import helper as ch
 from matplotlib import gridspec as gs
 from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
 import json
 import numpy as np
 import seaborn as sns
@@ -76,6 +77,7 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     # Extract spike train i.e. sorted array of spike times for each neuron
     # **NOTE** this is a version of correlation_toolbox.helper.sort_gdf_by_id, 
     # modified to suit our data format
+    # +1000 to ensure that we really have subsample non-silent neurons in the end
     ids = np.arange(ids[0], ids[0]+subsample+1001)
     dat = []
     for i in ids:
@@ -341,7 +343,12 @@ rate_violin_axis.set_title("D", loc="left")
 corr_coeff_violin_axis.set_title("E", loc="left")
 irregularity_violin_axis.set_title("F", loc="left")
 
-fig.tight_layout(pad=0)
+# Show figure legend with devices beneath figure
+pal = sns.color_palette("deep")
+fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1])],
+           ["NEST", "GeNN"], ncol=2, frameon=False, loc="lower center")
+fig.tight_layout(pad=0, rect= [0.0, 0.075, 1.0, 1.0])
+
 if not plot_settings.presentation:
     fig.savefig("../figures/multi_area.pdf")
     
