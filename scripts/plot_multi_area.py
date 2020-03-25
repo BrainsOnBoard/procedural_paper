@@ -76,7 +76,7 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     # Extract spike train i.e. sorted array of spike times for each neuron
     # **NOTE** this is a version of correlation_toolbox.helper.sort_gdf_by_id, 
     # modified to suit our data format
-    ids = np.arange(ids[0], ids[0]+subsample+1000)
+    ids = np.arange(ids[0], ids[0]+subsample+1001)
     dat = []
     for i in ids:
         dat.append(np.sort(data_array[0, np.where(data_array[1] == i)[0]]))
