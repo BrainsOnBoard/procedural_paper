@@ -126,16 +126,16 @@ Although this idea has not been previously applied to modern hardware, Eugene Iz
 Sadly, while this remains an incredible achievement, simulating the model for 1 second of biological time required 50 days of simulation.
 However, high-end GPUs have thousands of times more compute power than the CPUs available in 2005 and, due to the limited memory bandwidth available to each of their parallel computing elements, are particularly well-suited to this approach.
 
-\begin{figure*}
+\begin{figure}
     \centering
     \includegraphics{figures/merging_scaling}
-    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers of populations and running on a workstation equipped with a Titan RTX GPU.
-    \textbf{A} Compilation time using GCC 7.5.0.
-    \textbf{B} Simulation time for an \SI{1}{\second} simulation.
-    \textbf{C} Memory throughput reported by NVIDIA Nsight compute profiler 'Speed of light' metric.
-    \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler.}
+    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
+    \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
+    \textbf{B} Simulation time~($T_{sim}$) for an \SI{1}{\second} simulation.
+    \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler 'Speed of light' metric.
+    \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
     \label{fig:merging_scaling}
-\end{figure*}
+\end{figure}
 
 We implemented procedural connectivity as an option for simulation runs in GeNN by repurposing our previously developed parallel initialisation methods.
 Instead of being run once at the beginning of the simulation, the methods are rerun during the simulation for each pre-synaptic spike until all postsynaptic targets have been identified and the post-synaptic code can be run.
@@ -264,8 +264,8 @@ However, data from several species~\todo{find citation} has shown that cortical 
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} does this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque cortex involved in visual processing.
 The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses connecting pairs of areas.
 Synapses between areas are then distributed between the populations which make up each area \todo{finish}. 
-This model was simulated using NEST~\citep{Gewaltig2007} on a single rack~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}) of a IBM Blue Gene/Q supercomputer~\citep{Schmidt2018}.
-On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately~\SI{12}{\minute}.
+This model was simulated using NEST~\citep{Gewaltig2007} on a single rack of a IBM Blue Gene/Q supercomputer~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}).
+On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented earlier in this work, the model would be unlikely to compile or simulate at a reasonable speed using GeNN.
 Additionally, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
@@ -277,10 +277,11 @@ In order to use our procedural approach to simulate a model with this connectivi
 This operation cannot be efficiently parallelised so must be performed on the host but, once the length of each row is determined, the postsynaptic targets  of each presynaptic neuron can be procedurally generated in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
 The weights and delays for each synapse generated in this manner can then be sampled from the normal distribution using the same, repeatable random number generator stream.
 
-In order to validate our GeNN simulations of the multi-area model we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a Titan RTX GPU.
+In order to validate our GeNN simulations of the multi-area model we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a single Titan RTX GPU.
+Initialization our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and each biological second of simulation took \SI{7.7}{\minute} -- 
 Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three of the modelled areas.
-Next, we compared the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients with those obtained from the supercomputer simulations.
-
+Next, we compared the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas with those obtained from the supercomputer simulations.
+Irregularity was calculated using the revised local variaation LvR~\citep{Shinomoto2009} averaged over a subsample of \num{2000} neurons and 
 
 \section*{Discussion}
 \begin{itemize}
