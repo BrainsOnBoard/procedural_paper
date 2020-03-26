@@ -10,7 +10,7 @@
 \lstset{language=C++}
 
 % Turn off whitespace around lists
-\setlist{nolistsep}
+%\setlist{nolistsep}
 
 % Visible TODO notes
 \newcommand{\todo}[1]{\textbf{\textsc{\textcolor{red}{(TODO: #1)}}}}
@@ -57,7 +57,7 @@ In this work, we describe extensions to GeNN -- our GPU-based spiking neural net
 We find that GPUs are well-suited to this approach because of their raw computational power, which due to memory bandwidth limitations is often under-utilised when simulating spiking neural networks.
 We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
 Using our new method, this model can be simulated on a single GPU.
-Our results match those obtained on a supercomputer and the simulation runs faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
+Our results match those obtained on a supercomputer and the simulation runs \SI{35}{\percent} faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
 \end{abstract}
 
 \dates{This manuscript was compiled on \today}
@@ -261,27 +261,29 @@ Therefore, we apply this approach to initialisation and simulation kernels for b
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
 However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
-The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} does this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque cortex involved in visual processing.
-The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses connecting pairs of areas.
-Synapses between areas are then distributed between the populations which make up each area \todo{finish}. 
+The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} does just this -- using scaled versions of a previous 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque cortex involved in visual processing.
+The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
+These synapses are then distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004}.
+For a full description of the construction of the multi-area model please refer to the original works~\citep{Schmidt2018a,Schmidt2018}.
 This model was simulated using NEST~\citep{Gewaltig2007} on a single rack of a IBM Blue Gene/Q supercomputer~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}).
 On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented earlier in this work, the model would be unlikely to compile or simulate at a reasonable speed using GeNN.
 Additionally, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
-Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, delays can be expressed as a \SI{8}{\bit} integer and that the neuron populations are all small enough to index using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte}.
+Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to index using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
 
-In this model, the density of the synaptic connections between a pair of neuronal populations is specified in terms of a total number ($N_{\text{syn}}$) of random synapses.
-In order to use our procedural approach to simulate a model with this connectivity, the subset of the $N_{\text{syn}}$ synapses which end up in each row must be pre-calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{pre}} N_{\text{post}}} =  \frac{1}{N_{\text{pre}}} $.
-This operation cannot be efficiently parallelised so must be performed on the host but, once the length of each row is determined, the postsynaptic targets  of each presynaptic neuron can be procedurally generated in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
-The weights and delays for each synapse generated in this manner can then be sampled from the normal distribution using the same, repeatable random number generator stream.
+In this model, the density of the synaptic connections between pairs of neuronal populations is described as a total number ($N_{\text{syn}}$) of random synapses.
+In order to use our procedural approach with this connectivity, the subset of the $N_{\text{syn}}$ synapses which end up in each row must be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{pre}} N_{\text{post}}} =  \frac{1}{N_{\text{pre}}} $.
+This operation cannot be efficiently parallelised so we perform it on the host, storing the results in a GPU memory array.
+However, once the length of each row is determined, the postsynaptic targets for a presynaptic neuron can be procedurally generated very efficiently by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
+The weights and delays for each synapse can then be sampled from the normal distribution using the same repeatable random number stream used to sample the postsynaptic indices.
 
-In order to validate our GeNN simulations of the multi-area model we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a single Titan RTX GPU.
-Initialization our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and each biological second of simulation took \SI{7.7}{\minute} -- 
-Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three of the modelled areas.
-Next, we compared the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas with those obtained from the supercomputer simulations.
-Irregularity was calculated using the revised local variaation LvR~\citep{Shinomoto2009} averaged over a subsample of \num{2000} neurons and 
+In order to validate our GeNN simulations of the multi-area model, we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a single Titan RTX GPU.
+Initialization of our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and each biological second of simulation took \SI{7.7}{\minute} -- \SI{35}{\percent} faster than the supercomputer simulation.\todo{is this the best way of expressing this?}
+Fig.~\ref{fig:multi_area}A-C shows some example spiking activity from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state.
+Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarded the first \SI{500}{\milli\second} of simulation) and compared them to those obtained from the supercomputer simulations.
+We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons. 
 
 \section*{Discussion}
 \begin{itemize}
