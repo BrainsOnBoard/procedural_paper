@@ -286,11 +286,21 @@ Next, we calculated the per-layer distributions of rates, spike-train irregulari
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons. 
 
 \section*{Discussion}
-\begin{itemize}
-    \item Further scaling - memory only required for neuron parameters
-    \item Learning
-    \item Hardware for procedural connectivity?
-\end{itemize}
+In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
+We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018}.
+While this represents a significant step forward in terms of making truly large-scale brain modelling tools accesible to individual researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
+Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the implementation of dendritic delay ring buffers~(described in more detail in our previous work~\citep{Knight2018}).
+While these are a per-neuron (rather than per-synapse) data structure, because the inter-area connections in the model have delays up to around \SI{50}{\milli\second}, the delay buffers become extremely large.
+Additionally, as these buffers are accumulators for synaptic inputs, reducing the precision of thee
+
+One important aspect of large-scale brain simulation that we have not addressed in this work is the investigation of synaptic plasticity and its role in learning.
+As discussed in our previous work~\citep{Knight2018}, GeNN has support for a wide variety of synaptic plasticity rules.
+While, in order to modify synaptic weights, they need to be in memory rather than generated procedurally, connectivity could still be generated procedurally, potentially halving the memory requirements of models with synaptic plasticity.
+However, while this would be sufficient for many synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron state such as membrane voltage~\cite{Brader2007,Clopath2010c}, many Spike-Timing-Dependent Plasticity~(STDP) rules also require access to \emph{postsynaptic} spikes.
+GeNN supports such rules by automatically generating a suitable lookup table structure (see our previous work~\citep{Knight2018} for more details) and this process could be adapted to generate a lookup table from procedural connectivity but this would further erode the memory savings that procedural connectivity would result in.
+
+In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware.
+However, we believe that there is also the potential to develop a new type of neuromorphic hardware, built from the ground up for procedural connectivity with key components such as the counting random number generator implemented in hardware.
 
 \matmethods{\subsection*{Neuron models}
 The membrane voltage ($V_{j}$) of each neuron is modelled as a leaky integrate-and-fire~(LIF) unit:
@@ -312,8 +322,8 @@ In addition to its synaptic input, each neuron in the network also receives an i
 
 \showmatmethods{} % Display the Materials and Methods section
 
-\acknow{Please include your acknowledgments here, set in a single paragraph. Please do not include any acknowledgments in the Supporting Information, or anywhere else in the manuscript.}
-
+\acknow{
+We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their valuable assistance with using the data and analysis tools published alongside the multi-area model -- without these contributions, our comparison with these results would not have been possible.}
 \showacknow{} % Display the acknowledgments section
 
 % Bibliography
