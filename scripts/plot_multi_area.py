@@ -160,9 +160,6 @@ def calc_stats(duration_s):
         name_components = path.basename(s).split("_")
         area_name = name_components[0]
         pop_name = name_components[1].split(".")[0]
-        
-        # Count spikes
-        num_spikes = len(data[0])
 
         # Count neurons
         num_neurons = int(population_sizes[area_name][pop_name])
@@ -172,7 +169,11 @@ def calc_stats(duration_s):
         
         # Calculate rates if data doesn't exist
         if not rates_exists:
-            rates.append(num_spikes / (num_neurons * duration_s))
+            # Count spikes that occur after first 500ms
+            num_spikes = np.sum(data[0] > 500.0)
+            
+            # Calculate rate
+            rates.append(num_spikes / (num_neurons * (duration_s - 0.5)))
         
         # Calculate irregularity if data doesn't exist
         if not irregularity_exists:
