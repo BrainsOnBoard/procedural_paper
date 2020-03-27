@@ -351,7 +351,7 @@ fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1
 fig.tight_layout(pad=0, rect= [0.0, 0.075, 1.0, 1.0])
 
 if not plot_settings.presentation:
-    fig.savefig("../figures/multi_area.pdf")
+    fig.savefig("../figures/multi_area.pdf", dpi=600)
     
 # Show plot
 plt.show()
