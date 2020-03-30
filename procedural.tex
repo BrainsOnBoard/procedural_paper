@@ -109,7 +109,7 @@ In this work we present a novel approach which converts large-scale brain simula
 \end{figure*}
 
 \section*{Results}
-In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow to use it for simulating very large models on a single GPU.
+In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow us to use it for simulating very large models on a single GPU.
 We then demonstrate the power of these new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU.
 We find that we not only obtain the same results as in a previous simulation on a high-performance supercomputer, but that our simulation also runs faster.
 
@@ -119,7 +119,9 @@ Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and 
 We previously extended GeNN to allow the same approach to be used for generating efficient, parallel model initialisation code from code snippets describing state variable and synaptic connectivity initialisation algorithms~\citep{Knight2018}.
 Offloading initialisation to the GPU in this way sped up model initialisation by around $20\times$ on a desktop PC~\citep{Knight2018}, demonstrating that initialisation algorithms are well-suited to GPU acceleration.
 \todo{something explaining why this is for synapses ... or not? (Thomas)}
-In fact, if each synapse can be re-initialised in less than the 80 operations required to hide the latency for fetching its parameter values from memory, it will be faster and vastly more memory efficient to regenerate synapses on demand and never store them in memory. This is the concept of procedural connectivity. Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite} -- an incredible achievement -- it has not been used on modern hardware since.   
+In fact, if each synapse can be re-initialised in less than the 80 operations required to hide the latency for fetching its parameter values from memory, it could be faster and vastly more memory efficient to regenerate synapses on demand and never store them in memory.
+This is the concept of procedural connectivity.
+Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite} -- an incredible achievement -- it has not been subsequently applied to modern hardware.   
 
 \begin{figure}
     \centering
@@ -206,7 +208,7 @@ void updateNeurons()
     \label{fig:multi_area}
 \end{figure*}
 
-This approach works well for models with small numbers of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into a large number of populations, which increases the size of the neuron kernel, compilation times increases super-linearly -- quickly becoming impractical.
+This approach works well for models with small numbers of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into a large number of populations, compilation times increases super-linearly as the size of the neuron kernel increases -- quickly becoming impractical.
 Furthermore, Fig.~\ref{fig:merging_scaling}B shows that when the model is partitioned into a large number of populations, the simulation also runs much more slowly.
 We would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data and, as we discussed previously, hiding the latency of these memory accesses would require approximately 320 arithmetic operations which is many more than are required to sample from the uniform distribution and update a LIF neuron.
 Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\todo{cite} -- shows that this to be true with the memory system being around \SI{90}{\percent} utilised for small numbers of populations.
@@ -215,7 +217,7 @@ Investigating further using the profiler showed that this drop in performance wa
 Stalls are events which prevent the GPU from doing any work during a clock cycle and the profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''\todo{cite} -- which makes sense when we are generating kernels with hundreds of thousands of lines of code.
 \todo{is more detail required here as to why?}
 
-To address these issues, we developed a new code generator for GeNN which first `merges' the model description, grouping populations together which can be simulated using the same generated code.
+To address these issues, we developed a new code generator for GeNN which first `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and parameters which can differ between merged populations:
 %
 \begin{lstlisting}
@@ -262,7 +264,7 @@ The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of su
 The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
 These synapses are distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004}.
 For a full description of the construction of the multi-area model please refer to the original works~\citep{Schmidt2018a,Schmidt2018}.
-This model was simulated using NEST~\citep{Gewaltig2007} on a rack of an IBM Blue Gene/Q supercomputer~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}).
+This model was simulated using NEST~\citep{Gewaltig2007} on one rack of an IBM Blue Gene/Q supercomputer~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes and weighing over \SI{2}{\tonne}).
 On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented earlier in this work, the model would be unlikely to compile or simulate at a reasonable speed using GeNN.
@@ -279,8 +281,9 @@ The weights and delays for each synapse can then be sampled from the normal dist
 In order to validate our GeNN simulations of the multi-area model, we ran a \SI{10.5}{\second} simulation of the model in the ground state on a workstation with a single Titan RTX GPU.
 Initialization of our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and each biological second of simulation took \SI{7.7}{\minute} -- \SI{35}{\percent} faster than the supercomputer simulation.\todo{is this the best way of expressing this?}
 Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state.
-Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the values of the exact same measures obtained from the supercomputer simulations.
-We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons. The violin plot in Fig.~\ref{fig:multi_area}D-F shows the comparison of the distributions of values obtained from the two simulations, which are essentially identical.
+Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the values of the same measures obtained from the supercomputer simulations.
+We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
+The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the distributions of values obtained from the two simulations -- which are essentially identical.
 
 \section*{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
