@@ -198,14 +198,14 @@ However, if the weights vary across synapses, the `bitfield' representation cann
 \end{figure}
 
 \subsection*{Kernel merging}
-We call our second innovation ``kernel merging'' and it relates to the way code is organised into CUDA kernel functions.
+NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
+We call our second innovation ``kernel merging'' and it relates to the way code is organised into these kernels.
 While the procedural connectivity approach presented in the previous section allows us to simulate models which would otherwise not fit within the memory of a single GPU, there are additional problems when using code generation to generate simulation code for models with a large number of neuron and synapse populations.
 
 GeNN and -- to the best of our knowledge~\citep{Blundell2018} -- all other SNN simulators which use code generation to generate all of their simulation code (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate seperate pieces of code for each population of neurons and synapses.
 This approach allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
 Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 1000 neurons each could be simulated in a single kernel:
-\todo{very minimal sentance about SIMT here}
 
 \begin{lstlisting}
 void updateNeurons()
