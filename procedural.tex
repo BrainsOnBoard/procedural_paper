@@ -357,14 +357,13 @@ The membrane voltage ($V_{j}$) of neuron $j$ is modelled as:
 %
 where $\tau_{m}$ and $R_{m}$ represent the time constant and resistance of the neuron's cell membrane, $V_{rest}$ defines the resting potential and $I_{{in}_{j}}$ represents the input current.
 When the membrane voltage crosses a threshold~($V_{thresh}$) a spike is emitted, the membrane voltage is reset  to $V_{rest}$ and a countdown timer is started for $\tau_{ref}$ which, while running, disables the integration of further input thus providing a simulated refractory period.
-Incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$,
+In the procedural connectivity benchmark and the multi-area model where there are synaptic connections, incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$:
 %
 \begin{align}
     \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + \sum_{i=0}^{n} w_{ji} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
-where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.
-In addition to its synaptic input, each neuron in the network may also receive an additional input current.}
+where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
