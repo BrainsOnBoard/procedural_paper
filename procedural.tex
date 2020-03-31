@@ -1,7 +1,7 @@
 % Use the lineno option to display guide line numbers if required.
 \documentclass[9pt,twocolumn,twoside,lineno]{pnas-new}
 
-\usepackage{enumitem,listings}
+\usepackage{enumitem,listings,booktabs}
 
 % Automatic formatting of SI units
 \usepackage[binary-units]{siunitx}
@@ -217,21 +217,7 @@ void updateNeurons()
 }
 
 \end{lstlisting}
-
-\begin{figure*}
-    \centering
-    \includegraphics{figures/multi_area}
-    \caption{Results of full-scale multi-area model simulation. 
-    \textbf{A-C} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~\textbf{A}, V2~\textbf{B}, and FEF~\textbf{C}. 
-    Blue: excitatory neurons, red: inhibitory neurons.
-    \textbf{D-F} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
-    Solid lines: medians, Dashed lines: Interquartile range~(IQR).
-    \textbf{D} Population-averaged firing rates.
-    \textbf{E} Average pairwise correlation coefficients ofspiking activity. 
-    \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
-    \label{fig:multi_area}
-\end{figure*}
-
+%
 This approach works well for models with a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of (smaller and smaller) populations, compilation time increases super-linearly as the size of the neuron kernel increases -- quickly becoming impractical.
 Furthermore, as Fig.~\ref{fig:merging_scaling}B shows, the simulation also runs much more slowly when the model is partitioned into a large number of populations.
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data and, as we discussed previously, hiding the latency of these memory accesses would require approximately 320 arithmetic operations which is many more than are required to sample from the uniform distribution and update a LIF neuron.
@@ -251,7 +237,6 @@ struct NeuronUpdateGroup
   unsigned int numNeurons;
   float* V;  
 };
-
 \end{lstlisting}
 %
 An array of these structures is then declared for each merged population and each element is initialised with pointers to state variables and parameter values:
@@ -282,6 +267,20 @@ void updateNeurons()
 \end{lstlisting}
 %
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with compilation time and simulation performance caused by large numbers of populations.
+
+\begin{figure*}
+    \centering
+    \includegraphics{figures/multi_area}
+    \caption{Results of full-scale multi-area model simulation. 
+    \textbf{A-C} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~\textbf{A}, V2~\textbf{B}, and FEF~\textbf{C}. 
+    Blue: excitatory neurons, red: inhibitory neurons.
+    \textbf{D-F} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
+    Solid lines: medians, Dashed lines: Interquartile range~(IQR).
+    \textbf{D} Population-averaged firing rates.
+    \textbf{E} Average pairwise correlation coefficients ofspiking activity. 
+    \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
+    \label{fig:multi_area}
+\end{figure*}
 
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
@@ -326,28 +325,50 @@ However, typically not all synapses in a simulation are plastic and those that a
 In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware but, we believe that there is also some potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
 Key components such as the counting random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
 
-\matmethods{\subsection*{Neuron models}
-The membrane voltage ($V_{j}$) of neuron $j$ is modelled as a leaky integrate-and-fire~(LIF) unit,
+\matmethods{
+\begin{table}
+  \centering
+  \begin{tabular}{r S S S}
+    \toprule
+        {Parameter}                             & {Procedural connectivity} & {Merging}         & {Multi-area} \\
+                                                & {benchmark}               & {benchmark}       & {model} \\
+    \midrule
+        $\tau_{m}$ [\si{\milli\second}]         & 20                        & 20                & 2 \\
+        $V_{rest}$ [\si{\milli\volt}]           & -60.0                     & -70.0             & -65 \\
+       
+        $V_{thresh}$ [\si{\milli\volt}]         & -50.0                     & -51.0             & -50 \\
+        $R_m$ [\si{\mega\ohm}]                  & 20                        & 20                & 40 \\
+        $\tau_{syn}$ [\si{\milli\second}]       & 5/10\textsuperscript{1}   & {---}             & 0.5\\
+        $\tau_{ref}$ [\si{\milli\second}]       & 5                         & 2                 & 2 \\
+        $I_{inj}$ [\si{\nano\ampere}]           & 0.55                      & \text{Gaussian}\textsuperscript{2}   & \text{Poisson}\textsuperscript{3}\\
+        $W_{ji}$ [\si{\nano\ampere}]            & $\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}           & {---}            & Various\textsuperscript{3}\\
+    \bottomrule
+  \end{tabular}
+  \caption{Model parameters.\\
+  \textsuperscript{1}~Excitatory/Inhibitory. \textsuperscript{2}~Gaussian current with $\mu=\SI{1}{\nano\ampere}$ and $\sigma=\SI{0.25}{\nano\ampere}$. \textsuperscript{3}~Please refer to original works\citep[Table 1,2]{Schmidt2018}}
+  \label{tab:parameters}
+\end{table}
+In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units.
+The membrane voltage ($V_{j}$) of neuron $j$ is modelled as:
 %
 \begin{align}
     \tau_{m} \frac{dV_{j}}{dt} = & (V_{j} - V_{rest}) + R_{m} I_{{in}_{j}}, \label{eq:lif_neuron}
 \end{align}
 %
 where $\tau_{m}$ and $R_{m}$ represent the time constant and resistance of the neuron's cell membrane, $V_{rest}$ defines the resting potential and $I_{{in}_{j}}$ represents the input current.
-When the membrane voltage crosses a threshold~($V_{thresh}$) a spike is emitted, the membrane voltage is reset  to $V_{rest}$ and a countdown timer is started which, while running, disables the integration of further input thus providing a simulated refractory period.
+When the membrane voltage crosses a threshold~($V_{thresh}$) a spike is emitted, the membrane voltage is reset  to $V_{rest}$ and a countdown timer is started for $\tau_{ref}$ which, while running, disables the integration of further input thus providing a simulated refractory period.
 Incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$,
 %
 \begin{align}
-    \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + I_{p_{j}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f}),\label{eq:exp_neuron_input_current}
+    \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + \sum_{i=0}^{n} w_{ji} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
-where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.\todo{{The indexing is unusual, normally one would have used $w_{ji}$ in the equation above, or, more common still, also swapped the roles of $i$ and $j$, i.e. describe the $i$th neuron and sum over $j$}} 
-In addition to its synaptic input, each neuron in the network also receives an independent Poisson input current $I_{p_{j}}$ (also exponentially shaped by equation~\ref{eq:exp_neuron_input_current}) which represents input from adjacent cortical regions.}
-
+where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.
+In addition to its synaptic input, each neuron in the network may also receive an additional input current.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
-We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their valuable assistance with using the data and analysis tools published alongside the multi-area model -- without these contributions, our comparison with these results would not have been possible. \todo{where does the funding info go?}}
+We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their valuable assistance with using the data and analysis tools published alongside the multi-area model -- without these contributions, our comparison with these results would not have been possible.}
 \showacknow{} % Display the acknowledgments section
 
 % Bibliography
