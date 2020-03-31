@@ -363,11 +363,13 @@ In the procedural connectivity benchmark and the multi-area model where there ar
     \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + \sum_{i=0}^{n} w_{ji} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
-where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.}
+where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.
+In all models, the continuous terms of the two equations are solved separately so that the synaptic input current $I_{{in}_{j}}$ entering into equation~\ref{eq:lif_neuron} is effectively treated as a constant during each simulation timestep.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
-We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their valuable assistance with using the data and analysis tools published alongside the multi-area model -- without these contributions, our comparison with these results would not have been possible.}
+We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their valuable assistance with using the data and analysis tools published alongside the multi-area model -- without these contributions, our comparison with these results would not have been possible.
+This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).}
 \showacknow{} % Display the acknowledgments section
 
 % Bibliography
