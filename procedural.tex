@@ -4,7 +4,7 @@
 \usepackage{enumitem,listings,booktabs}
 
 % Automatic formatting of SI units
-\usepackage[binary-units]{siunitx}
+\usepackage[binary-units,separate-uncertainty=true]{siunitx}
 
 % Set options for code listings
 \lstset{language=C++}
@@ -338,14 +338,13 @@ Key components such as the counting random number generator could be implemented
        
         $V_{thresh}$ [\si{\milli\volt}]         & -50.0                     & -51.0             & -50 \\
         $R_m$ [\si{\mega\ohm}]                  & 20                        & 20                & 40 \\
-        $\tau_{syn}$ [\si{\milli\second}]       & 5/10\textsuperscript{1}   & {---}             & 0.5\\
+        $\tau_{syn}$ [\si{\milli\second}]       & {$5/10$\textsuperscript{1}} & {---}             & 0.5\\
         $\tau_{ref}$ [\si{\milli\second}]       & 5                         & 2                 & 2 \\
-        $I_{inj}$ [\si{\nano\ampere}]           & 0.55                      & \text{Gaussian}\textsuperscript{2}   & \text{Poisson}\textsuperscript{3}\\
-        $W_{ji}$ [\si{\nano\ampere}]            & $\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}           & {---}            & Various\textsuperscript{3}\\
+        $I_{inj}$ [\si{\nano\ampere}]           & 0.55                      & 1.0 \pm 0.25   & {Poisson\textsuperscript{2}}\\
+        $W_{ji}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
     \bottomrule
   \end{tabular}
-  \caption{Model parameters.\\
-  \textsuperscript{1}~Excitatory/Inhibitory. \textsuperscript{2}~Gaussian current with $\mu=\SI{1}{\nano\ampere}$ and $\sigma=\SI{0.25}{\nano\ampere}$. \textsuperscript{3}~Please refer to original works\citep[Table 1,2]{Schmidt2018}}
+  \caption{Model parameters. \textsuperscript{1}~Excitatory/Inhibitory. \textsuperscript{2}~Please refer to original works\citep[Table 1,2]{Schmidt2018}}
   \label{tab:parameters}
 \end{table}
 In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units.
