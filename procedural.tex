@@ -360,14 +360,14 @@ The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 where $\tau_{\text{m}}$ and $R_{\text{m}}$ represent the time constant and resistance of the neuron's cell membrane, $V_{\text{rest}}$ defines the resting potential and $I_{\text{in}_{j}}$ represents the input current.
 When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted, the membrane voltage is reset to $V_{\text{rest}}$ and membrane potential integration is suspended for a refractory period $\tau_{\text{ref}}$.
-In both models pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{in}_{j}}$
+In the models where there are synaptic connections, pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{in}_{j}}$
 %
 \begin{align}
     \tau_{\text{syn}} \frac{dI_{\text{in}_{i}}}{dt} = & -I_{\text{in}_{i}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{j}}  \delta(t - t_{j}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
-In all models, the continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ entering into equation~\ref{eq:lif_neuron} is treated as a constant during each simulation timestep.}
+The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ entering into equation~\ref{eq:lif_neuron} is treated as a constant during each simulation timestep.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
