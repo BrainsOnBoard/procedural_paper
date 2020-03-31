@@ -327,42 +327,42 @@ Key components such as the counting random number generator could be implemented
 \matmethods{
 \begin{table}
   \centering
+  \caption{Model parameters. \label{tab:parameters}}
   \begin{tabular}{r S S S}
     \toprule
         {Parameter}                             & {Procedural connectivity} & {Merging}         & {Multi-area} \\
                                                 & {benchmark}               & {benchmark}       & {model} \\
     \midrule
-        $\tau_{m}$ [\si{\milli\second}]         & 20                        & 20                & 2 \\
-        $V_{rest}$ [\si{\milli\volt}]           & -60.0                     & -70.0             & -65 \\
+        $\tau_{\text{m}}$ [\si{\milli\second}]         & 20                        & 20                & 2 \\
+        $V_{\text{rest}}$ [\si{\milli\volt}]           & -60.0                     & -70.0             & -65 \\
        
-        $V_{thresh}$ [\si{\milli\volt}]         & -50.0                     & -51.0             & -50 \\
-        $R_m$ [\si{\mega\ohm}]                  & 20                        & 20                & 40 \\
-        $\tau_{syn}$ [\si{\milli\second}]       & {$5/10$\textsuperscript{1}} & {---}             & 0.5\\
-        $\tau_{ref}$ [\si{\milli\second}]       & 5                         & 2                 & 2 \\
-        $I_{inj}$ [\si{\nano\ampere}]           & 0.55                      & 1.0 \pm 0.25   & {Poisson\textsuperscript{2}}\\
-        $W_{ji}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
+        $V_{\text{th}}$ [\si{\milli\volt}]         & -50.0                     & -51.0             & -50 \\
+        $R_{\text{m}}$ [\si{\mega\ohm}]                  & 20                        & 20                & 40 \\
+        $\tau_{\text{syn}}$ [\si{\milli\second}]       & {$5/10$\textsuperscript{1}} & {---}             & 0.5\\
+        $\tau_{\text{ref}}$ [\si{\milli\second}]       & 5                         & 2                 & 2 \\
+        $I_{\text{in}_j}$ [\si{\nano\ampere}]           & 0.55                      & 1.0 \pm 0.25   & {Poisson\textsuperscript{2}}\\
+        $w_{ij}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
     \bottomrule
   \end{tabular}
-  \caption{Model parameters. \textsuperscript{1}~Excitatory/Inhibitory. \textsuperscript{2}~Please refer to original works\citep[Table 1,2]{Schmidt2018}}
-  \label{tab:parameters}
+  \parbox{\columnwidth}{\textsuperscript{1}Excitatory/Inhibitory. \textsuperscript{2}Please refer to original works\citep[Table 1,2]{Schmidt2018}}
 \end{table}
 In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units using the parameters listed in Table~\ref{tab:parameters}.
-The membrane voltage ($V_{j}$) of neuron $j$ is modelled as:
+The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 \begin{align}
-    \tau_{m} \frac{dV_{j}}{dt} = & (V_{j} - V_{rest}) + R_{m} I_{{in}_{j}}, \label{eq:lif_neuron}
+    \tau_{\text{m}} \frac{dV_{i}}{dt} = & (V_{i} - V_{\text{rest}}) + R_{\text{m}} I_{\text{in}_{j}}, \label{eq:lif_neuron}
 \end{align}
 %
-where $\tau_{m}$ and $R_{m}$ represent the time constant and resistance of the neuron's cell membrane, $V_{rest}$ defines the resting potential and $I_{{in}_{j}}$ represents the input current.
-When the membrane voltage crosses a threshold~($V_{thresh}$) a spike is emitted, the membrane voltage is reset  to $V_{rest}$ and a countdown timer is started for $\tau_{ref}$ which, while running, disables the integration of further input thus providing a simulated refractory period.
-In the procedural connectivity benchmark and the multi-area model where there are synaptic connections, incoming spikes induce an exponentially-shaped input current in $I_{{in}_{j}}$:
+where $\tau_{\text{m}}$ and $R_{\text{m}}$ represent the time constant and resistance of the neuron's cell membrane, $V_{\text{rest}}$ defines the resting potential and $I_{\text{in}_{j}}$ represents the input current.
+When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted, the membrane voltage is reset to $V_{\text{rest}}$ and membrane potential integration is suspended for a refractory period $\tau_{\text{ref}}$.
+In both models pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{in}_{j}}$
 %
 \begin{align}
-    \tau_{syn} \frac{dI_{{in}_{j}}}{dt} = & -I_{{in}_{j}} + \sum_{i=0}^{n} w_{ji} \sum_{t_{i}^{f}}  \delta(t - t_{i}^{f}),\label{eq:exp_neuron_input_current}
+    \tau_{\text{syn}} \frac{dI_{\text{in}_{i}}}{dt} = & -I_{\text{in}_{i}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{j}}  \delta(t - t_{j}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
-where $\tau_{syn}$ represents the time constant with which the influence of any incoming spikes (modelled as Dirac deltas) from the $n$ presynaptic neurons occuring at times $t_{i}^{f}$ decay exponentially.
-In all models, the continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{{in}_{j}}$ entering into equation~\ref{eq:lif_neuron} is treated as a constant during each simulation timestep.}
+where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
+In all models, the continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ entering into equation~\ref{eq:lif_neuron} is treated as a constant during each simulation timestep.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
