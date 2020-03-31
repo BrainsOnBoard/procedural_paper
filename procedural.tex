@@ -272,9 +272,10 @@ unsigned int startThread[3] = {0, 1000, 2000};
 void updateNeurons()
 {
   if(thread < 3000) {
-    // Binary search in startThread to determine
-    // which neuron in which population should be 
-    // processed. Then update, accessing variables 
+    // Binary search in startThread to 
+    // determine which neuron in which 
+    // population should be processed. 
+    // Then update, accessing variables 
     // through neuronUpdateGroup
   }
 }
@@ -294,10 +295,10 @@ In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on one rack of
 On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented above the model would be unlikely to compile or simulate at a workable speed using GeNN.
-Additionally, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used efficiently to represent the connectivity.
+Additionally, unlike the model we benchmarked previously, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
 Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, that delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
-However, with the procedeural connectivity method we are able to simulate this model on single workstation with one Titan RTX GPU, which has \SI{24}{\giga\byte} of GPU memory.
+However, with the procedeural connectivity method, we are able to simulate this model on single workstation with one Titan RTX GPU with \SI{24}{\giga\byte} of memory.
 
 In order to validate our GeNN simulations of the multi-area model, we ran a \SI{10.5}{\second} simulation of the model.
 Initialization of our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and simulation of each biological second took \SI{7.7}{\minute} -- \SI{35}{\percent} less than in the previous supercomputer simulation.
@@ -310,8 +311,8 @@ The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the dis
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
 While this represents a significant step forward in terms of making truly large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
-Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the implementation of dendritic delay ring buffers~(described in more detail in our previous work~\citep{Knight2018}).
-These are a per-neuron (rather than per-synapse) data structure, but because the inter-area connections in the model have delays of up to around \SI{50}{\milli\second}, the delay buffers become extremely large.
+Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the implementation of the circular buffers used to simulate dendritic delay~(described in more detail in our previous work~\citep{Knight2018}).
+These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to around \SI{50}{\milli\second} (500 \SI{0.1}{\milli\second} timesteps), the delay buffers become extremely large.
 Additionally, as these buffers are accumulators for synaptic inputs, reducing the precision of these \todo{something missing here}
 
 One important aspect of large-scale brain simulations that we have not addressed in this work is synaptic plasticity and its role in learning.
@@ -319,10 +320,10 @@ As discussed in our previous work~\citep{Knight2018}, GeNN has support for a wid
 In order to modify synaptic weights, they need to be stored in memory rather than generated procedurally.
 However, connectivity could still be generated procedurally, potentially halving the memory requirements of models with synaptic plasticity.
 This would be sufficient for many synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron states such as membrane voltage~\cite{Brader2007,Clopath2010c}, but for many Spike-Timing-Dependent Plasticity~(STDP) rules access to \emph{postsynaptic} spikes is also required.
-GeNN supports such rules by automatically generating a suitable lookup table structure (see our previous work~\citep{Knight2018} for more details) and this process could be adapted to generate a lookup table from procedural connectivity but this would further erode memory savings.
+GeNN supports such rules by automatically generating a suitable lookup table structure (see our previous work~\citep{Knight2018} for more details) and this process could be adapted to generate a lookup table from procedural connectivity although this would further erode memory savings.
 However, typically not all synapses in a simulation are plastic and those that are not could be simulated fully procedurally.
 
-In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware but we believe that there is also some potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
+In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware but, we believe that there is also some potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
 Key components such as the counting random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
 
 \matmethods{\subsection*{Neuron models}
