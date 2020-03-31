@@ -95,7 +95,7 @@ GPUs use dedictated hardware to rapidly switch between tasks so that the latency
 For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
 Unfortunately, processing a synapse in a spiking neural network simulation is likely to require accessing approximately \SI{8}{\byte} of memory and performing many fewer than the required 80 instructions. This makes synaptic updates highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
-However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\todo{cite} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems.
+However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems.
 
 In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable truly large-scale brain simulations on a single GPU workstation.
 
@@ -159,7 +159,7 @@ In principle this could be done with `convential' random number generators~(RNGs
 Instead, we use a `counter-based' Philox4$\times$32-10 RNG~\citep{Salmon2011}.
 Counter-based RNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (in this case a \SI{128}{\bit} number) and outputs random numbers.
 In constrast to convential RNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
-\todo{do we need some more explanation of how you get from this to a network simulation?}
+%\todo{do we need some more explanation of how you get from this to a network simulation?}
 
 For an initial demonstration of the performance and scalability of procedural connectivity, we used a network that was initially designed to investigate signal propagation through cortical networks~\citep{Vogels2005}, but subsequently has been widely used as a scalable benchmark~\citep{Brette2007}.
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
@@ -198,7 +198,7 @@ While the procedural connectivity approach presented in the previous section all
 
 GeNN and -- to the best of our knowledge~\citep{Blundell2018} -- all other SNN simulators which use code generation to generate all of their simulation code (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate seperate pieces of code for each population of neurons and synapses.
 This approach allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
-However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\todo{cite}).
+However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
 Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 1000 neurons each could be simulated in a single kernel:
 \todo{very minimal sentance about SIMT here}
 
@@ -221,12 +221,12 @@ void updateNeurons()
 This approach works well for models with a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of (smaller and smaller) populations, compilation time increases super-linearly as the size of the neuron kernel increases -- quickly becoming impractical.
 Furthermore, as Fig.~\ref{fig:merging_scaling}B shows, the simulation also runs much more slowly when the model is partitioned into a large number of populations.
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data and, as we discussed previously, hiding the latency of these memory accesses would require approximately 320 arithmetic operations which is many more than are required to sample from the uniform distribution and update a LIF neuron.
-Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\todo{cite} -- shows that this is true for small numbers of populations.
+Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
 However, when the model is partitioned into a larger number of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e. neither memory \emph{nor} compute are used efficiently.
 Investigating further using the profiler, we found that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls as shown in Fig.~\ref{fig:merging_scaling}D.
-Stalls are events which prevent the GPU from doing any work during a clock cycle and the profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''\todo{cite} -- which makes sense when we are generating kernels with hundreds of thousands of lines of code.
-\todo{is more detail required here as to why?}
+Stalls are events which prevent the GPU from doing any work during a clock cycle and the profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020} -- which makes sense when we are generating kernels with hundreds of thousands of lines of code.
+%\todo{is more detail required here as to why?}
 
 To address these issues, we developed a new code generator for GeNN which first `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
@@ -283,7 +283,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with co
 \end{figure*}
 
 \subsection*{The multi-area model}
-Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\todo{find citation}.
+Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\citep{Cabral2014}.
 However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling -- using scaled versions of a previous, 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for each of 32 areas of the macaque visual cortex.
 The 32 areas are connected together with connectivity based on inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
