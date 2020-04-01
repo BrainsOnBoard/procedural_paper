@@ -206,10 +206,9 @@ GeNN and -- to the best of our knowledge~\citep{Blundell2018} -- all other SNN s
 This approach allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
 Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 100 neurons each could be simulated in a single kernel:
-
+%
 \begin{lstlisting}
-void updateNeurons()
-{
+void updateNeurons() {
   if(thread < 100) {
     // Update neuron population A
   } else if(thread >= 100 && thread < 200) {
@@ -218,7 +217,6 @@ void updateNeurons()
     // Update neuron population C
   }
 }
-
 \end{lstlisting}
 %
 This approach works well for models with a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of (smaller and smaller) populations, compilation time increases super-linearly as the size of the neuron kernel increases -- quickly becoming impractical.
