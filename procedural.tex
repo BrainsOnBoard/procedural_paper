@@ -132,24 +132,22 @@ This is the concept of procedural connectivity.
 Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite} -- an incredible achievement -- it has not been applied to more modern hardware since.  
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
-Instead of being run once for all synapses at the beginning of the simulation, the methods are rerun during the simulation for all outgoing synapses of each neuron that fires a spike.
-The identified connections and weights are then used to run the post-synaptic code that calculates the effect of the spike onto other neurons.
-This is possible because outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
+Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation for all outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code that calculates the effect of the spike onto other neurons.
+This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
 
 In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
 We will now discuss two typical examples and how they can be implemented efficiently on a GPU.
 One very common connectivity scheme is the `fixed probability connector' which is described by a fixed probability $P_{\text{conn}}$ that a neuron in the presynaptic population will be connected to a neuron in the postsynaptic population.
 In this case, the postsynaptic targets of any presynaptic neuron can be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
 One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
-However, it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which is the distribution of the number of Bernoulli trials required to get the next success (i.e. a synapse).
+However, for sparse connectivity, it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which is the distribution of the number of Bernoulli trials required to get the next success (i.e. a synapse).
 The geometric distribution can be sampled in constant time by inverting the cumulative density function~(CDF) of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
 Note, that when directly drawing from the uniform distribution, the sampling for each potential synapse is completely independent from any other potential synapse and all these operations could be performed in parallel.
 However, for the more efficient `beta-sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
 
-Another common connectivity scheme for defining connectivity is the fixed number connector.
-In this scheme the synaptic connections between two neuronal populations are characterised by a fixed total number ($N_{\text{syn}}$) of randomly placed synapses.
-In order to initialise this connectivity in parallel, the subset of the $N_{\text{syn}}$ synapses which connect each presynaptic neuron must be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{pre}} N_{\text{post}}} =  \frac{1}{N_{\text{pre}}} $, because the numbers for different presynaptic neurons are not independent from each other.
-This operation cannot be efficiently parallelised so we perform it on the host CPU and store the results in a GPU memory array.
+Another common connectivity scheme for defining connectivity is the `fixed number connector'.
+In this scheme the synaptic connections between two neuronal populations are characterised by a fixed total number $N_{\text{syn}}$ of randomly placed synapses.
+In order to initialise this connectivity in parallel, the number of synapses that originate from each presynaptic neuron must be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{n}, P_{n}, \ldots, P_{n}\}]$ where $P_{n} = \frac{1}{N_{\text{pre}}} $ on the host CPU up front because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
 However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other pre-synaptic neuron.
 Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
