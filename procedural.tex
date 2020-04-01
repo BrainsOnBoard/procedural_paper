@@ -169,7 +169,10 @@ For an initial demonstration of the performance and scalability of procedural co
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ connection probability.
 
-We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware: (1) Jetson TX2, a low-power embedded system designed for robotic applications with \SI{8}{\giga\byte} (shared memory), (2) Geforce MX130, a laptop GPU with \SI{2}{\giga\byte}, (3) Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte}, and (4) Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
+We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware:
+Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} of shared memory;
+Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
+Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte}; and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
 
 In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulations using our new procedural approach against the standard approach of storing synaptic connections in memory using two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{pre}} \times N_{\text{post}}$ array of bits where a `1' at position $i$, $j$ indicates the existence of a synapse between neurons $i$ and $j$ and `0' its absence.
