@@ -119,20 +119,20 @@ We find that we not only obtain the same results as in a previous simulation on 
 
 \subsection*{Procedural connectivity}
 The first crucial innovation to enable large scale simulations on a GPU is what we call `procedural connectivity'.
-In a brain simulation, neurons and synapses can be described by a variety of mathematical models but, eventually, are translated into time or event-driven update algorithms~\citep{Brette2007} that calculate their state from previous states, allowing us to simulate their behaviour over time.
+In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007} which simulate their behaviour over time.
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
 Before a simulation can be run, its parameters -- in particular the state variables and the synaptic connectivity -- need to be initialised.
 Traditionally, this is done by running initialisation algorithms -- often involving random number generation -- once prior to the simulation on the main CPU.
 The results are stored in CPU and GPU memories and used throughout the simulation.
-We have recently extended GeNN to also use code generation to generate efficient, parallel model initialisation methods that run on the GPU from initialisation code snippets ~\citep{Knight2018}.
-Offloading initialisation to the GPU in this way sped up model initialisation by around $20\times$ on a desktop PC~\citep{Knight2018}, demonstrating that initialisation algorithms are well-suited to GPU acceleration.
+We have recently extended GeNN to use code generation from initialisation code snippets to also generate efficient, parallel model initialisation methods that run on the GPU~\citep{Knight2018}.
+Offloading initialisation to the GPU in this way made it around $20\times$ faster on a desktop PC~\citep{Knight2018}, demonstrating that initialisation algorithms are well-suited for GPU acceleration.
 Here, we are going one step further.
 We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred by fetching its parameter values from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
 This is the concept of procedural connectivity.
 Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite} -- an incredible achievement -- it has not been applied to more modern hardware since.  
 
-We implemented procedural connectivity as an option in GeNN by repurposing our previously developed parallel initialisation methods.
-Instead of being run once for all synapses at the beginning of the simulation, when using procedural connectivity, the methods are rerun during the simulation for the outgoing synapses of each neuron that fires a spike.
+We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
+Instead of being run once for all synapses at the beginning of the simulation, the methods are rerun during the simulation for all outgoing synapses of each neuron that fires a spike.
 The identified connections and weights are then used to run the post-synaptic code that calculates the effect of the spike onto other neurons.
 This is possible because outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
 
