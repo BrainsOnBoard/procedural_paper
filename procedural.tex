@@ -146,7 +146,7 @@ The geometric distribution can be sampled in constant time by inverting the cumu
 Note, that when directly drawing from the uniform distribution, the sampling for each potential synapse is completely independent from any other potential synapse and all these operations could be performed in parallel.
 However, for the more efficient `beta-sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
 
-Another common connectivity scheme for defining connectivity is the fixed number connector.
+Another common scheme for defining connectivity is the fixed number connector.
 In this scheme the synaptic connections between two neuronal populations are characterised by a fixed total number ($N_{\text{syn}}$) of randomly placed synapses.
 In order to initialise this connectivity in parallel, the subset of the $N_{\text{syn}}$ synapses which connect each presynaptic neuron must be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{row}, P_{row}, \ldots, P_{row}\}]$ where $P_{row} = \frac{N_{\text{post}}}{N_{\text{pre}} N_{\text{post}}} =  \frac{1}{N_{\text{pre}}} $, because the numbers for different presynaptic neurons are not independent from each other.
 This operation cannot be efficiently parallelised so we perform it on the host CPU and store the results in a GPU memory array.
@@ -293,7 +293,7 @@ The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the dis
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
 While this represents a significant step forward in terms of making truly large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
-Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the implementation of the circular buffers used to simulate dendritic delay~(described in more detail in our previous work~\citep{Knight2018}).
+Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the dendritic delay buffers~(described in our previous work~\citep{Knight2018}).
 These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to around \SI{50}{\milli\second} (500 \SI{0.1}{\milli\second} timesteps), the delay buffers become extremely large.
 
 One important aspect of large-scale brain simulations that we have not addressed in this work is synaptic plasticity and its role in learning.
