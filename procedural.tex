@@ -235,10 +235,9 @@ To address these issues, we developed a new code generator for GeNN which first 
 From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
 %
 \begin{lstlisting}
-struct NeuronUpdateGroup
-{
+struct NeuronUpdateGroup {
   unsigned int numNeurons;
-  float* V;  
+  float* V;
 };
 \end{lstlisting}
 %
