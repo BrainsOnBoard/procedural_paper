@@ -8,7 +8,7 @@ data = np.genfromtxt("merging_data.csv", delimiter=",", skip_header=1)
 assert data.shape[1] == 11
 
 fig, axes = plt.subplots(2, 2, sharex="col", frameon=False,
-                         figsize=(8.0 * plot_settings.cm_to_inches, 
+                         figsize=(8.5 * plot_settings.cm_to_inches, 
                                   5.0 * plot_settings.cm_to_inches))
 
 # Plot compile time
