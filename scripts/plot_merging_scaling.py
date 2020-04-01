@@ -7,7 +7,9 @@ import plot_settings
 data = np.genfromtxt("merging_data.csv", delimiter=",", skip_header=1)
 assert data.shape[1] == 11
 
-fig, axes = plt.subplots(2, 2, figsize=plot_settings.small_figure, sharex="col", frameon=False)
+fig, axes = plt.subplots(2, 2, sharex="col", frameon=False,
+                         figsize=(8.0 * plot_settings.cm_to_inches, 
+                                  5.0 * plot_settings.cm_to_inches))
 
 # Plot compile time
 compile_time_axis = axes[0,0]
@@ -54,12 +56,13 @@ stall_count_axis.set_xlabel("$N_{pop}$")
 stall_count_axis.set_ylabel("$N_{stall}$")
 stall_count_axis.xaxis.grid(False)
 stall_count_axis.yaxis.grid(False)
+stall_count_axis.set_yticks([0, 25, 50])
 sns.despine(ax=stall_count_axis)
 
 fig.legend([latest_actor, release_actor], ["Latest version", "GeNN 4.1.0"], 
            ncol=2, frameon=False, loc="lower center")
 fig.align_ylabels()
-fig.tight_layout(pad=0, rect= [0.0, 0.125, 1.0, 1.0])
+fig.tight_layout(pad=0, rect= [0.0, 0.1, 1.0, 1.0])
 if not plot_settings.presentation:
     fig.savefig("../figures/merging_scaling.pdf")
 plt.show()

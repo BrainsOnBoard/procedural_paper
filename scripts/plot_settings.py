@@ -8,7 +8,8 @@ if presentation:
     sns.set(context="talk")
     sns.set_style("whitegrid", {"font.family":"sans-serif", "font.sans-serif":"Verdana"})
 else:
-    sns.set(context="paper")
+    sns.set(context="paper", rc={"font.size":7, "axes.labelsize":7, "axes.titlesize": 8,
+                                 "legend.fontsize":7, "xtick.labelsize":7, "ytick.labelsize":7})
     sns.set_style("whitegrid", {"font.family":"serif", "font.serif":"Times New Roman"})
 
 # **HACK** fix bug with markers

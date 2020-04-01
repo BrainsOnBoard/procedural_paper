@@ -289,14 +289,14 @@ nest_irregularity = load_nest_pop_data(path.join(nest_recording_path, "Analysis"
 genn_rates, genn_irregularity, genn_corr_coeff = calc_stats(10.5)
 
 # Create plot
-fig = plt.figure(figsize=(plot_settings.large_figure[0], plot_settings.medium_figure[1]), 
-                 frameon=False)
+fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
+                                         9.0 * plot_settings.cm_to_inches))
 
 # Create outer gridspec dividing plot area into 3 (2/3 for raster plots, 1/3 for violin plots)
 gsp = gs.GridSpec(1, 3)
 
 # Create sub-gridspecs for panels within outer gridspec
-violin_plot_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=gsp[2], hspace=0.7)
+violin_plot_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=gsp[2], hspace=0.9)
 raster_plot_gsp = gs.GridSpecFromSubplotSpec(1, 3, subplot_spec=gsp[0:2])
 
 # Create axes within outer gridspec
@@ -348,7 +348,8 @@ irregularity_violin_axis.set_title("F", loc="left")
 pal = sns.color_palette("deep")
 fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1])],
            ["NEST", "GeNN"], ncol=2, frameon=False, loc="lower center")
-fig.tight_layout(pad=0, rect= [0.0, 0.075, 1.0, 1.0])
+fig.align_ylabels([rate_violin_axis, corr_coeff_violin_axis, irregularity_violin_axis])
+fig.tight_layout(pad=0, w_pad=0.5, rect= [0.0, 0.075, 1.0, 1.0])
 
 if not plot_settings.presentation:
     fig.savefig("../figures/multi_area.pdf", dpi=600)

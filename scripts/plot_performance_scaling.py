@@ -119,7 +119,9 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
 
 pal = sns.color_palette("deep")
-fig, axes = plt.subplots(1, 2, sharey=True, figsize=(plot_settings.large_figure[0], plot_settings.small_figure[1]))
+fig, axes = plt.subplots(1, 2, sharey=True, 
+                         figsize=(17.0 * plot_settings.cm_to_inches, 
+                                  5.0 * plot_settings.cm_to_inches))
 plot_line(axes[0], data, devices, algorithms, pal)
 plot_bars(axes[1], data, devices, algorithms, pal, False)
 
@@ -129,7 +131,7 @@ axes[1].set_title("B", loc="left")
 legend_actors = [Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices)]
 fig.legend(legend_actors, devices, ncol=len(devices), frameon=False, loc="lower center")
 
-plt.tight_layout(pad=0, w_pad=1.0, rect= [0.0, 0.15, 1.0, 1.0])
+plt.tight_layout(pad=0, w_pad=1.0, rect= [0.0, 0.125, 1.0, 1.0])
 if not plot_settings.presentation:
     fig.savefig("../figures/performance_scaling.pdf")
 plt.show()
