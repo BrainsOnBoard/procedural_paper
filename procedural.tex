@@ -205,18 +205,16 @@ While the procedural connectivity approach presented in the previous section all
 GeNN and -- to the best of our knowledge~\citep{Blundell2018} -- all other SNN simulators which use code generation to generate all of their simulation code (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate seperate pieces of code for each population of neurons and synapses.
 This approach allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
-Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 1000 neurons each could be simulated in a single kernel:
+Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 100 neurons each could be simulated in a single kernel:
 
 \begin{lstlisting}
 void updateNeurons()
 {
-  if(thread < 1000) {
+  if(thread < 100) {
     // Update neuron population A
-  }
-  else if(thread >= 1000 && thread < 2000) {
+  } else if(thread >= 100 && thread < 200) {
     // Update neuron population B
-  }
-  else if(thread >= 2000 && thread < 3000) {
+  } else if(thread >= 200 && thread < 300) {
     // Update neuron population C
   }
 }
@@ -248,15 +246,15 @@ An array of these structures is then declared for each merged population and eac
 %
 \begin{lstlisting}
 NeuronUpdateGroup neuronUpdateGroup[3];
-neuronUpdateGroup[0] = {1000, VA};
-neuronUpdateGroup[1] = {1000, VB};
-neuronUpdateGroup[2] = {1000, VC};
+neuronUpdateGroup[0] = {100, VA};
+neuronUpdateGroup[1] = {100, VB};
+neuronUpdateGroup[2] = {100, VC};
 \end{lstlisting}
 %
 where \lstinline{VA} is a pointer to the array containing the state variable `V' of populations `A' and so on.
 In order for a thread to determine which neuron in which population it should simulate, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population:
 \begin{lstlisting}
-unsigned int startThread[3] = {0, 1000, 2000};
+unsigned int startThread[3] = {0, 100, 200};
 \end{lstlisting}
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate:
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with compilation time and simulation performance caused by large numbers of populations.
