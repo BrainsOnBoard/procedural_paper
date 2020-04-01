@@ -74,35 +74,34 @@ Our results match those obtained on a supercomputer and the simulation runs \SI{
 \thispagestyle{firststyle}
 \ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
 
-\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12}~\citep{Herculano-Houzel2010} synapses which connect them.
+\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
-In computer simulations of spiking neural networks, propagating spikes through synapses involves reading a `row' of synapses connecting a spiking presynaptic neuron to its postsynaptic partners and adding the `weight' of each synapse in the row to a `bin' containing the postsynatic neuron's input for the next simulation timestep.
+In computer simulations of spiking neural networks, propagating spikes involves  adding the `weight' of synapses from each spiking presynaptic neuron to the input currents of connected postsynaptic neurons.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
-Typically, the information describing which neurons are connected by a synapse and with what conductance, is generated before a simulation is run and stored in large matrices in random access memory~(RAM). 
+Typically, the information describing which neurons are connected by a synapse and with what weight, is generated before a simulation is run and stored in large matrices in random access memory~(RAM). 
 This creates high memory requirements for large-scale brain models, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
 By careful design, these simulators can keep the memory requirements for each node constant, even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
-However, high performance computer systems are bulky, expensive and consume large amounts of power, meaning that they are typically shared resources that are only accessible to a limited number of researchers and for strongly time-limited investigations.
+However, high performance computer systems are bulky, expensive and consume a lot of power, and are hence typically shared resources that are only accessible to a limited number of researchers for time-limited investigations.
 
-Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks.
+Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks more efficiently.
 One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons -- throughout the entire system.
 In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
-However, while such on-chip memory is fast, it can only be fabricated at relatively low density meaning that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
-Such strategies allow some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity in large-scale brain simulations to fit within the constraints of current neuromorphic systems inevitably changes their dynamics~\citep{VanAlbada2015}.
-Unlike the majority of other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic super-computer is entirely programmable and combines a large amount of on-chip memory with external memories, distributed across the system for the storage of synaptic connectivity.
-SpiNNaker's external memory bandwidth, on-chip memory capacity and the computational power of each core are all tailored to large-scale brain simulation meaning that the output bins of the synapse processing algorithm can fit in on-chip memory and there is enough external memory bandwidth to fetch synaptic rows fast enough for real-time simulation of large-scale models~\citep{Rhodes2019}.
-This is a promising approach for future research but, because of its prototype nature, the availability of SpiNNaker hardware is limited and a physically large system is still required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
+However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
+This allows some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
+Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic super-computer is entirely programmable and combines a large amount of on-chip memory with external memories, distributed across the system for the storage of synaptic connectivity, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
+This is promising for future research but, due to its prototype nature, the availability of SpiNNaker hardware is limited and a physically large system is still required even for moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
 %However, a physically large system is required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019})
 %A next generation SpiNNaker system is currently under development~\citep{Mayr2019} and, by employing a newer fabrication technology (\SI{22}{\nano\meter} rather than \SI{130}{\nano\meter}), a single chip of the new system will offer equivalent performance to 48 of the current chips.
 %Nonetheless, large-scale brain simulations will still require a large multi-chip system.
 
-Modern GPUs have relatively small amounts of on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
+Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
 GPUs use dedictated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
 For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
-Unfortunately, processing a synapse in a spiking neural network simulation is likely to require accessing approximately \SI{8}{\byte} of memory and performing many fewer than the required 80 instructions. This makes synaptic updates highly memory bound.
-Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy requirements.
-However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected together using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems.
+Unfortunately, processing a synapse in a spiking neural network simulation is likely to require accessing approximately \SI{8}{\byte} of memory and performing a lot less than the required 80 instructions. This makes synaptic updates highly memory bound.
+Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the most expensive CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
+However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other MPI-based distributed systems.
 
-In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable truly large-scale brain simulations on a single GPU workstation.
+In this work we present a novel approach which converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of computational power available on a GPU can be used to reduce both memory and memory bandwidth requirements and enable large-scale brain simulations on a single GPU workstation.
 
 \begin{figure*}
     \centering
@@ -114,8 +113,8 @@ In this work we present a novel approach which converts large-scale brain simula
 \end{figure*}
 
 \section*{Results}
-In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which allow us to use it for simulating very large models on a single GPU.
-We then demonstrate the power of these new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU.
+In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
+We then demonstrate the power of the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} consisting of \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU.
 We find that we not only obtain the same results as in a previous simulation on a high-performance supercomputer, but that our simulation also runs faster.
 
 \subsection*{Procedural connectivity}
@@ -170,9 +169,10 @@ The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{
 The two populations of neurons are connected to each other and with themselves with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ connection probability.
 
 We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware:
-Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} of shared memory;
+Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
-Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte}; and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
+Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
+and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
 
 In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulations using our new procedural approach against the standard approach of storing synaptic connections in memory using two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{pre}} \times N_{\text{post}}$ array of bits where a `1' at position $i$, $j$ indicates the existence of a synapse between neurons $i$ and $j$ and `0' its absence.
