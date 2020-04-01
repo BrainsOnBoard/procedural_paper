@@ -278,7 +278,7 @@ The multi-area model consists of \num{4.13E6} neurons split into \num{254} popul
 Additionally, unlike the model we benchmarked previously, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
 Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, that delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
-However, with the procedeural connectivity method, we are able to simulate this model on single workstation with one Titan RTX GPU with \SI{24}{\giga\byte} of memory.
+However, using procedeural connectivity, we are able to simulate this model on a single workstation with a Titan RTX GPU.
 
 In order to validate our GeNN simulations of the multi-area model, we ran a \SI{10.5}{\second} simulation of the model.
 Initialization of our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was spent generating and compiling code -- and simulation of each biological second took \SI{7.7}{\minute} -- \SI{35}{\percent} less than in the previous supercomputer simulation.
@@ -291,19 +291,20 @@ The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the dis
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
 While this represents a significant step forward in terms of making truly large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
-Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory in total, with the majority~(\SI{8.5}{\giga\byte}) being used for the implementation of the circular buffers used to simulate dendritic delay~(described in more detail in our previous work~\citep{Knight2018}).
-These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to around \SI{50}{\milli\second} (500 \SI{0.1}{\milli\second} timesteps), the delay buffers become extremely large.
+Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory, with the majority~(\SI{8.5}{\giga\byte}) being used for the circular dendritic delay buffers~(described in our previous work~\citep{Knight2018}).
+These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to 500 simulation timesteps~(\SI{0.1}{\milli\second}), the delay buffers become extremely large.
 
-One important aspect of large-scale brain simulations that we have not addressed in this work is synaptic plasticity and its role in learning.
-As discussed in our previous work~\citep{Knight2018}, GeNN has support for a wide variety of synaptic plasticity rules.
+One important aspect of large-scale brain simulations not addressed in this work is synaptic plasticity and its role in learning.
+As discussed in our previous work~\citep{Knight2018}, GeNN supports a wide variety of synaptic plasticity rules.
 In order to modify synaptic weights, they need to be stored in memory rather than generated procedurally.
 However, connectivity could still be generated procedurally, potentially halving the memory requirements of models with synaptic plasticity.
-This would be sufficient for many synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron states such as membrane voltage~\cite{Brader2007,Clopath2010c}, but for many Spike-Timing-Dependent Plasticity~(STDP) rules access to \emph{postsynaptic} spikes is also required.
-GeNN supports such rules by automatically generating a suitable lookup table structure (see our previous work~\citep{Knight2018} for more details) and this process could be adapted to generate a lookup table from procedural connectivity although this would further erode memory savings.
+This would be sufficient for synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron states such as membrane voltage~\cite{Brader2007,Clopath2010c} bu,t for many Spike-Timing-Dependent Plasticity~(STDP) rules, access to \emph{postsynaptic} spikes is also required.
+GeNN supports such rules by automatically generating a lookup table structure (see our previous work~\citep{Knight2018}).
+While this process could be adapted to generate a lookup table from procedural connectivity, this would further erode memory savings.
 However, typically not all synapses in a simulation are plastic and those that are not could be simulated fully procedurally.
 
-In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware but, we believe that there is also some potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
-Key components such as the counting random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
+In this work, we have discussed the idea of procedural connectivity in the context of GPU hardware but, we believe that there is also potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
+Key components such as the random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
 %
 \matmethods{
 \begin{table}
@@ -329,7 +330,7 @@ Key components such as the counting random number generator could be implemented
   \parbox{\columnwidth}{\small \textsuperscript{1}Excitatory/Inhibitory. \\
   \textsuperscript{2}Please refer to original works~\citep[Table 1,2]{Schmidt2018}}
 \end{table}
-In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units using the parameters listed in Table~\ref{tab:parameters}.
+In all experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units with the parameters listed in Table~\ref{tab:parameters}.
 The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 \begin{align}
@@ -337,7 +338,7 @@ The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 \end{align}
 %
 where $\tau_{\text{m}}$ and $R_{\text{m}}$ represent the time constant and resistance of the neuron's cell membrane, $V_{\text{rest}}$ defines the resting potential and $I_{\text{in}_{j}}$ represents the input current.
-When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted, the membrane voltage is reset to $V_{\text{rest}}$ and membrane potential integration is suspended for a refractory period $\tau_{\text{ref}}$.
+When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted, the membrane voltage is reset to $V_{\text{rest}}$ and updating of $V$ is suspended for a refractory period $\tau_{\text{ref}}$.
 In the models where there are synaptic connections, pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{in}_{j}}$
 %
 \begin{align}
@@ -345,7 +346,7 @@ In the models where there are synaptic connections, pre-synaptic spikes lead to 
 \end{align}
 %
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
-The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ entering into equation~\ref{eq:lif_neuron} is treated as a constant during each simulation timestep.}
+The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ is treated as a constant throughout each simulation timestep.}
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
