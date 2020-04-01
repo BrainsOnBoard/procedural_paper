@@ -153,7 +153,6 @@ In order to initialise this connectivity in parallel, the subset of the $N_{\tex
 This operation cannot be efficiently parallelised so we perform it on the host CPU and store the results in a GPU memory array.
 However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other pre-synaptic neuron.
-
 Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
 %
 %Other typical connectivity schemes are described in the GeNN documentation\ref{}\todo{Uhm ... are they? Or should we gloss over this ...}
@@ -170,20 +169,13 @@ For an initial demonstration of the performance and scalability of procedural co
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ connection probability.
 
-We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware:
-%
-\begin{description}[noitemsep]
-    \item [Jetson TX2] a low-power embedded system designed for robotic applications with \SI{8}{\giga\byte} of shared memory
-    \item [Geforce MX130] a laptop GPU with \SI{2}{\giga\byte} of dedicated memory
-    \item [Geforce GTX 1650] a low-end desktop GPU with \SI{4}{\giga\byte} of dedicated memory
-    \item [Titan RTX] a high-end workstation GPU with \SI{24}{\giga\byte} of dedicated memory
-\end{description}
-%
+We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware: (1) Jetson TX2, a low-power embedded system designed for robotic applications with \SI{8}{\giga\byte} (shared memory), (2) Geforce MX130, a laptop GPU with \SI{2}{\giga\byte}, (3) Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte}, and (4) Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
+
 In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulations using our new procedural approach against the standard approach of storing synaptic connections in memory using two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{pre}} \times N_{\text{post}}$ array of bits where a `1' at position $i$, $j$ indicates the existence of a synapse between neurons $i$ and $j$ and `0' its absence.
-None of the devices used have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
-However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales its performance is competitive with and sometime better than the standard approach.
-All of the excitatory and inhibitory synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
+None of oru devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
+However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, its performance is competitive with and sometime better than the standard approach even at smaller scales.
+All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if the weights vary across synapses, the `bitfield' representation cannot be used and the memory constraints for the 'sparse' representation become even more severe.
 
 \begin{figure}
@@ -208,8 +200,7 @@ However, GPUs can only run a small number of kernels -- which are equivalent to 
 Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 100 neurons each could be simulated in a single kernel:
 
 \begin{lstlisting}
-void updateNeurons()
-{
+void updateNeurons() {
   if(thread < 100) {
     // Update neuron population A
   } else if(thread >= 100 && thread < 200) {
@@ -218,7 +209,6 @@ void updateNeurons()
     // Update neuron population C
   }
 }
-
 \end{lstlisting}
 %
 This approach works well for models with a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of (smaller and smaller) populations, compilation time increases super-linearly as the size of the neuron kernel increases -- quickly becoming impractical.
@@ -334,7 +324,8 @@ Key components such as the counting random number generator could be implemented
         $w_{ij}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
     \bottomrule
   \end{tabular}
-  \parbox{\columnwidth}{\textsuperscript{1}Excitatory/Inhibitory. \\
+  \mbox{ } \\[-0.2cm]
+  \parbox{\columnwidth}{\small \textsuperscript{1}Excitatory/Inhibitory. \\
   \textsuperscript{2}Please refer to original works~\citep[Table 1,2]{Schmidt2018}}
 \end{table}
 In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units using the parameters listed in Table~\ref{tab:parameters}.
