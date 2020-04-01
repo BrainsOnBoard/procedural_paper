@@ -254,23 +254,11 @@ neuronUpdateGroup[2] = {1000, VC};
 \end{lstlisting}
 %
 where \lstinline{VA} is a pointer to the array containing the state variable `V' of populations `A' and so on.
-In order for a thread to determine which neuron in which population it should simulate, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population.
-Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate:
-%
+In order for a thread to determine which neuron in which population it should simulate, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population:
 \begin{lstlisting}
 unsigned int startThread[3] = {0, 1000, 2000};
-void updateNeurons()
-{
-  if(thread < 3000) {
-    // Binary search in startThread to 
-    // determine which neuron in which 
-    // population should be processed. 
-    // Then update, accessing variables 
-    // through neuronUpdateGroup
-  }
-}
 \end{lstlisting}
-%
+Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate:
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with compilation time and simulation performance caused by large numbers of populations.
 
 \begin{figure*}
