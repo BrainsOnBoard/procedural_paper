@@ -153,7 +153,6 @@ In order to initialise this connectivity in parallel, the subset of the $N_{\tex
 This operation cannot be efficiently parallelised so we perform it on the host CPU and store the results in a GPU memory array.
 However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other pre-synaptic neuron.
-
 Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
 %
 %Other typical connectivity schemes are described in the GeNN documentation\ref{}\todo{Uhm ... are they? Or should we gloss over this ...}
@@ -170,22 +169,15 @@ For an initial demonstration of the performance and scalability of procedural co
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ connection probability.
 
-We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware:
-%
-\begin{description}[noitemsep]
-    \item [Jetson TX2] a low-power embedded system designed for robotic applications with \SI{8}{\giga\byte} of shared memory
-    \item [Geforce MX130] a laptop GPU with \SI{2}{\giga\byte} of dedicated memory
-    \item [Geforce GTX 1650] a low-end desktop GPU with \SI{4}{\giga\byte} of dedicated memory
-    \item [Titan RTX] a high-end workstation GPU with \SI{24}{\giga\byte} of dedicated memory
-\end{description}
-%
+We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware: (1) Jetson TX2, a low-power embedded system designed for robotic applications with \SI{8}{\giga\byte} (shared memory), (2) Geforce MX130, a laptop GPU with \SI{2}{\giga\byte}, (3) Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte}, and (4) Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
+
 In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulations using our new procedural approach against the standard approach of storing synaptic connections in memory using two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{pre}} \times N_{\text{post}}$ array of bits where a `1' at position $i$, $j$ indicates the existence of a synapse between neurons $i$ and $j$ and `0' its absence.
-None of the devices used have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
-However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales its performance is competitive with and sometime better than the standard approach.
-All of the excitatory and inhibitory synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
+None of the devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
+However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, its performance is competitive with and sometime better than the standard approach even at smaller scales.
+All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if the weights vary across synapses, the `bitfield' representation cannot be used and the memory constraints for the 'sparse' representation become even more severe.
-
+%
 \begin{figure}
     \centering
     \includegraphics{figures/merging_scaling}
@@ -196,7 +188,7 @@ However, if the weights vary across synapses, the `bitfield' representation cann
     \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
     \label{fig:merging_scaling}
 \end{figure}
-
+%
 \subsection*{Kernel merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
 We call our second innovation ``kernel merging'' and it relates to the way code is organised into these kernels.
@@ -255,7 +247,7 @@ unsigned int startThread[3] = {0, 100, 200};
 \end{lstlisting}
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate:
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with compilation time and simulation performance caused by large numbers of populations.
-
+%
 \begin{figure*}
     \centering
     \includegraphics{figures/multi_area}
@@ -269,7 +261,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with co
     \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
     \label{fig:multi_area}
 \end{figure*}
-
+%
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction where entire ensembles of neurons are described by a small number of differential equations~\citep{Cabral2014}.
 However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
@@ -293,7 +285,7 @@ Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the 
 Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the previously published values of the same measures obtained from the supercomputer simulations.
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
 The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the distributions of values obtained from the two simulations -- which are essentially identical.
-
+%
 \section*{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
@@ -311,7 +303,7 @@ However, typically not all synapses in a simulation are plastic and those that a
 
 In this work, we have discussed the idea of procedural connectivity purely in the context of GPU hardware but, we believe that there is also some potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
 Key components such as the counting random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
-
+%
 \matmethods{
 \begin{table}
   \centering
@@ -332,7 +324,8 @@ Key components such as the counting random number generator could be implemented
         $w_{ij}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
     \bottomrule
   \end{tabular}
-  \parbox{\columnwidth}{\textsuperscript{1}Excitatory/Inhibitory. \\
+  \mbox{ } \\[-0.2cm]
+  \parbox{\columnwidth}{\small \textsuperscript{1}Excitatory/Inhibitory. \\
   \textsuperscript{2}Please refer to original works~\citep[Table 1,2]{Schmidt2018}}
 \end{table}
 In all three experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units using the parameters listed in Table~\ref{tab:parameters}.
