@@ -77,7 +77,7 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     
 def calc_stats(data_path, duration_s, population_name, population_sizes):
     # Get list of all data files for this population
-    spike_files = list(glob(path.join(data_path, "*_%s.npy" % population_name)))
+    spike_files = list(glob(path.join(data_path, "recordings", "*_%s.npy" % population_name)))
     
     rates = np.empty(len(spike_files))
     irregularity = np.empty(len(spike_files))
