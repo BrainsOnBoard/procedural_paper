@@ -129,7 +129,7 @@ if __name__ == '__main__':
     populations = ["4E", "4I", "5E", "5I", "6E", "6I", "23E", "23I"]
 
     # Create processes to calculate stats for each population
-    processes = [Process(target=calc_stats, args=(data_path, 10.5, p, population_sizes)) 
+    processes = [Process(target=calc_stats, args=(data_path, 100.5, p, population_sizes)) 
                  for p in populations]
      
     # Start processes
