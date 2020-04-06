@@ -3,6 +3,7 @@ from itertools import repeat
 from matplotlib import gridspec as gs
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
+from matplotlib.ticker import MultipleLocator
 import json
 import numpy as np
 import seaborn as sns
@@ -22,9 +23,8 @@ def create_pop_data_array(populations, simulators, values):
     return data
 
 def remove_junk(axis):
-    sns.despine(ax=axis)
+    sns.despine(ax=axis, left=True, bottom=True)
     axis.xaxis.grid(False)
-    axis.yaxis.grid(False)
 
 def load_nest_pop_data(filename, areas=None):
     # Load JSON format
@@ -124,6 +124,7 @@ def plot_area(name, axis):
     axis.set_yticks(np.cumsum(layer_counts) - (layer_counts / 2))
     axis.set_yticklabels(["L" + n[:-1] for n in pop_names[::2]])
     remove_junk(axis)
+    axis.yaxis.grid(False)
     
     axis.set_xlim((3.0, 3.5))
     axis.set_ylim((0.0, np.sum(layer_counts)))
@@ -140,10 +141,12 @@ def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
     sns.violinplot(x=data["pop"] if vertical else data["value"], 
                    y=data["value"] if vertical else data["pop"], 
                    hue=data["sim"], split=True, inner="quartile", 
-                   ax=axis, order=order)
+                   linewidth=0.75, cut=0.0, ax=axis, order=order)
 
     # Remove junk
+    axis.minorticks_on()
     remove_junk(axis)
+    axis.yaxis.grid(True, "both")
     axis.get_legend().remove()
 
     # Configure axes
@@ -208,15 +211,15 @@ vertical = True
 
 # Combine GeNN and NEST rates and plot split violin plot
 plot_violin(nest_rates, genn_rates, rate_violin_axis, 
-            vertical, "Rate [spikes/s]", (0.0, 12.0))
+            vertical, "Rate [spikes/s]", (-1.0, 13.0))
 
 # Combine GeNN and NEST correlation coefficients and plot split violin plot
 plot_violin(nest_corr_coeff, genn_corr_coeff, corr_coeff_violin_axis, 
-            vertical, "Correlation coefficient", (0.0, 0.01))
+            vertical, "Correlation coefficient", (-0.002, 0.012))
 
 # Combine GeNN and NEST irregularity and plot split violin plot
 plot_violin(nest_irregularity, genn_irregularity, irregularity_violin_axis, 
-            vertical, "Irregularity", (0.0, 2.0))
+            vertical, "Irregularity", (-0.01, 2.01))
 
 # Label axes
 v1_axis.set_title("A: V1", loc="left")
@@ -226,12 +229,16 @@ rate_violin_axis.set_title("D", loc="left")
 corr_coeff_violin_axis.set_title("E", loc="left")
 irregularity_violin_axis.set_title("F", loc="left")
 
+rate_violin_axis.yaxis.set_minor_locator(MultipleLocator(5.0))
+corr_coeff_violin_axis.yaxis.set_minor_locator(MultipleLocator(0.005))
+irregularity_violin_axis.yaxis.set_minor_locator(MultipleLocator(1.0))
+
 # Show figure legend with devices beneath figure
-pal = sns.color_palette("deep")
+pal = sns.color_palette()
 fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1])],
-           ["NEST", "GeNN"], ncol=2, frameon=False, loc="lower center")
+           ["NEST", "GeNN"], ncol=2, frameon=False, bbox_to_anchor=(0.875, 0.0), loc="lower center")
 fig.align_ylabels([rate_violin_axis, corr_coeff_violin_axis, irregularity_violin_axis])
-fig.tight_layout(pad=0, w_pad=0.5, rect= [0.0, 0.075, 1.0, 1.0])
+fig.tight_layout(pad=0, w_pad=2.0, rect= [0.0, 0.075, 1.0, 1.0])
 
 if not plot_settings.presentation:
     fig.savefig("../figures/multi_area.pdf", dpi=600)

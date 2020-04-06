@@ -15,7 +15,8 @@ else:
 # **HACK** fix bug with markers
 sns.set_context(rc={"lines.markeredgewidth": 1.0})
 
-
+# Set palette
+sns.set_palette("muted")
 
 cm_to_inches = 0.39370079
 small_figure = (9.0 * cm_to_inches, 6.0 * cm_to_inches)
