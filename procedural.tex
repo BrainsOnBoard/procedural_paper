@@ -53,7 +53,7 @@ J.K. performed the experiments and the analysis of the results that are presente
 
 \begin{abstract}
 Large-scale simulations of spiking neural networks are important for improving our understanding of the dynamics and ultimately function of brains.
-However, even small mammals such as mice have approximately \num{1E12} synaptic connections which are typically charaterized by at least one floating point value per synapse.
+However, even small mammals such as mice have approximately \num{1E12} synaptic connections which are typically charaterized by at least one floating-point value per synapse.
 This amounts to several terabytes of connection data -- an unrealistic memory requirement for a single desktop machine.
 Simulations of large spiking neural networks are therefore typically executed on large distributed supercomputers.
 This is costly and limits large-scale modelling to a select few research groups with the appropriate resources.
@@ -277,7 +277,7 @@ On this system, initialization of the model took around \SI{5}{\minute} and simu
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented above, the model would be unlikely to compile or simulate at a workable speed using GeNN.
 Additionally, unlike the model we benchmarked previously, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
-Even if we assume that \SI{16}{\bit} floating point would provide sufficient weight precision, that delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
+Even if we assume that \SI{16}{\bit} floating-point would provide sufficient weight precision, that delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
 However, using procedural connectivity, we are able to simulate this model on a single workstation with a Titan RTX GPU.
 
