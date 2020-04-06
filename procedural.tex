@@ -32,7 +32,7 @@
 \leadauthor{Knight} 
 
 % Please add here a significance statement to explain the relevance of your work
-\significancestatement{Simulations are an important tool for investigating how brains works.
+\significancestatement{Simulations are an important tool for investigating how brains work.
 However, in order to faithfully reproduce some of the features found in biological brains, large models are required. 
 Simulating such models has, until now, required so much memory that it could only be done on large, expensive supercomputers.
 In this work, we present a new method for simulating large models that significantly reduces memory requirements.
@@ -46,7 +46,7 @@ J.K. is currently the primary GeNN developer and was responsible for extending t
 J.K. performed the experiments and the analysis of the results that are presented in this work.}
 
 \authordeclaration{The authors declare no conflict of interest.}
-\correspondingauthor{\textsuperscript{1}To whom correspondence should be addressed. E-mail: J.C.Knight\@sussex.ac.uk}
+\correspondingauthor{\textsuperscript{1}To whom correspondence should be addressed. E-mail: J.C.Knight@sussex.ac.uk}
 
 % Keywords are not mandatory, but authors are strongly encouraged to provide them. If provided, please include two to five keywords, separated by the pipe symbol, e.g:
 \keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
@@ -88,14 +88,14 @@ One particular relevant feature of the brain is that its memory elements -- the 
 In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
 However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
 This allows some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
-Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic super-computer is entirely programmable and combines a large amount of on-chip memory with external memories, distributed across the system for the storage of synaptic connectivity, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
+Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic supercomputer is entirely programmable and combines a large amount of on-chip memory with external memories, distributed across the system for the storage of synaptic connectivity, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
 This is promising for future research but, due to its prototype nature, the availability of SpiNNaker hardware is limited and a physically large system is still required even for moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
 %However, a physically large system is required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019})
 %A next generation SpiNNaker system is currently under development~\citep{Mayr2019} and, by employing a newer fabrication technology (\SI{22}{\nano\meter} rather than \SI{130}{\nano\meter}), a single chip of the new system will offer equivalent performance to 48 of the current chips.
 %Nonetheless, large-scale brain simulations will still require a large multi-chip system.
 
 Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
-GPUs use dedictated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
+GPUs use dedicated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
 For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
 Unfortunately, propagating a spike in a spiking neural network simulation is likely to require accessing around \SI{8}{\byte} of memory and performing many fewer than the required 80 instructions. 
 This makes spike propagation highly memory bound.
@@ -157,10 +157,10 @@ Where synaptic weights and delays are not constant across synapses, but are desc
 %'fixed number post' which is like fixed number total without the multinomial and 'fixed number pre' which we can't do easily :)
 
 In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each pre-synaptic neuron.
-In principle this could be done with `convential' random number generators~(RNGs), but each presynaptic neuron would need to maintain its own RNG state which would lead to a significant memory overhead.
-Instead, we use the `counter-based' Philox4$\times$32-10 RNG~\citep{Salmon2011}.
-Counter-based RNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs random numbers.
-In constrast to convential RNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
+In principle this could be done with `convential' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
+Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
+Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs random numbers.
+In constrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
 For an initial demonstration of the performance and scalability of procedural connectivity, we used a network that was initially designed to investigate signal propagation through cortical networks~\citep{Vogels2005}, but subsequently has been widely used as a scalable benchmark~\citep{Brette2007}.
@@ -259,7 +259,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the issues with co
     \textbf{D-F} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
     Solid lines: medians, Dashed lines: Interquartile range~(IQR).
     \textbf{D} Population-averaged firing rates.
-    \textbf{E} Average pairwise correlation coefficients ofspiking activity. 
+    \textbf{E} Average pairwise correlation coefficients ofs piking activity. 
     \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
     \label{fig:multi_area}
 \end{figure*}
@@ -277,7 +277,7 @@ On this system, initialization of the model took around \SI{5}{\minute} and simu
 
 The multi-area model consists of \num{4.13E6} neurons split into \num{254} populations and \num{24.2E9} synapses split into \num{64516} populations meaning that, without the kernel merging approach presented above, the model would be unlikely to compile or simulate at a workable speed using GeNN.
 Additionally, unlike the model we benchmarked previously, each synapse in this model has an independant weight and synaptic delay sampled from a normal distribution, meaning that the bitfield data structure cannot be used to represent the connectivity.
-Even if we assume that \SI{16}{\bit} floating-point would provide sufficient weight precision, that delays could be expressed as an \SI{8}{\bit} integer and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
+Even if we assume that \SI{16}{\bit} floating-point would provide sufficient weight precision, that delays could be expressed as \SI{8}{\bit} integers and that the neuron populations are all small enough to be indexed using \SI{16}{\bit} indices, our sparse data structure would still require \SI{5}{\byte} per synapse, meaning that this model's synaptic data would require over \SI{100}{\giga\byte} of GPU memory.
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
 However, using procedural connectivity, we are able to simulate this model on a single workstation with a Titan RTX GPU.
 
@@ -286,7 +286,7 @@ Initialization of our model took \SI{6}{\minute} -- \SI{3}{\minute} of which was
 Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state.
 Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the previously published values of the same measures obtained from the supercomputer simulations.
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
-The violin plots in Fig.~\ref{fig:multi_area}D-F shows the comparison of the distributions of values obtained from the two simulations -- which are essentially identical.
+The violin plots in Fig.~\ref{fig:multi_area}D-F show the comparison of the distributions of values obtained from the two simulations -- which are essentially identical.
 %
 \section*{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
