@@ -61,7 +61,7 @@ This is costly and limits large-scale modelling to a select few research groups 
 In this work, we describe extensions to GeNN -- our Graphical Processing Unit~(GPU) accelerated spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
 We find that GPUs are well-suited to this approach because of their raw computational power which, due to memory bandwidth limitations, is often under-utilised when simulating spiking neural networks.
 We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
-Using our new method, this model can be simulated on a single GPU.
+Using our new method, this model can be simulated on a single GPU -- a significant step forward in making  large-scale brain modelling accesible to many more researchers.
 Our results match those obtained on a supercomputer and the simulation runs \SI{35}{\percent} faster on a single high-end GPU than a previous simulation executed on over 1000 supercomputer nodes.
 \end{abstract}
 
