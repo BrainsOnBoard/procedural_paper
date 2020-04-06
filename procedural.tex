@@ -148,8 +148,8 @@ However, for the more efficient `beta-sampling' employed here, the sampling for 
 
 Another common scheme for defining connectivity is the `fixed number total connector'.
 In this scheme the synaptic connections between two neuronal populations are characterised by a fixed total number $N_{\text{syn}}$ of randomly placed synapses.
-In order to initialise this connectivity in parallel, the number of synapses that originate from each presynaptic neuron must first be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{n}, P_{n}, \ldots, P_{n}\}]$ where $P_{n} = \frac{1}{N_{\text{pre}}}$ on the host CPU up front because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
-However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$.
+In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{n}, P_{n}, \ldots, P_{n}\}]$ where $P_{n} = \frac{1}{N_{\text{pre}}}$ on the host CPU up front because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
+However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$ where $N_{\text{post}}$ is the size of the postsynaptic population.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other pre-synaptic neuron.
 Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
 %
