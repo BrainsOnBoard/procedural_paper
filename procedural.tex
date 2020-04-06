@@ -222,6 +222,9 @@ However, when the model is partitioned into a larger number of smaller populatio
 Investigating further using the profiler, we found that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls as shown in Fig.~\ref{fig:merging_scaling}D.
 Stalls are events which prevent the GPU from doing any work during a clock cycle and the profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020} -- which makes sense when we are generating kernels with hundreds of thousands of lines of code.
 %\todo{is more detail required here as to why?}
+Several neural modelling tools -- including Brian2~\citep{Stimberg2014} -- provide modellers with tools to work with `slices' of neuron populations, allowing models to be defined using fewer populations.
+However, if a model is defined by connecting these slices together, the resulting connectivity is going to be the result of \emph{multiple} simple connection rules of the type discussed in the previous section, making it much more difficult to apply our procedural connectivity approach.
+Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modeller, leading to a rather leaky abstraction.
 
 To address these issues, we developed a new code generator for GeNN which first `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
