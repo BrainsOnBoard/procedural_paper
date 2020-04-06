@@ -1,5 +1,5 @@
 from glob import glob
-from correlation_toolbox import helper as ch
+from itertools import repeat
 from matplotlib import gridspec as gs
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
@@ -26,74 +26,6 @@ def remove_junk(axis):
     axis.xaxis.grid(False)
     axis.yaxis.grid(False)
 
-def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
-    """
-    Compute the LvR value of the given data_array.
-    See Shinomoto et al. 2009 for details.
-
-    Parameters
-    ----------
-    data_array : numpy.ndarray
-        Arrays with spike data.
-        column 0: neuron_ids, column 1: spike times
-    t_ref : float
-        Refractory period of the neurons.
-    t_min : float
-        Minimal time for the calculation.
-    t_max : float
-        Maximal time for the calculation.
-    num_neur: int
-        Number of recorded neurons. Needs to provided explicitly
-        to avoid corruption of results by silent neurons not
-        present in the given data.
-
-    Returns
-    -------
-    mean : float
-        Population-averaged LvR.
-    LvR : numpy.ndarray
-        Single-cell LvR values
-    """
-    i_min = np.searchsorted(data_array[0], t_min)
-    i_max = np.searchsorted(data_array[0], t_max)
-    LvR = np.array([])
-    data_array = data_array[:,i_min:i_max]
-    for i in np.unique(data_array[1]):
-        intervals = np.diff(data_array[0, np.where(data_array[1] == i)[0]])
-        if intervals.size > 1:
-            val = np.sum((1. - 4 * intervals[0:-1] * intervals[1:] / (intervals[0:-1] + intervals[
-                         1:]) ** 2) * (1 + 4 * t_ref / (intervals[0:-1] + intervals[1:])))
-            LvR = np.append(LvR, val * 3 / (intervals.size - 1.))
-        else:
-            LvR = np.append(LvR, 0.0)
-    if len(LvR) < num_neur:
-        LvR = np.append(LvR, np.zeros(num_neur - len(LvR)))
-    return np.mean(LvR), LvR
-
-def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
-    # Get unique neuron ids
-    ids = np.unique(data_array[1])
-    
-    # Extract spike train i.e. sorted array of spike times for each neuron
-    # **NOTE** this is a version of correlation_toolbox.helper.sort_gdf_by_id, 
-    # modified to suit our data format
-    # +1000 to ensure that we really have subsample non-silent neurons in the end
-    ids = np.arange(ids[0], ids[0]+subsample+1001)
-    dat = []
-    for i in ids:
-        dat.append(np.sort(data_array[0, np.where(data_array[1] == i)[0]]))
-
-    # Calculate correlation coefficient
-    # **NOTE** this comes from the compute_corrcoeff.py in original paper repository
-    bins, hist = ch.instantaneous_spike_count(dat, resolution, tmin=t_min, tmax=t_max)
-    rates = ch.strip_binned_spiketrains(hist)[:subsample]
-    cc = np.corrcoef(rates)
-    cc = np.extract(1-np.eye(cc[0].size), cc)
-    cc[np.where(np.isnan(cc))] = 0.
-    
-    # Return mean correlation coefficient
-    return np.mean(cc)
-    
 def load_nest_pop_data(filename, areas=None):
     # Load JSON format
     data_json = json.load(open(filename, "r"))
@@ -133,79 +65,27 @@ def load_nest_pop_data(filename, areas=None):
     else:
         return data
 
-def calc_stats(duration_s):
-    # Does preprocessed data exist?
-    rates_exists = path.exists("genn_rates.npy")
-    irregularity_exists = path.exists("genn_irregularity.npy")
-    corr_coeff_exists = path.exists("genn_corr_coeff.npy")
-
-    # Get list of all data files
-    spike_files = list(glob(path.join("genn_recordings", "*.npy")))
-    
-    # Load model description and extract population sizes
-    custom_data_model_file = path.join("genn_recordings", "custom_Data_Model_da4e0764b4a3d0c8a3d3687dfa9c5ae4.json")
-    custom_data_model = json.load(open(custom_data_model_file, "r"))
-    population_sizes = custom_data_model["neuron_numbers"]
-  
-    # Loop through spike files
+def load_genn_pop_data(stat_file_stem):
+    # Create default dict for data
     populations = []
-    rates = []
-    irregularity = []
-    correlation = []
-    for s in spike_files:
-        # Load spike data
-        data = np.load(s)
-         
-        # Extract population name
-        name_components = path.basename(s).split("_")
-        area_name = name_components[0]
-        pop_name = name_components[1].split(".")[0]
-
-        # Count neurons
-        num_neurons = int(population_sizes[area_name][pop_name])
-        
-        # Add stats to lists
-        populations.append(pop_name)
-        
-        # Calculate rates if data doesn't exist
-        if not rates_exists:
-            # Count spikes that occur after first 500ms
-            num_spikes = np.sum(data[0] > 500.0)
-            
-            # Calculate rate
-            rates.append(num_spikes / (num_neurons * (duration_s - 0.5)))
-        
-        # Calculate irregularity if data doesn't exist
-        if not irregularity_exists:
-            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0])
-        
-        # Calculate correlation coefficient if data doesn't exist
-        if not corr_coeff_exists:
-            correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
+    values = []
     
-    # Load rates if they exist, otherwise recalculate
-    if rates_exists:
-        genn_rates = np.load("genn_rates.npy")
-    else:
-        genn_rates = create_pop_data_array(populations, "genn", rates)
-        np.save("genn_rates.npy", genn_rates)
+    # Get list of files containing data for this
+    data_files = list(glob("genn_%s_*.npy" % stat_file_stem))
     
-    # Load irregularity if exists, otherwise recalculate
-    if irregularity_exists:
-        genn_irregularity = np.load("genn_irregularity.npy")
-    else:
-        genn_irregularity = create_pop_data_array(populations, "genn", irregularity)
-        np.save("genn_irregularity.npy", genn_irregularity)
+    for d in data_files:
+        # Extract pop name
+        pop_name = path.splitext(d)[0].split("_")[-1]
+        
+        # Load data
+        data = np.load(d)
+        
+        # Ad to arrays
+        populations.extend(repeat(pop_name, len(data)))
+        values.extend(data)
     
-    # Load correlation coefficients if exists, otherwise recalculate
-    if corr_coeff_exists:
-        genn_corr_coeff = np.load("genn_corr_coeff.npy")
-    else:
-        genn_corr_coeff = create_pop_data_array(populations, "genn", correlation)
-        np.save("genn_corr_coeff.npy", genn_corr_coeff)
-    
-    # Return stats
-    return genn_rates, genn_irregularity, genn_corr_coeff
+    # Create and populate numpy array of data
+    return create_pop_data_array(populations, "genn", values)
 
 def plot_area(name, axis):
     # Find files containing spikes for this area
@@ -285,8 +165,10 @@ nest_rates, areas = load_nest_pop_data(path.join(nest_recording_path, "Analysis"
 nest_corr_coeff = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "corrcoeff.json"), areas)
 nest_irregularity = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "pop_LvR.json"), areas)
 
-# Calculate stats from GeNN data
-genn_rates, genn_irregularity, genn_corr_coeff = calc_stats(10.5)
+# Load pre-processed GeNN data
+genn_rates = load_genn_pop_data("rates")
+genn_irregularity = load_genn_pop_data("irregularity")
+genn_corr_coeff = load_genn_pop_data("corr_coeff")
 
 # Create plot
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
