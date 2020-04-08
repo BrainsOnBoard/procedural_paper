@@ -118,7 +118,7 @@ Offloading initialisation to the GPU in this way made it around $20\times$ faste
 Here, we are going one step further.
 We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred by fetching its \SI{8}{\byte} of parameter values from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
 This is the concept of procedural connectivity and is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
-Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\todo{cite} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
+Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation for all outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
@@ -265,7 +265,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
 %
 \subsection*{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
-However, data from several species~\todo{find citation} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
+However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling.
 It uses scaled versions of a previous, 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for 32 areas of the macaque visual cortex.
 The patches are connected together according to inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
