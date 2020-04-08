@@ -47,8 +47,8 @@ def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
             LvR = np.append(LvR, val * 3 / (intervals.size - 1.))
         else:
             LvR = np.append(LvR, 0.0)
-    if len(LvR) < num_neur:
-        LvR = np.append(LvR, np.zeros(num_neur - len(LvR)))
+    #if len(LvR) < num_neur:
+    #    LvR = np.append(LvR, np.zeros(num_neur - len(LvR)))
     return np.mean(LvR), LvR
 
 def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
