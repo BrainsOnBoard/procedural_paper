@@ -118,7 +118,7 @@ def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
     legend_actors = [Rectangle((0, 0), 1, 1, fc=(0.0, 0.0, 0.0, a), ec=(0.0, 0.0, 0.0, 1.0)) for a in alphas]
     axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
 
-pal = sns.color_palette("deep")
+pal = sns.color_palette()
 fig, axes = plt.subplots(1, 2, sharey=True, 
                          figsize=(17.0 * plot_settings.cm_to_inches, 
                                   5.0 * plot_settings.cm_to_inches))
