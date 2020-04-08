@@ -81,10 +81,10 @@ This creates high memory requirements for large-scale brain models, so that they
 By careful design, these simulators can keep the memory requirements for each node constant, even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
 However, high performance computer systems are bulky, expensive and consume a lot of power and are hence typically shared resources only accessible to a limited number of researchers for time-limited investigations.
 
-Neuromorphic systems~\citep{Frenkel2018,Frenkel2019,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks more efficiently.
+Neuromorphic systems~\citep{Frenkel2018,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks more efficiently.
 One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons -- throughout the entire system.
 In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
-However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014,Frenkel2019}.
+However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014}.
 This allows some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
 Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic supercomputer is fully programmable and combines large on-chip memory with external memories, distributed across the system, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
 This is promising for the future but, due to its prototype nature, the availability of SpiNNaker hardware is limited and a physically large system is still needed even for moderately-sized simulations (9 boards for a model with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
@@ -352,7 +352,7 @@ The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input
 \showmatmethods{} % Display the Materials and Methods section
 
 \acknow{
-We like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their assistance with the multi-area model data and analysis tools.
+We would like to thank Jari Pronold, Sacha van Albada and Maximilian Schmidt for their help with the multi-area model data and tools.
 This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).}
 \showacknow{} % Display the acknowledgments section
 
