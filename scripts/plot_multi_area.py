@@ -121,14 +121,14 @@ def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
 
 
 # Load pre-processed NEST data
-nest_rates, areas = load_pop_data("rates", "nest")
+nest_rates = load_pop_data("rates", "nest")
 nest_irregularity = load_pop_data("irregularity", "nest")
 nest_corr_coeff = load_pop_data("corr_coeff", "nest")
 
 # Load pre-processed GeNN data
 genn_rates = load_pop_data("rates", "genn")
-genn_irregularity = load_pop_data("irregularity", "genn)
-genn_corr_coeff = load_pop_data("corr_coeff", "genn)
+genn_irregularity = load_pop_data("irregularity", "genn")
+genn_corr_coeff = load_pop_data("corr_coeff", "genn")
 
 # Create plot
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
