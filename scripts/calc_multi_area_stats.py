@@ -151,7 +151,7 @@ def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
 
 def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
     # Get list of all data files for this population
-    spike_files = list(glob(path.join(data_path, "*_spikes-*-%s-*-*.gdf" % population_name)))
+    spike_files = list(glob(path.join(data_path, "*_spikes-*-%s-*-*.gdf" % pop_name)))
     
     rates = []
     irregularity = []
@@ -184,9 +184,9 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
             # Calculate correlation coefficient
             correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
 
-    np.save("nest_rates_%s.npy" % population_name, np.asarray(rates))
-    np.save("nest_irregularity_%s.npy" % population_name, np.asarray(irregularity))
-    np.save("nest_corr_coeff_%s.npy" % population_name, np.asarray(correlation))
+    np.save("nest_rates_%s.npy" % pop_name, np.asarray(rates))
+    np.save("nest_irregularity_%s.npy" % pop_name, np.asarray(irregularity))
+    np.save("nest_corr_coeff_%s.npy" % pop_name, np.asarray(correlation))
      
      
 if __name__ == '__main__':
