@@ -26,52 +26,13 @@ def remove_junk(axis):
     sns.despine(ax=axis, left=True, bottom=True)
     axis.xaxis.grid(False)
 
-def load_nest_pop_data(filename, areas=None):
-    # Load JSON format
-    data_json = json.load(open(filename, "r"))
-    
-    # Create default dict for data
-    populations = []
-    values = []
-    
-    # If areas aren't passed, extract them
-    area_names = areas
-    if area_names is None:
-        area_names = data_json["Parameters"]["areas"]
-        
-    # Loop through areas included in data
-    for a in area_names:
-        # Loop through populations in area
-        for p, d in iteritems(data_json[a]):
-            # Ignore "total"
-            if p != "total":
-                populations.append(p)
-                
-                # If it's iterable, add first
-                try:
-                    iter(d)
-                    values.append(d[0])
-                # Otherwise, add value
-                except TypeError:
-                    values.append(d)
-    
-    # Create and populate numpy array of data
-    data = create_pop_data_array(populations, "nest", values)
-    
-    # If no areas were passed, return data and areas
-    if areas is None:
-        return data, area_names
-    # Otherwise, just return data
-    else:
-        return data
-
-def load_genn_pop_data(stat_file_stem):
+def load_pop_data(stat_file_stem, simulator_prefix):
     # Create default dict for data
     populations = []
     values = []
     
     # Get list of files containing data for this
-    data_files = list(glob("genn_%s_*.npy" % stat_file_stem))
+    data_files = list(glob("%s_%s_*.npy" % (simulator_prefix, stat_file_stem)))
     
     for d in data_files:
         # Extract pop name
@@ -85,7 +46,7 @@ def load_genn_pop_data(stat_file_stem):
         values.extend(data)
     
     # Create and populate numpy array of data
-    return create_pop_data_array(populations, "genn", values)
+    return create_pop_data_array(populations, simulator_prefix, values)
 
 def plot_area(name, axis):
     # Find files containing spikes for this area
@@ -158,20 +119,16 @@ def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
         axis.set_xlabel(label)
         axis.set_xlim(lim)
 
-# Read GeNN and NEST recording paths
-assert len(argv) == 2
-nest_recording_path = argv[1]
-nest_recording_hash = path.split(nest_recording_path)[1]
 
 # Load pre-processed NEST data
-nest_rates, areas = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "pop_rates.json"))
-nest_corr_coeff = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "corrcoeff.json"), areas)
-nest_irregularity = load_nest_pop_data(path.join(nest_recording_path, "Analysis", "pop_LvR.json"), areas)
+nest_rates, areas = load_pop_data("rates", "nest")
+nest_irregularity = load_pop_data("irregularity", "nest")
+nest_corr_coeff = load_pop_data("corr_coeff", "nest")
 
 # Load pre-processed GeNN data
-genn_rates = load_genn_pop_data("rates")
-genn_irregularity = load_genn_pop_data("irregularity")
-genn_corr_coeff = load_genn_pop_data("corr_coeff")
+genn_rates = load_pop_data("rates", "genn")
+genn_irregularity = load_pop_data("irregularity", "genn)
+genn_corr_coeff = load_pop_data("corr_coeff", "genn)
 
 # Create plot
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
