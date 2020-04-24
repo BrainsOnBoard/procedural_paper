@@ -74,33 +74,33 @@ Our results match those obtained on a supercomputer and the simulation runs up t
 
 \dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
-In computer simulations of spiking neural networks, propagating spikes involves  adding the `weight' of synapses from each spiking presynaptic neuron to the input currents of connected postsynaptic neurons.
+In computer simulations of spiking neural networks, propagating spikes involves  adding the inputs of synapses from each spiking presynaptic neuron to the postsynaptic neurons.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
-Typically, the information describing which neurons are connected by a synapse and with what weight is generated before a simulation is run and stored in large arrays in random access memory~(RAM). 
-This creates high memory requirements for large-scale brain models, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
-By careful design, these simulators can keep the memory requirements for each node constant, even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
-However, high performance computer systems are bulky, expensive and consume a lot of power and are hence typically shared resources only accessible to a limited number of researchers for time-limited investigations.
+The information which neurons are synaptically connected and with what weight is typically generated before a simulation is run and stored in large arrays. 
+For large-scale brain models this creates high memory requirements, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
+Fortunately, by careful design, these simulators can keep the memory requirements for each node constant, even when a simulation is distributed across thousands of nodes~\citep{Jordan2018}.
+However, high performance computer~(HPC) systems are bulky, expensive and consume a lot of power and are hence typically shared resources, only accessible to a limited number of researchers and for time-limited investigations.
 
 Neuromorphic systems~\citep{Frenkel2018,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks more efficiently.
-One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons -- throughout the entire system.
+One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons.
 In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
 However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \num{6}~\citep{Schemmel2017}, \num{4}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014}.
 This allows some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
 Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic supercomputer is fully programmable and combines large on-chip memory with external memories, distributed across the system, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
-This is promising for the future but, due to its prototype nature, the availability of SpiNNaker hardware is limited and a physically large system is still needed even for moderately-sized simulations (9 boards for a model with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
+This is promising for the future but, due to its prototype nature, the availability of SpiNNaker hardware is limited and even moderately-sized simulations still require a physically large system (9 boards for a model with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
 %However, a physically large system is required for even moderately-sized simulations (9 boards for a simulation with around \num{10E3} neurons and \num{300E6} synapses~\citep{Rhodes2019})
 %A next generation SpiNNaker system is currently under development~\citep{Mayr2019} and, by employing a newer fabrication technology (\SI{22}{\nano\meter} rather than \SI{130}{\nano\meter}), a single chip of the new system will offer equivalent performance to 48 of the current chips.
 %Nonetheless, large-scale brain simulations will still require a large multi-chip system.
 
-Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units~(ALUs).
+Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units.
 GPUs use dedicated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
 For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
-Unfortunately, propagating a spike in a spiking neural network simulation is likely to require accessing around \SI{8}{\byte} of memory and performing many fewer than the required 80 instructions. 
+Unfortunately, propagating a spike in a spiking neural network simulation is likely to require accessing around \SI{8}{\byte} of memory but performing many fewer than the required 80 instructions. 
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{10E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
-However, individual GPUs do not have enough memory to simulate truly large-scale brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, beyond such small GPU clusters, scaling will be dictated by the same communication overheads as for other CPU-based distributed systems.
+However, individual GPUs do not have enough memory to simulate truly large-scallarger brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, larger GPU clusters suffer from the same communication overheads as any other distributed HPC system.
 
-In this work, we present a novel approach that converts large-scale brain simulation from a problem which is memory-bound on a GPU to one where the large amount of available computational power  can be used to reduce both memory and memory bandwidth requirements and enable large-scale brain simulations on a single GPU workstation.
+In this work, we present a novel approach that uses the large amount of computational power available on a GPU to reduce both memory and memory bandwidth requirements and enable large-scale brain simulations on a single GPU workstation.
 
 \section*{Results}
 In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
@@ -108,7 +108,7 @@ We then demonstrate the power of the new features by simulating a recent model o
 
 \subsection*{Procedural connectivity}
 The first crucial innovation that enables large-scale simulations on a GPU is what we call `procedural connectivity'.
-In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007} which simulate their behaviour over time.
+In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
 Before a simulation can be run, its parameters, in particular the state variables and the synaptic connectivity, need to be initialised.
 Traditionally, this is done by running initialisation algorithms on the main CPU prior to the simulation.
@@ -116,8 +116,8 @@ The results are stored in CPU and GPU memories and then used during the simulati
 We have recently extended GeNN to use code generation from code snippets to also generate efficient, parallel code for model initialisation~\citep{Knight2018}.
 Offloading initialisation to the GPU in this way made it around $20\times$ faster on a desktop PC~\citep{Knight2018}, demonstrating that initialisation algorithms are well-suited for GPU acceleration.
 Here, we are going one step further.
-We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred by fetching its \SI{8}{\byte} of parameter values from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
-This is the concept of procedural connectivity and is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
+We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred when fetching its \SI{8}{\byte} of parameter values from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
+This is the concept of procedural connectivity. It is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
 Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
@@ -135,16 +135,15 @@ This is possible because the outgoing synaptic connections from each neuron are 
 
 In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
 We will now discuss two typical examples and how they can be implemented efficiently on a GPU.
-One very common connectivity scheme is the `fixed probability connector' which is described by a fixed probability $P_{\text{conn}}$ that a neuron in the presynaptic population will be connected to a neuron in the postsynaptic population.
-In this case, the postsynaptic targets of any presynaptic neuron can be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
+One very common connectivity scheme is the `fixed probability connector' for which each neuron in the presynaptic population is connected to each neuron in the postsynaptic population with fixed probability $P_{\text{conn}}$.
+The postsynaptic targets of any presynaptic neuron can hence be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
 One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
-However, for sparse connectivity, it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which is the distribution of the number of Bernoulli trials required to get the next success (i.e. a synapse).
-The geometric distribution can be sampled in constant time by inverting the cumulative density function~(CDF) of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
+However, for sparse connectivity, it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e. a synapse).
+The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
 Note, that when directly drawing from the uniform distribution, the sampling for each potential synapse is independent from any other potential synapse and all these operations could be performed in parallel.
 For the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
 
-Another common scheme for defining connectivity is the `fixed number total connector'.
-In this scheme the synaptic connections between two neuronal populations are characterised by a fixed total number $N_{\text{syn}}$ of randomly placed synapses.
+Another common scheme for defining connectivity is the `fixed number total connector' in which a fixed total number $N_{\text{syn}}$ of synapses is placed between randomly chosen partners from the pre- and postsynaptic populations.
 In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{n}, P_{n}, \ldots, P_{n}\}]$, where $P_{n} = \frac{1}{N_{\text{pre}}}$, on the host CPU up front because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
 However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$ where $N_{\text{post}}$ is the size of the postsynaptic population.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other presynaptic neuron.
@@ -156,46 +155,34 @@ Where synaptic weights and delays are not constant across synapses, but are desc
 In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each presynaptic neuron.
 In principle this could be done with `convential' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
 Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
-Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs random numbers.
+Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs a random number.
 In constrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
-For an initial demonstration of the performance and scalability of procedural connectivity, we used a network that was initially designed to investigate signal propagation through cortical networks~\citep{Vogels2005}, but subsequently has been widely used as a scalable benchmark~\citep{Brette2007}.
+For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a network initially designed to investigate signal propagation through cortical networks~\citep{Vogels2005} but subsequently widely used as a scalable benchmark~\citep{Brette2007}.
 The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
-The two populations of neurons are connected to each other and with themselves with a fixed $P_{\text{conn}}=\SI{10}{\percent}$ connection probability.
+The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$.
 
-We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} and \num{100E9} synapses respectively) on a representative selection of modern NVIDIA GPU hardware:
+We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
-In Fig.~\ref{fig:performance_scaling} we compare the duration of these simulations using our new procedural approach against the standard approach of storing synaptic connections in memory using two different data structures.
+Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach or using the standard approach of storing synaptic connections in memory employing two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{post}}$ array of bits where a `1' at position $i$ indicates that there is a connection to postsynaptic neuron $i$ and a `0' that there is not.
-None of the devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
+None of our devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, the performance of the precedural approach is competitive with and sometimes better than the standard approach even at smaller scales.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
-However, if weights vary across synapses, the `bitfield' representation cannot be used and the memory constraints for 'sparse' representations become even more severe.
+However, if weights vary across synapses, the `bitfield' cannot be used either and the memory constraints for the 'sparse' representation become even more severe.
 %
 \subsection*{Kernel merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
 We call our second innovation ``kernel merging'' and it relates to the way these kernels are implemented.
-While the procedural connectivity approach presented in the previous section allows us to simulate models which would otherwise not fit into the memory of a single GPU, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
-%
-\begin{figure}
-    \centering
-    \includegraphics{figures/merging_scaling}
-    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
-    \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
-    \textbf{B} Simulation time~($T_{sim}$) for an \SI{1}{\second} simulation.
-    \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler 'Speed of light' metric.
-    \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
-    \label{fig:merging_scaling}
-\end{figure}
-%
-GeNN and all other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate seperate pieces of code for each population of neurons and synapses.
+While the procedural connectivity presented in the previous section allows simulating models which would otherwise not fit into the memory of a GPU, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
+GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate seperate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
-Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode which illustrates how 3 populations of 100 neurons each can be simulated in a single kernel:
+Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode for simulating 3 populations of 100 neurons each in a single kernel:
 %
 \begin{lstlisting}
 void updateNeurons() {
@@ -210,17 +197,29 @@ void updateNeurons() {
 \end{lstlisting}
 %
 This works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of (smaller and smaller) populations, compilation time increases super-linearly and quickly becomes impractical.
-Furthermore, as Fig.~\ref{fig:merging_scaling}B shows, the simulation also runs much more slowly when the model is partitioned into a large number of populations.
+Furthermore, the simulation also is much slower for a large number of populations (Fig.~\ref{fig:merging_scaling}B).
+%
+\begin{figure}
+    \centering
+    \includegraphics{figures/merging_scaling}
+    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
+    \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
+    \textbf{B} Simulation time~($T_{sim}$) for an \SI{1}{\second} simulation.
+    \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler 'Speed of light' metric.
+    \textbf{D} Number of 'No instruction' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
+    \label{fig:merging_scaling}
+\end{figure}
+%
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
 Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
-However, when the model is partitioned into a larger number of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e. neither memory \emph{nor} compute are used efficiently.
+However, when the model is partitioned into larger numbers of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e. neither memory \emph{nor} compute are used efficiently.
 Investigating further, we found that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls~(Fig.~\ref{fig:merging_scaling}D) which are events that prevent the GPU from doing any work during a clock cycle.
-The profiler documentation suggests that these particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020}, which makes sense when we are generating kernels with hundreds of thousands of lines of code.
+These particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020}, which makes sense as we are generating kernels with hundreds of thousands of lines of code.
 %\todo{is more detail required here as to why?}
 Several neural modelling tools including Brian2~\citep{Stimberg2014} provide modellers with tools to work with `slices' of neuron populations, allowing models to be defined with fewer populations.
 However, if a model is defined by connecting these slices together, the resulting connectivity is the result of \emph{multiple} simple connection rules of the type discussed in the previous section, making it much more difficult to apply our procedural connectivity approach.
-Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
+Furthermore, such an approach places the responsibility for optimising model structure for efficient simulation onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
 
 To address the issue of too many populations, we developed a new code generator for GeNN which first `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
