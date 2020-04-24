@@ -166,7 +166,7 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
         data = np.vstack((data["time"], data["id"]))
          
         # Extract population name
-        name_components = path.basename(p).split("-")
+        name_components = path.basename(s).split("-")
         area_name = name_components[1]
 
         # Count neurons
