@@ -153,9 +153,9 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
     # Get list of all data files for this population
     spike_files = list(glob(path.join(data_path, "*_spikes-*-%s-*-*.gdf" % population_name)))
     
-    rates = np.empty(len(spike_files))
-    irregularity = np.empty(len(spike_files))
-    correlation = np.empty(len(spike_files))
+    rates = []
+    irregularity = []
+    correlation = []
     for i, s in enumerate(spike_files):
         # Load spike data using pandas to improve performance
         # **NOTE** we need usecols becauses lines have a trailing delimiter which pandas thinks is another column
@@ -174,19 +174,19 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
 
         # Count spikes that occur after first 500ms
         num_spikes = np.sum(data[0] > 500.0)
+        if num_spikes > 0:
+            # Calculate rate
+            rates.append(num_spikes / (num_neurons * (duration_s - 0.5)))
         
-        # Calculate rate
-        rates[i] = num_spikes / (num_neurons * (duration_s - 0.5))
-    
-        # Calculate irregularity
-        irregularity[i] = pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0]
-        
-        # Calculate correlation coefficient
-        correlation[i] = calc_correlations(data, 500.0, duration_s * 1000.0)
+            # Calculate irregularity
+            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0])
+            
+            # Calculate correlation coefficient
+            correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
 
-    np.save("nest_rates_%s.npy" % population_name, rates)
-    np.save("nest_irregularity_%s.npy" % population_name, irregularity)
-    np.save("nest_corr_coeff_%s.npy" % population_name, correlation)
+    np.save("nest_rates_%s.npy" % population_name, np.asarray(rates))
+    np.save("nest_irregularity_%s.npy" % population_name, np.asarray(irregularity))
+    np.save("nest_corr_coeff_%s.npy" % population_name, np.asarray(correlation))
      
      
 if __name__ == '__main__':
