@@ -26,14 +26,13 @@ def remove_junk(axis):
     sns.despine(ax=axis, left=True, bottom=True)
     axis.xaxis.grid(False)
 
-def load_pop_data(stat_file_stem, simulator_prefix):
+def load_pop_data(stat_file_stem, simulator_prefix, data_path):
     # Create default dict for data
     populations = []
     values = []
     
     # Get list of files containing data for this
-    data_files = list(glob("%s_%s_*.npy" % (simulator_prefix, stat_file_stem)))
-    
+    data_files = list(glob(path.join(data_path, "%s_%s_*.npy" % (simulator_prefix, stat_file_stem))))
     for d in data_files:
         # Extract pop name
         pop_name = path.splitext(d)[0].split("_")[-1]
@@ -48,9 +47,9 @@ def load_pop_data(stat_file_stem, simulator_prefix):
     # Create and populate numpy array of data
     return create_pop_data_array(populations, simulator_prefix, values)
 
-def plot_area(name, axis):
+def plot_area(name, axis, data_path):
     # Find files containing spikes for this area
-    area_spikes = list(reversed(sorted(glob(path.join("genn_recordings", name + "_*.npy")))))
+    area_spikes = list(reversed(sorted(glob(path.join(data_path, "genn_recordings", name + "_*.npy")))))
 
     # Extract names of sub-populations from filenames
     pop_names = [path.basename(s).split("_")[1].split(".")[0] for s in area_spikes]
@@ -119,16 +118,18 @@ def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
         axis.set_xlabel(label)
         axis.set_xlim(lim)
 
+data_path = "chi_1_9" if len(argv) == 1 else argv[2]
+print("Loading data from %s" % data_path)
 
 # Load pre-processed NEST data
-nest_rates = load_pop_data("rates", "nest")
-nest_irregularity = load_pop_data("irregularity", "nest")
-nest_corr_coeff = load_pop_data("corr_coeff", "nest")
+nest_rates = load_pop_data("rates", "nest", data_path)
+nest_irregularity = load_pop_data("irregularity", "nest", data_path)
+nest_corr_coeff = load_pop_data("corr_coeff", "nest", data_path)
 
 # Load pre-processed GeNN data
-genn_rates = load_pop_data("rates", "genn")
-genn_irregularity = load_pop_data("irregularity", "genn")
-genn_corr_coeff = load_pop_data("corr_coeff", "genn")
+genn_rates = load_pop_data("rates", "genn", data_path)
+genn_irregularity = load_pop_data("irregularity", "genn", data_path)
+genn_corr_coeff = load_pop_data("corr_coeff", "genn", data_path)
 
 # Create plot
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
@@ -160,9 +161,9 @@ fig.add_subplot(corr_coeff_violin_axis)
 fig.add_subplot(irregularity_violin_axis)
 
 # Plot example GeNN raster plots
-plot_area("V1", v1_axis)
-plot_area("V2", v2_axis)
-plot_area("FEF", fef_axis)
+plot_area("V1", v1_axis, data_path)
+plot_area("V2", v2_axis, data_path)
+plot_area("FEF", fef_axis, data_path)
 
 vertical = True 
 
