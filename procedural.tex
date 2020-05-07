@@ -1,5 +1,5 @@
 % Use the lineno option to display guide line numbers if required.
-\documentclass[9pt,twocolumn,twoside,lineno]{pnas-new}
+\documentclass[9pt,lineno]{elife}
 
 \usepackage{enumitem,listings,booktabs}
 
@@ -15,42 +15,21 @@
 % Visible TODO notes
 \newcommand{\todo}[1]{\textbf{\textsc{\textcolor{red}{(TODO: #1)}}}}
 
-\templatetype{pnasresearcharticle} % Choose template 
-% {pnasresearcharticle} = Template for a two-column research article
-% {pnasmathematics} %= Template for a one-column mathematics article
-% {pnasinvited} %= Template for a PNAS invited submission
-
 \title{Larger GPU-accelerated brain simulations with procedural connectivity}
 
 % Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
-\author[a,1]{James C Knight}
-\author[a]{Thomas Nowotny} 
+\author[1*]{James C Knight}
+\author[1]{Thomas Nowotny} 
 
-\affil[a]{Centre for Computational Neuroscience and Robotics, School of Engineering and Informatics, University of Sussex, Brighton, United Kingdom}
+\affil[1]{Centre for Computational Neuroscience and Robotics, School of Engineering and Informatics, University of Sussex, Brighton, United Kingdom}
 
-% Please give the surname of the lead author for the running footer
-\leadauthor{Knight} 
+\corr{J.C.Knight@sussex.ac.uk}{JCK}
 
-% Please add here a significance statement to explain the relevance of your work
-\significancestatement{Simulations are an important tool for investigating how brains work.
-However, in order to faithfully reproduce some of the features found in biological brains, large models are required. 
-Simulating such models has, until now, required so much memory that it could only be done on large, expensive supercomputers.
-In this work, we present a new method for simulating large models that significantly reduces memory requirements.
-This method is particularly well-suited for use on Graphical Processing Units~(GPUs), which are a common fixture in many workstations.
-We demonstrate that using our new method we can not only simulate a very large brain model on a single GPU, but also do so up to \SI{35}{\percent} faster than in previous supercomputer simulations.}
+\contrib[\authfn{1}]{is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.performed the experiments and the analysis of the results that are presented in this work.wrote paper}
+\contrib[\authfn{2}]{is the original developer of GeNN and wrote the paper}
 
-% Please include corresponding author, author contribution and author declaration information
-\authorcontributions{J.K. and T.N. wrote the paper.
-T.N. is the original developer of GeNN.
-J.K. is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.
-J.K. performed the experiments and the analysis of the results that are presented in this work.}
-
-\authordeclaration{The authors declare no conflict of interest.}
-\correspondingauthor{\textsuperscript{1}To whom correspondence should be addressed. E-mail: J.C.Knight@sussex.ac.uk}
-
-% Keywords are not mandatory, but authors are strongly encouraged to provide them. If provided, please include two to five keywords, separated by the pipe symbol, e.g:
-\keywords{spiking neural networks $|$ GPU $|$ high-performance computing $|$ brain simulation} 
-
+\begin{document}
+\maketitle
 \begin{abstract}
 Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
 However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value.
@@ -63,16 +42,8 @@ Using our new method, it can be simulated on a single GPU -- a significant step 
 Our results match those obtained on a supercomputer and the simulation runs up to \SI{35}{\percent} faster on a single high-end GPU than previously on over 1000 supercomputer nodes.
 \end{abstract}
 
-\dates{This manuscript was compiled on \today}
-\doi{\url{www.pnas.org/cgi/doi/10.1073/pnas.XXXXXXXXXX}}
-
-\begin{document}
-
-\maketitle
-\thispagestyle{firststyle}
-\ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
-
-\dropcap{T}he brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
+\section{Introduction}
+The brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
 In computer simulations of spiking neural networks, propagating spikes involves  adding the synaptic input from each spiking presynaptic neuron to the postsynaptic neurons.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
@@ -102,11 +73,11 @@ However, individual GPUs do not have enough memory to simulate larger brain mode
 
 In this work, we present a novel approach that uses the large amount of computational power available on a GPU to reduce both memory and memory bandwidth requirements and enable large-scale brain simulations on a single GPU workstation.
 
-\section*{Results}
+\section{Results}
 In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
 We then demonstrate the power of the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
 
-\subsection*{Procedural connectivity}
+\subsection{Procedural connectivity}
 The first crucial innovation that enables large-scale simulations on a GPU is what we call `procedural connectivity'.
 In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
@@ -125,14 +96,15 @@ We implemented procedural connectivity in GeNN by repurposing our previously dev
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
 This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
 
-\begin{figure*}
-    \centering
-    \includegraphics{figures/performance_scaling}
-    \caption{Simulation time performance scaling on a range of modern GPUs (colors). \textbf{A} The best performing approach at each scale on each GPU (indicated by the symbols). For the largest models, the procedural method is always best.
-    \textbf{B} Raw performance of each approach on each GPU.
-    Missing bars indicate insufficient memory to simulate.}
-    \label{fig:performance_scaling}
-\end{figure*}
+\begin{figure}
+    \begin{fullwidth}
+        \includegraphics{figures/performance_scaling}
+        \caption{Simulation time performance scaling on a range of modern GPUs (colors). \textbf{A} The best performing approach at each scale on each GPU (indicated by the symbols). For the largest models, the procedural method is always best.
+        \textbf{B} Raw performance of each approach on each GPU.
+        Missing bars indicate insufficient memory to simulate.}
+        \label{fig:performance_scaling}
+    \end{fullwidth}
+\end{figure}
 
 In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
 We will now discuss two typical examples and how they can be implemented efficiently on a GPU.
@@ -176,7 +148,7 @@ However, not only is the new procedural approach the \emph{only} way of simulati
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
-\subsection*{Kernel merging}
+\subsection{Kernel merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
 We call our second innovation `kernel merging' and it relates to the way these kernels are implemented.
 While the procedural connectivity presented in the previous section allows simulating models which would otherwise not fit into the memory of a GPU, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
@@ -249,21 +221,22 @@ unsigned int startThread[3] = {0, 100, 200};
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance.
 %
-\begin{figure*}
-    \centering
-    \includegraphics{figures/multi_area}
-    \caption{Results of full-scale multi-area model simulation of resting state. 
-    \textbf{A-C} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~\textbf{A}, V2~\textbf{B}, and FEF~\textbf{C}. 
-    Blue: excitatory neurons, red: inhibitory neurons.
-    \textbf{D-F} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
-    Solid lines: medians, Dashed lines: Interquartile range~(IQR).
-    \textbf{D} Population-averaged firing rates.
-    \textbf{E} Average pairwise correlation coefficients of spiking activity. 
-    \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
-    \label{fig:multi_area}
-\end{figure*}
+\begin{figure}
+    \begin{fullwidth}
+        \includegraphics{figures/multi_area}
+        \caption{Results of full-scale multi-area model simulation of resting state. 
+        \textbf{A-C} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~\textbf{A}, V2~\textbf{B}, and FEF~\textbf{C}. 
+        Blue: excitatory neurons, red: inhibitory neurons.
+        \textbf{D-F} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
+        Solid lines: medians, Dashed lines: Interquartile range~(IQR).
+        \textbf{D} Population-averaged firing rates.
+        \textbf{E} Average pairwise correlation coefficients of spiking activity. 
+        \textbf{F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
+        \label{fig:multi_area}
+    \end{fullwidth}
+\end{figure}
 %
-\subsection*{The multi-area model}
+\subsection{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
 However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling.
@@ -289,7 +262,7 @@ Next, we calculated the per-layer distributions of rates, spike-train irregulari
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
 The violin plots in Fig.~\ref{fig:multi_area}D-F show the comparison of the distributions of values obtained from the two simulations -- which are essentially identical.
 %
-\section*{Discussion}
+\section{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
 While this represents a significant step forward in terms of making truly large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
@@ -308,7 +281,7 @@ However, typically not all synapses in a simulation are plastic and those that a
 In this work, we have discussed the idea of procedural connectivity in the context of GPU hardware but, we believe that there is also potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
 Key components such as the random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
 %
-\matmethods{
+\section{Methods}
 \begin{table}
   \centering
   \caption{Model parameters. \label{tab:parameters}}
@@ -348,13 +321,8 @@ In the models where there are synaptic connections, pre-synaptic spikes lead to 
 \end{align}
 %
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
-The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ is treated as a constant throughout each simulation timestep.}
-\showmatmethods{} % Display the Materials and Methods section
+The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ is treated as a constant throughout each simulation timestep.
 
-\acknow{
-We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
-This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).}
-\showacknow{} % Display the acknowledgments section
 
 % Bibliography
 \bibliography{procedural}
