@@ -10,7 +10,7 @@ if presentation:
 else:
     sns.set(context="paper", rc={"font.size":7, "axes.labelsize":7, "axes.titlesize": 8,
                                  "legend.fontsize":7, "xtick.labelsize":7, "ytick.labelsize":7})
-    sns.set_style("whitegrid", {"font.family":"serif", "font.serif":"Times New Roman"})
+    sns.set_style("whitegrid", {"font.family":"sans-serif", "font.serif":"OpenSans"})
 
 # **HACK** fix bug with markers
 sns.set_context(rc={"lines.markeredgewidth": 1.0})
