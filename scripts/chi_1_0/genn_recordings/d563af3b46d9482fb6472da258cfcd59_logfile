@@ -1,0 +1,1 @@
+{"time_prepare": 0.001470327377319336, "time_network_local": 0.346390962600708, "time_network_global": 8.45041275024414, "time_simulate": 4819.578303337097, "time_genn_init": 8041.021484374999, "time_genn_init_sparse": 0.0, "time_genn_neuron_update": 267723.7766382666, "time_genn_presynaptic_update": 4150254.73228455}
