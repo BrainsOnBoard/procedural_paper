@@ -138,28 +138,34 @@ genn_corr_coeff_1_9 = load_pop_data("corr_coeff", "genn", "chi_1_9")
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
                                          18.0 * plot_settings.cm_to_inches))
 
-# Create outer gridspec dividing plot area into 3 (2/3 for raster plots, 1/3 for violin plots)
-gsp = gs.GridSpec(2, 3)
+# Create outer gridspec with three columns
+gsp = gs.GridSpec(1, 3)
 
-# Create sub-gridspecs for panels within outer gridspec
-violin_plot_gsp = gs.GridSpecFromSubplotSpec(6, 1, subplot_spec=gsp[:,2], hspace=0.9)
-raster_plot_gsp = gs.GridSpecFromSubplotSpec(2, 3, subplot_spec=gsp[:,0:2], hspace=0.2)
+# Create two sub-gridspecs to divide these columns into gridspecs for raster and violin plots with an axis for each regime
+raster_gsp = gs.GridSpecFromSubplotSpec(2, 1, subplot_spec=gsp[0:2], hspace=0.3)
+violin_gsp = gs.GridSpecFromSubplotSpec(2, 1, subplot_spec=gsp[2], hspace=0.3)
+
+# Create four more gridspecs to divide each of these gridspecs into individual axes for plots
+violin_plot_1_0_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=violin_gsp[0], hspace=0.9)
+raster_plot_1_0_gsp = gs.GridSpecFromSubplotSpec(1, 3, subplot_spec=raster_gsp[0])
+violin_plot_1_9_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=violin_gsp[1], hspace=0.9)
+raster_plot_1_9_gsp = gs.GridSpecFromSubplotSpec(1, 3, subplot_spec=raster_gsp[1])
 
 # Create axes within outer gridspec
-v1_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 0])
-v2_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 1])
-fef_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 2])
-v1_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 0])
-v2_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 1])
-fef_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 2])
+v1_1_0_axis = plt.Subplot(fig, raster_plot_1_0_gsp[0])
+v2_1_0_axis = plt.Subplot(fig, raster_plot_1_0_gsp[1])
+fef_1_0_axis = plt.Subplot(fig, raster_plot_1_0_gsp[2])
+v1_1_9_axis = plt.Subplot(fig, raster_plot_1_9_gsp[0])
+v2_1_9_axis = plt.Subplot(fig, raster_plot_1_9_gsp[1])
+fef_1_9_axis = plt.Subplot(fig, raster_plot_1_9_gsp[2])
 
 # Create axes within violin plot gridspec
-rate_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[0])
-corr_coeff_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[1])
-irregularity_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[2])
-rate_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[3])
-corr_coeff_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[4])
-irregularity_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[5])
+rate_1_0_violin_axis = plt.Subplot(fig, violin_plot_1_0_gsp[0])
+corr_coeff_1_0_violin_axis = plt.Subplot(fig, violin_plot_1_0_gsp[1])
+irregularity_1_0_violin_axis = plt.Subplot(fig, violin_plot_1_0_gsp[2])
+rate_1_9_violin_axis = plt.Subplot(fig, violin_plot_1_9_gsp[0])
+corr_coeff_1_9_violin_axis = plt.Subplot(fig, violin_plot_1_9_gsp[1])
+irregularity_1_9_violin_axis = plt.Subplot(fig, violin_plot_1_9_gsp[2])
 
 # Add axes
 fig.add_subplot(v1_1_0_axis)
