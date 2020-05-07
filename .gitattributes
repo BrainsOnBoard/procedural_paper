@@ -1,1 +1,1 @@
-'scripts/**/genn_recordings/*.npy' filter=lfs diff=lfs merge=lfs -text
+'**/genn_recordings/*.npy' filter=lfs diff=lfs merge=lfs -text
