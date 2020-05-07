@@ -18,15 +18,17 @@
 \title{Larger GPU-accelerated brain simulations with procedural connectivity}
 
 % Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
-\author[1*]{James C Knight}
-\author[1]{Thomas Nowotny} 
+\author[1*\authfn{1}\authfn{2}]{James C Knight}
+\author[1\authfn{1}\authfn{3}]{Thomas Nowotny} 
 
 \affil[1]{Centre for Computational Neuroscience and Robotics, School of Engineering and Informatics, University of Sussex, Brighton, United Kingdom}
 
 \corr{J.C.Knight@sussex.ac.uk}{JCK}
 
-\contrib[\authfn{1}]{is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.performed the experiments and the analysis of the results that are presented in this work.wrote paper}
-\contrib[\authfn{2}]{is the original developer of GeNN and wrote the paper}
+\contrib[\authfn{1}]{wrote the paper.}
+\contrib[\authfn{2}]{is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.}
+\contrib[\authfn{2}]{performed the experiments and the analysis of the results that are presented in this work.}
+\contrib[\authfn{3}]{is the original developer of GeNN.}
 
 \begin{document}
 \maketitle
@@ -325,6 +327,9 @@ In the models where there are synaptic connections, pre-synaptic spikes lead to 
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
 The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are seperately solved algebraically so that the synaptic input current $I_{\text{in}_{i}}$ is treated as a constant throughout each simulation timestep.
 
+\section{Acknowledgements}
+We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
+This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).
 
 % Bibliography
 \bibliography{procedural}
