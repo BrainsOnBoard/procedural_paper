@@ -233,7 +233,7 @@ fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1
            ["NEST", "GeNN"], ncol=2, frameon=False, bbox_to_anchor=(0.875, 0.0), loc="lower center")
 fig.align_ylabels([rate_1_0_violin_axis, corr_coeff_1_0_violin_axis, irregularity_1_0_violin_axis,
                    rate_1_9_violin_axis, corr_coeff_1_9_violin_axis, irregularity_1_9_violin_axis])
-fig.tight_layout(pad=0, w_pad=2.0, rect= [0.0, 0.075, 1.0, 1.0])
+fig.tight_layout(pad=0, w_pad=2.0, rect= [0.0, 0.035, 1.0, 1.0])
 
 if not plot_settings.presentation:
     fig.savefig("../figures/multi_area.pdf", dpi=600)
