@@ -118,84 +118,121 @@ def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
         axis.set_xlabel(label)
         axis.set_xlim(lim)
 
-data_path = "chi_1_9" if len(argv) == 1 else argv[2]
-print("Loading data from %s" % data_path)
-
 # Load pre-processed NEST data
-nest_rates = load_pop_data("rates", "nest", data_path)
-nest_irregularity = load_pop_data("irregularity", "nest", data_path)
-nest_corr_coeff = load_pop_data("corr_coeff", "nest", data_path)
+nest_rates_1_0 = load_pop_data("rates", "nest", "chi_1_0")
+nest_irregularity_1_0 = load_pop_data("irregularity", "nest", "chi_1_0")
+nest_corr_coeff_1_0 = load_pop_data("corr_coeff", "nest", "chi_1_0")
+nest_rates_1_9 = load_pop_data("rates", "nest", "chi_1_9")
+nest_irregularity_1_9 = load_pop_data("irregularity", "nest", "chi_1_9")
+nest_corr_coeff_1_9 = load_pop_data("corr_coeff", "nest", "chi_1_9")
 
 # Load pre-processed GeNN data
-genn_rates = load_pop_data("rates", "genn", data_path)
-genn_irregularity = load_pop_data("irregularity", "genn", data_path)
-genn_corr_coeff = load_pop_data("corr_coeff", "genn", data_path)
+genn_rates_1_0 = load_pop_data("rates", "genn", "chi_1_0")
+genn_irregularity_1_0 = load_pop_data("irregularity", "genn", "chi_1_0")
+genn_corr_coeff_1_0 = load_pop_data("corr_coeff", "genn", "chi_1_0")
+genn_rates_1_9 = load_pop_data("rates", "genn", "chi_1_9")
+genn_irregularity_1_9 = load_pop_data("irregularity", "genn", "chi_1_9")
+genn_corr_coeff_1_9 = load_pop_data("corr_coeff", "genn", "chi_1_9")
 
 # Create plot
 fig = plt.figure(frameon=False, figsize=(17.0 * plot_settings.cm_to_inches, 
-                                         9.0 * plot_settings.cm_to_inches))
+                                         18.0 * plot_settings.cm_to_inches))
 
 # Create outer gridspec dividing plot area into 3 (2/3 for raster plots, 1/3 for violin plots)
-gsp = gs.GridSpec(1, 3)
+gsp = gs.GridSpec(2, 3)
 
 # Create sub-gridspecs for panels within outer gridspec
-violin_plot_gsp = gs.GridSpecFromSubplotSpec(3, 1, subplot_spec=gsp[2], hspace=0.9)
-raster_plot_gsp = gs.GridSpecFromSubplotSpec(1, 3, subplot_spec=gsp[0:2])
+violin_plot_gsp = gs.GridSpecFromSubplotSpec(6, 1, subplot_spec=gsp[:,2], hspace=0.9)
+raster_plot_gsp = gs.GridSpecFromSubplotSpec(2, 3, subplot_spec=gsp[:,0:2], hspace=0.2)
 
 # Create axes within outer gridspec
-v1_axis = plt.Subplot(fig, raster_plot_gsp[0])
-v2_axis = plt.Subplot(fig, raster_plot_gsp[1])
-fef_axis = plt.Subplot(fig, raster_plot_gsp[2])
+v1_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 0])
+v2_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 1])
+fef_1_0_axis = plt.Subplot(fig, raster_plot_gsp[0, 2])
+v1_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 0])
+v2_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 1])
+fef_1_9_axis = plt.Subplot(fig, raster_plot_gsp[1, 2])
 
 # Create axes within violin plot gridspec
-rate_violin_axis = plt.Subplot(fig, violin_plot_gsp[0])
-corr_coeff_violin_axis = plt.Subplot(fig, violin_plot_gsp[1])
-irregularity_violin_axis = plt.Subplot(fig, violin_plot_gsp[2])
+rate_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[0])
+corr_coeff_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[1])
+irregularity_1_0_violin_axis = plt.Subplot(fig, violin_plot_gsp[2])
+rate_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[3])
+corr_coeff_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[4])
+irregularity_1_9_violin_axis = plt.Subplot(fig, violin_plot_gsp[5])
 
 # Add axes
-fig.add_subplot(v1_axis)
-fig.add_subplot(v2_axis)
-fig.add_subplot(fef_axis)
-fig.add_subplot(rate_violin_axis)
-fig.add_subplot(corr_coeff_violin_axis)
-fig.add_subplot(irregularity_violin_axis)
+fig.add_subplot(v1_1_0_axis)
+fig.add_subplot(v2_1_0_axis)
+fig.add_subplot(fef_1_0_axis)
+fig.add_subplot(v1_1_9_axis)
+fig.add_subplot(v2_1_9_axis)
+fig.add_subplot(fef_1_9_axis)
+fig.add_subplot(rate_1_0_violin_axis)
+fig.add_subplot(corr_coeff_1_0_violin_axis)
+fig.add_subplot(irregularity_1_0_violin_axis)
+fig.add_subplot(rate_1_9_violin_axis)
+fig.add_subplot(corr_coeff_1_9_violin_axis)
+fig.add_subplot(irregularity_1_9_violin_axis)
 
 # Plot example GeNN raster plots
-plot_area("V1", v1_axis, data_path)
-plot_area("V2", v2_axis, data_path)
-plot_area("FEF", fef_axis, data_path)
+plot_area("V1", v1_1_0_axis, "chi_1_0")
+plot_area("V2", v2_1_0_axis, "chi_1_0")
+plot_area("FEF", fef_1_0_axis, "chi_1_0")
+plot_area("V1", v1_1_9_axis, "chi_1_9")
+plot_area("V2", v2_1_9_axis, "chi_1_9")
+plot_area("FEF", fef_1_9_axis, "chi_1_9")
 
 vertical = True 
 
 # Combine GeNN and NEST rates and plot split violin plot
-plot_violin(nest_rates, genn_rates, rate_violin_axis, 
+plot_violin(nest_rates_1_0, genn_rates_1_0, rate_1_0_violin_axis, 
+            vertical, "Rate [spikes/s]", (-1.0, 13.0))
+plot_violin(nest_rates_1_9, genn_rates_1_9, rate_1_9_violin_axis, 
             vertical, "Rate [spikes/s]", (-10.0, 150.0))
-
+            
 # Combine GeNN and NEST correlation coefficients and plot split violin plot
-plot_violin(nest_corr_coeff, genn_corr_coeff, corr_coeff_violin_axis, 
+plot_violin(nest_corr_coeff_1_0, genn_corr_coeff_1_0, corr_coeff_1_0_violin_axis, 
+            vertical, "Correlation coefficient", (-0.002, 0.012))
+plot_violin(nest_corr_coeff_1_9, genn_corr_coeff_1_9, corr_coeff_1_9_violin_axis, 
             vertical, "Correlation coefficient", (-0.1, 0.6))
 
 # Combine GeNN and NEST irregularity and plot split violin plot
-plot_violin(nest_irregularity, genn_irregularity, irregularity_violin_axis, 
+plot_violin(nest_irregularity_1_0, genn_irregularity_1_0, irregularity_1_0_violin_axis, 
+            vertical, "Irregularity", (-0.01, 2.01))
+plot_violin(nest_irregularity_1_9, genn_irregularity_1_9, irregularity_1_9_violin_axis, 
             vertical, "Irregularity", (-0.5, 2.5))
 
 # Label axes
-v1_axis.set_title("A: V1", loc="left")
-v2_axis.set_title("B: V2", loc="left")
-fef_axis.set_title("C: FEF", loc="left")
-rate_violin_axis.set_title("D", loc="left")
-corr_coeff_violin_axis.set_title("E", loc="left")
-irregularity_violin_axis.set_title("F", loc="left")
+v1_1_0_axis.set_title("A: V1", loc="left")
+v2_1_0_axis.set_title("B: V2", loc="left")
+fef_1_0_axis.set_title("C: FEF", loc="left")
+v1_1_9_axis.set_title("D: V1", loc="left")
+v2_1_9_axis.set_title("E: V2", loc="left")
+fef_1_9_axis.set_title("F: FEF", loc="left")
 
-rate_violin_axis.yaxis.set_minor_locator(MultipleLocator(100.0))
-corr_coeff_violin_axis.yaxis.set_minor_locator(MultipleLocator(0.25))
-irregularity_violin_axis.yaxis.set_minor_locator(MultipleLocator(1.0))
+
+rate_1_0_violin_axis.set_title("G", loc="left")
+corr_coeff_1_0_violin_axis.set_title("H", loc="left")
+irregularity_1_0_violin_axis.set_title("I", loc="left")
+rate_1_9_violin_axis.set_title("J", loc="left")
+corr_coeff_1_9_violin_axis.set_title("K", loc="left")
+irregularity_1_9_violin_axis.set_title("L", loc="left")
+
+# Configure axis ticks
+rate_1_0_violin_axis.yaxis.set_minor_locator(MultipleLocator(5.0))
+corr_coeff_1_0_violin_axis.yaxis.set_minor_locator(MultipleLocator(0.005))
+irregularity_1_0_violin_axis.yaxis.set_minor_locator(MultipleLocator(1.0))
+rate_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(100.0))
+corr_coeff_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(0.25))
+irregularity_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(1.0))
 
 # Show figure legend with devices beneath figure
 pal = sns.color_palette()
 fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1])],
            ["NEST", "GeNN"], ncol=2, frameon=False, bbox_to_anchor=(0.875, 0.0), loc="lower center")
-fig.align_ylabels([rate_violin_axis, corr_coeff_violin_axis, irregularity_violin_axis])
+fig.align_ylabels([rate_1_0_violin_axis, corr_coeff_1_0_violin_axis, irregularity_1_0_violin_axis,
+                   rate_1_9_violin_axis, corr_coeff_1_9_violin_axis, irregularity_1_9_violin_axis])
 fig.tight_layout(pad=0, w_pad=2.0, rect= [0.0, 0.075, 1.0, 1.0])
 
 if not plot_settings.presentation:
