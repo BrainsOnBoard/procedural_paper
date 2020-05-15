@@ -1,7 +1,7 @@
 % Use the lineno option to display guide line numbers if required.
-\documentclass[9pt,lineno]{elife}
+\documentclass[9pt,a4paper]{amsart}
 
-\usepackage{enumitem,listings,booktabs}
+\usepackage{amsaddr,amsmath,caption,changepage,enumitem,graphicx,natbib,listings,booktabs,url}
 
 % Automatic formatting of SI units
 \usepackage[binary-units,separate-uncertainty=true]{siunitx}
@@ -12,26 +12,26 @@
 % Turn off whitespace around lists
 %\setlist{nolistsep}
 
+\newenvironment{fullwidth}{%
+  \begin{adjustwidth}{-0.85in}{-0.85in}
+}{\end{adjustwidth}}
+
 % Visible TODO notes
 \newcommand{\todo}[1]{\textbf{\textsc{\textcolor{red}{(TODO: #1)}}}}
 
 \title{Larger GPU-accelerated brain simulations with procedural connectivity}
 
 % Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
-\author[1*\authfn{1}\authfn{2}]{James C Knight}
-\author[1\authfn{1}\authfn{3}]{Thomas Nowotny} 
+\author{James C Knight and Thomas Nowotny}
+\address{Centre for Computational Neuroscience and Robotics, School of Engineering and Informatics, University of Sussex, Brighton, United Kingdom} 
+\email{J.C.Knight@sussex.ac.uk}
 
-\affil[1]{Centre for Computational Neuroscience and Robotics, School of Engineering and Informatics, University of Sussex, Brighton, United Kingdom}
-
-\corr{J.C.Knight@sussex.ac.uk}{JCK}
-
-\contrib[\authfn{1}]{wrote the paper.}
-\contrib[\authfn{2}]{is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.}
-\contrib[\authfn{2}]{performed the experiments and the analysis of the results that are presented in this work.}
-\contrib[\authfn{3}]{is the original developer of GeNN.}
+%\contrib[\authfn{1}]{wrote the paper.}
+%\contrib[\authfn{2}]{is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.}
+%\contrib[\authfn{2}]{performed the experiments and the analysis of the results that are presented in this work.}
+%\contrib[\authfn{3}]{is the original developer of GeNN.}
 
 \begin{document}
-\maketitle
 \begin{abstract}
 Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
 However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value.
@@ -43,7 +43,7 @@ We demonstrate the value of our approach with a recent model of the Macaque visu
 Using our new method, it can be simulated on a single GPU -- a significant step forward in making large-scale brain modelling accessible to many more researchers.
 Our results match those obtained on a supercomputer and the simulation runs up to \SI{35}{\percent} faster on a single high-end GPU than previously on over 1000 supercomputer nodes.
 \end{abstract}
-
+\maketitle
 \section{Introduction}
 The brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
@@ -102,6 +102,7 @@ This is possible because the outgoing synaptic connections from each neuron are 
     \begin{fullwidth}
         \centering
         \includegraphics{figures/performance_scaling}
+        \captionsetup{width=6.69in}
         \caption{Simulation time performance scaling on a range of modern GPUs (colors). \textbf{A} The best performing approach at each scale on each GPU (indicated by the symbols). For the largest models, the procedural method is always best.
         \textbf{B} Raw performance of each approach on each GPU.
         Missing bars indicate insufficient memory to simulate.}
@@ -228,6 +229,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
     \begin{fullwidth}
         \centering
         \includegraphics{figures/multi_area}
+        \captionsetup{width=6.69in}
         \caption{Results of full-scale multi-area model simulation in ground and resting states. 
         \textbf{A-F} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~(A,D), V2~(B,E), and FEF~(C,F).
         Blue: excitatory neurons, red: inhibitory neurons.
@@ -288,7 +290,6 @@ Key components such as the random number generator could be implemented directly
 \section{Methods}
 \begin{table}
   \centering
-  
   \begin{tabular}{r S S S}
     \toprule
         {Parameter}                             & {Procedural connectivity} & {Merging}         & {Multi-area} \\
@@ -333,6 +334,7 @@ We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and M
 This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).
 
 % Bibliography
+\bibliographystyle{plainnat}
 \bibliography{procedural}
 
 \end{document}
