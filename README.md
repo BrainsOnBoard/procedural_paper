@@ -53,7 +53,7 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ## Demo
-To demonstrate your newly installed version of GeNN, 
+To demonstrate your newly installed version of GeNN, you can run the GeNN implementation of [The Cell-Type Specific Cortical Microcircuit: Relating Structure and Activity in a Full-Scale Spiking Network Model](http://www.ncbi.nlm.nih.gov/pubmed/23203991) previously discussed in [our paper](https://www.frontiersin.org/articles/10.3389/fnins.2018.00941).
 
 ### Windows
 1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
