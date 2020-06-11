@@ -62,6 +62,12 @@ If you are interested in using GeNN for simulating your own models please see th
 
 ### Reproducing figure 1
 Instructions for simulating model are included in a seperate [readme](models/va_benchmark/README.md)
+Data points can be added to [scaling_data.csv](scripts/scaling_data.csv) and then plotted using [plot_performance_scaling.py](scripts/plot_performance_scaling.py).
 
-### Reproducing figure 1
+### Reproducing figure 2
 Instructions for simulating model are included in a seperate [readme](models/neuron_merge/README.md)
+Data points can be added to [merging_data.csv](scripts/merging_data.csv) and then plotted using [plot_merging_scaling.py](scripts/plot_merging_scaling.py).
+
+### Reproducing figure 3
+The "ground state" simulation can be run using the [run_example_fullscale.py](models/multi-area-model/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](models/multi-area-model/run_example_1_9_fullscale.py).
+Spike trains from the simulations will be saved into the [simulations](models/multi-area-model/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
