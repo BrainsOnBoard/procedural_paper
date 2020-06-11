@@ -77,5 +77,5 @@ Data points can be added to [merging_data.csv](scripts/merging_data.csv) and the
 
 ### Reproducing figure 3
 Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``
-The "ground state" simulation can be run using the [run_example_fullscale.py](neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
-Spike trains from the simulations will be saved into the [simulations](neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
+The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
+Spike trains from the simulations will be saved into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
