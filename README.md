@@ -54,6 +54,7 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 
 ## Demo
 To demonstrate your newly installed version of GeNN, you can run the GeNN implementation of [The Cell-Type Specific Cortical Microcircuit](http://www.ncbi.nlm.nih.gov/pubmed/23203991) developed by Tobias C. Potjans and Markus Diesmann, previously discussed in [our paper](https://www.frontiersin.org/articles/10.3389/fnins.2018.00941).
+This should take less than 2 minutes on a standard PC.
 
 ### Windows
 1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
