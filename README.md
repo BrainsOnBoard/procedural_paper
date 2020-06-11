@@ -44,7 +44,7 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ### Linux
-1. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git
+1. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git``
 2. Ensure that swig is installed. For example, on an Ubuntu system, run ``sudo apt-get install swig``.
 3. Ensure that numpy is installed. For example by running ``pip install numpy``.
 4. Ensure the ``CUDA_PATH`` environment variable is set to point to your CUDA installation. For example from a bash terminal you could run ``export CUDA_PATH=/usr/local/cuda``.
@@ -53,12 +53,19 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ## Demo
-Instructions to run on data
-Expected output
-Expected run time for demo on a "normal" desktop computer
+To demonstrate your newly installed version of GeNN you can run 
+
+### Windows
+1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
+2. 
+### Linux
+
+
+If you have GPU with at least 4GB of memory you can pass the ``--neuron-scale 1.0 --connectivity-scale 1.0`` options too step XX to run the model at full scale.
 
 ## Instructions for use
 If you are interested in using GeNN for simulating your own models please see the [user manual](https://genn-team.github.io/genn/documentation/4/html/index.html) or the [tutorial](https://github.com/neworderofjamie/new_genn_tutorials).
+To reproduce the figures included in this paper, please follow the steps below.
 
 ### Reproducing figure 1
 Instructions for simulating model are included in a seperate [readme](models/va_benchmark/README.md)
@@ -69,5 +76,6 @@ Instructions for simulating model are included in a seperate [readme](models/neu
 Data points can be added to [merging_data.csv](scripts/merging_data.csv) and then plotted using [plot_merging_scaling.py](scripts/plot_merging_scaling.py).
 
 ### Reproducing figure 3
-The "ground state" simulation can be run using the [run_example_fullscale.py](models/multi-area-model/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](models/multi-area-model/run_example_1_9_fullscale.py).
-Spike trains from the simulations will be saved into the [simulations](models/multi-area-model/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
+Install additional python dependencies by 
+The "ground state" simulation can be run using the [run_example_fullscale.py](neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
+Spike trains from the simulations will be saved into the [simulations](neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
