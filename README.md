@@ -31,10 +31,10 @@ Tested on Arch Linux, GCC 10.1, CUDA 10.2 and Python 3.8.3
 ### Linux
 1. Ensure that swig is installed. For example, on an Ubuntu system, run ``sudo apt-get install swig``.
 2. Ensure that numpy is installed. For example by running ``pip install numpy``.
-2. Ensure the ``CUDA_PATH`` environment variable is set to point to your CUDA installation (e.g. ``/usr/local/cuda``).
-3. Ensure that GeNN is in the path. For example, from the ``genn`` directory of this repository, you could run the following in a bash terminal ``set PATH=%PATH%:`pwd`/bin``.
-4. From the ``genn directory of this repository, build GeNN libraries with ``make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/``
-5. From the ``genn directory of this repository, build python extension using ``python setup.py develop``
+2. Ensure the ``CUDA_PATH`` environment variable is set to point to your CUDA installation. For example from a bash terminal you could run ``export CUDA_PATH=/usr/local/cuda``.
+3. Ensure that GeNN is in the path. For example, from the ``genn`` directory of this repository, you could run the following in a bash terminal ``PATH=%PATH%:`pwd`/bin``.
+4. From the ``genn`` directory of this repository, build GeNN libraries with ``make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/``
+5. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 Instructions
 Typical install time on a "normal" desktop comput
