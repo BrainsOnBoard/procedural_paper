@@ -1,3 +1,6 @@
 [submodule "genn"]
 	path = genn
 	url = https://github.com/genn-team/genn.git
+[submodule "models/multi-area-model"]
+	path = models/multi-area-model
+	url = ../../neworderofjamie/multi-area-model.git
