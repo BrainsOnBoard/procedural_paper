@@ -15,3 +15,4 @@ genn-buildmodel.sh model.cc
 make
 ./va_benchmark
 ```
+Simulation time will be outputted by the simulation.

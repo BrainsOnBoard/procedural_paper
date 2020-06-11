@@ -41,7 +41,7 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 4. Ensure that the version of GeNN included in this repository is in the path. For example, if your user is called "me" and this repository is located in Documents, you could run the following in the terminal ``SET "PATH=%PATH%;c:\Users\me\Documents\procedural_paper\genn\bin"``.
 5. From the ``genn`` directory of this repository, build GeNN libraries with ``msbuild genn.sln /t:Build /p:Configuration=Release_DLL``
 6. From the ``genn`` directory of this repository, copy the GeNN libraries into the correct location with ``copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper``
-7. From the ``genn directory of this repository, build python extension using ``python setup.py develop``
+7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ### Linux
 1. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git
@@ -60,9 +60,6 @@ Expected run time for demo on a "normal" desktop computer
 ## Instructions for use
 If you are interested in using GeNN for simulating your own models please see the [user manual](https://genn-team.github.io/genn/documentation/4/html/index.html) or the [tutorial](https://github.com/neworderofjamie/new_genn_tutorials).
 
-How to run the software on your data
-
-
-### Figure 1
-ss
+### Reproducing figure 1
+Instructions are included in models/va_benchmark/README.md
 (OPTIONAL) Reproduction instructions
