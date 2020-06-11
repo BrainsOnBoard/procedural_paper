@@ -53,15 +53,22 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ## Demo
-To demonstrate your newly installed version of GeNN you can run 
+To demonstrate your newly installed version of GeNN, 
 
 ### Windows
 1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
-2. 
+2. Build the project runner executable with ``msbuild ..\userprojects.sln /t:generate_potjans_microcircuit_runner /p:Configuration=Release``
+3. Build and simulate the project with ``generate_run test`` where "test" is the name of the folder to save the model output.
+4. Plot results with ``python plot.py test`` where "test" is again the name of the folder to save the model output.
+
 ### Linux
+1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
+2. Build the project runner executable with ``make``
+3. Build and simulate the project with ``./generate_run test`` where "test" is the name of the folder to save the model output.
+4. Plot results with ``python plot.py test`` where "test" is again the name of the folder to save the model output.
 
-
-If you have GPU with at least 4GB of memory you can pass the ``--neuron-scale 1.0 --connectivity-scale 1.0`` options too step XX to run the model at full scale.
+A raster plot resembling this one should then be displayed:
+![Microcircuit output](microcircuit_demo.png)
 
 ## Instructions for use
 If you are interested in using GeNN for simulating your own models please see the [user manual](https://genn-team.github.io/genn/documentation/4/html/index.html) or the [tutorial](https://github.com/neworderofjamie/new_genn_tutorials).
@@ -78,4 +85,4 @@ Data points can be added to [merging_data.csv](scripts/merging_data.csv) and the
 ### Reproducing figure 3
 Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``
 The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
-Spike trains from the simulations will be saved into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script.
+Spike trains from the simulations will be saved into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script and then plotted using the [calc_multi_area_stats.py](scripts/plot_multi_area.py) script.
