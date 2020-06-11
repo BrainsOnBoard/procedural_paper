@@ -15,3 +15,5 @@ genn-buildmodel.sh model.cc
 make
 ./if_curr
 ```
+
+_Tsim_ will be outputted by the simulation, compilation time can be recorded using standard operating system tools (e.g. _time_ on Linux) and the executable can be run using [Nsight Compute](https://developer.nvidia.com/nsight-compute) to calculate _Kmem_ and _Nstall_.
