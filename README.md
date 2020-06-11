@@ -61,5 +61,7 @@ Expected run time for demo on a "normal" desktop computer
 If you are interested in using GeNN for simulating your own models please see the [user manual](https://genn-team.github.io/genn/documentation/4/html/index.html) or the [tutorial](https://github.com/neworderofjamie/new_genn_tutorials).
 
 ### Reproducing figure 1
-Instructions are included in models/va_benchmark/README.md
-(OPTIONAL) Reproduction instructions
+Instructions for simulating model are included in a seperate [readme](models/va_benchmark/README.md)
+
+### Reproducing figure 1
+Instructions for simulating model are included in a seperate [readme](models/neuron_merge/README.md)
