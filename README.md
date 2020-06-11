@@ -10,7 +10,7 @@ Using our new method, it can be simulated on a single GPU - a significant step f
 Our results match those obtained on a supercomputer and the simulation runs up to 35% faster on a single high-end GPU than previously on over 1000 supercomputer nodes.
 
 ## System requirements
-Although GeNN can be used without a CPU, because this paper focusses on GPU acceleration, an NVIDIA GPU with the Kepler architecture or newer required.
+Although GeNN can be used without a GPU, because this paper focusses on GPU acceleration, an NVIDIA GPU with the Kepler architecture or newer is required.
 Furthermore, to simulate the multi-area model, a GPU with at least 12GB of memory is required (depending on the device and operating system, you may need more memory than this) - it has been tested on an Tesla K80 and a Titan RTX.
 
 ### Windows
@@ -30,7 +30,7 @@ Installation should take less than 5 minutes on a standard PC.
 We recommend using [python virtualenvs](https://pypi.org/project/virtualenv/) to prevent conflicts between installed python package versions.
 
 ### Windows
-These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in different way.
+These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in a different way.
 On Windows, installation requires a command prompt with the environment correctly configured for both Visual Studio **and** Anaconda. 
 To create one, launch an "x64 Native Tools Command Prompt" from your chosen version of Visual Studio's start menu folder and _activate_ your chosen version of Anaconda by running the ``activate.bat`` in its ``Scripts`` directory. 
 For example, if your user is called "me" and Anaconda is installed in your home directory, you might run ``c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3``.
