@@ -16,14 +16,14 @@ Furthermore, to simulate the multi-area model, a GPU with at least 12GB of memor
 ### Windows
 To build GeNN, Visual Studio 2015 or later and Python 3.5 or later is required.
 The version of GeNN included in this repository has been tested with:
-- Windows 10 with Visual Studio 2019, CUDA 10.1 and Python 3.7.7 provided by Anaconda
-- Windows 10 with Visual Studio 2017, CUDA 10.1 and Python 3.7.0 provided by Anaconda
+* Windows 10 with Visual Studio 2019, CUDA 10.1 and Python 3.7.7 provided by Anaconda
+* Windows 10 with Visual Studio 2017, CUDA 10.1 and Python 3.7.0 provided by Anaconda
 
 ### Linux
 To build GeNN, GCC 4.9.1 or later and Python 2.7 or later is required.
 The version of GeNN included in this repository has been tested with:
-- Ubuntu 18.04; GCC 7.5.0; CUDA 10.0; 10.1 and 10.2; and Python 3.6.9
-- Arch Linux, GCC 10.1, CUDA 10.2 and Python 3.8.3
+* Ubuntu 18.04; GCC 7.5.0; CUDA 10.0; 10.1 and 10.2; and Python 3.6.9
+* Arch Linux, GCC 10.1, CUDA 10.2 and Python 3.8.3
 
 ## Installation guide
 Installation should take less than 5 minutes on a standard PC.
