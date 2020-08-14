@@ -61,7 +61,7 @@ stall_count_axis.yaxis.grid(False)
 stall_count_axis.set_yticks([0, 25, 50])
 sns.despine(ax=stall_count_axis)
 
-fig.legend([latest_actor, release_actor], ["Latest version", "GeNN 4.1.0"], 
+fig.legend([latest_actor, release_actor], ["Kernel merging", "GeNN 4.1.0"], 
            ncol=2, frameon=False, loc="lower center")
 fig.align_ylabels()
 fig.tight_layout(pad=0, rect= [0.0, 0.1, 1.0, 1.0])

@@ -143,7 +143,7 @@ and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
 Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach or using the standard approach of storing synaptic connections in memory employing two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{post}}$ array of bits where a `1' at position $i$ indicates that there is a connection to postsynaptic neuron $i$ and a `0' that there is not.
 None of our devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
-However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the precedural approach is competitive with and sometimes better than the standard approach.
+However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the procedural approach is competitive with and sometimes better than the standard approach.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
@@ -174,7 +174,7 @@ Furthermore, the simulation also runs slower with a large number of populations 
 \begin{figure}
     \centering
     \includegraphics{figures/merging_scaling}
-    \caption{Performance of a simulation of \num{1000000} LIF neurons driven by a Gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
+    \caption{Performance of a simulation of \num{1E6} LIF neurons driven by a Gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
     \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
     \textbf{B} Simulation time~($T_{sim}$) for a \SI{1}{\second} simulation.
     \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler ``Speed of light'' metric.
