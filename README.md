@@ -48,7 +48,7 @@ For example, if your user is called "me" and Anaconda is installed in your home 
 2. Ensure that swig is installed. For example, on an Ubuntu system, run ``sudo apt-get install swig``.
 3. Ensure that numpy is installed. For example by running ``pip install numpy``.
 4. Ensure the ``CUDA_PATH`` environment variable is set to point to your CUDA installation. For example from a bash terminal you could run ``export CUDA_PATH=/usr/local/cuda``.
-5. Ensure that the version of GeNN included in this repository is in the path. For example, from the ``genn`` directory of this repository, you could run the following in a bash terminal ``PATH=%PATH%:`pwd`/bin``.
+5. Ensure that the version of GeNN included in this repository is in the path. For example, from the ``genn`` directory of this repository, you could run the following in a bash terminal ``PATH=$PATH:`pwd`/bin``.
 6. From the ``genn`` directory of this repository, build GeNN libraries with ``make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/``
 7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
