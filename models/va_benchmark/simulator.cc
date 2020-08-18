@@ -3,6 +3,7 @@
 #include <random>
 
 // GeNN robotics includes
+#include "analogueRecorder.h"
 #include "timer.h"
 #include "spikeRecorder.h"
 
@@ -20,6 +21,7 @@ int main()
 
     // Open CSV output files
     SpikeRecorder<SpikeWriterTextCached> spikes(&getECurrentSpikes, &getECurrentSpikeCount, "spikes.csv", ",", true);
+    AnalogueRecorder<scalar> voltages("voltages.csv", VE, Parameters::numExcitatory, ",");
 
     {
         Timer a("Simulation wall clock:");
@@ -27,10 +29,15 @@ int main()
             // Simulate
             stepTime();
 
-            pullECurrentSpikesFromDevice();
+            if(Parameters::recordSpikes) {
+                pullECurrentSpikesFromDevice();
+                spikes.record(t);
+            }
 
-
-            spikes.record(t);
+            if(Parameters::recordVoltages) {
+                pullVEFromDevice();
+                voltages.record(t);
+            }
         }
     }
 

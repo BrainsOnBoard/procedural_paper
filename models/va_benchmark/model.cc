@@ -7,6 +7,7 @@
 
 void modelDefinition(NNmodel &model)
 {
+    model.setSeed(1234);
     model.setDT(1.0);
     model.setName("va_benchmark");
     model.setDefaultVarLocation(VarLocation::DEVICE);
@@ -56,9 +57,9 @@ void modelDefinition(NNmodel &model)
     auto *e = model.addNeuronPopulation<NeuronModels::LIF>("E", Parameters::numExcitatory, lifParams, lifInit);
     auto *i = model.addNeuronPopulation<NeuronModels::LIF>("I", Parameters::numInhibitory, lifParams, lifInit);
 
-    // Configure spike variables so that they can be downloaded to host
+    // Configure recordable variables so that they can be downloaded to host
     e->setSpikeLocation(VarLocation::HOST_DEVICE);
-    i->setSpikeLocation(VarLocation::HOST_DEVICE);
+    e->setVarLocation("V", VarLocation::HOST_DEVICE);
 
     // Determine matrix type
     const SynapseMatrixType matrixType = Parameters::proceduralConnectivity
