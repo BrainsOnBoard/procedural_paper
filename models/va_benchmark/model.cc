@@ -12,7 +12,7 @@ void modelDefinition(NNmodel &model)
     model.setName("va_benchmark");
     model.setDefaultVarLocation(VarLocation::DEVICE);
     model.setDefaultSparseConnectivityLocation(VarLocation::DEVICE);
-    model.setTiming(true);
+    model.setTiming(Parameters::timing);
 
     //---------------------------------------------------------------------------
     // Build model
@@ -55,7 +55,7 @@ void modelDefinition(NNmodel &model)
 
     // Create IF_curr neuron
     auto *e = model.addNeuronPopulation<NeuronModels::LIF>("E", Parameters::numExcitatory, lifParams, lifInit);
-    auto *i = model.addNeuronPopulation<NeuronModels::LIF>("I", Parameters::numInhibitory, lifParams, lifInit);
+    model.addNeuronPopulation<NeuronModels::LIF>("I", Parameters::numInhibitory, lifParams, lifInit);
 
     // Configure recordable variables so that they can be downloaded to host
     e->setSpikeLocation(VarLocation::HOST_DEVICE);

@@ -23,9 +23,10 @@ int main()
     SpikeRecorder<SpikeWriterTextCached> spikes(&getECurrentSpikes, &getECurrentSpikeCount, "spikes.csv", ",", true);
     AnalogueRecorder<scalar> voltages("voltages.csv", VE, Parameters::numExcitatory, ",");
 
+    double wallClock = 0.0;
     {
-        Timer a("Simulation wall clock:");
-        while(t < 10000.0) {
+        TimerAccumulate a(wallClock);
+        while(t < 1000.0) {
             // Simulate
             stepTime();
 
@@ -41,12 +42,15 @@ int main()
         }
     }
 
+    std::cout << wallClock << ", ";
+
     spikes.writeCache();
 
-    std::cout << "Init:" << initTime << std::endl;
-    std::cout << "Init sparse:" << initSparseTime << std::endl;
-    std::cout << "Neuron update:" << neuronUpdateTime << std::endl;
-    std::cout << "Presynaptic update:" << presynapticUpdateTime << std::endl;
-
-    return 0;
+    if(Parameters::timing) {
+        std::cout << "Init:" << initTime << std::endl;
+        std::cout << "Init sparse:" << initSparseTime << std::endl;
+        std::cout << "Neuron update:" << neuronUpdateTime << std::endl;
+        std::cout << "Presynaptic update:" << presynapticUpdateTime << std::endl;
+    }
+    return EXIT_SUCCESS;;
 }

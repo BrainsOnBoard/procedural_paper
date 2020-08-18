@@ -10,6 +10,8 @@ namespace Parameters
 {
     const double timestep = 1.0;
 
+    const bool timing = false;
+
     // Should we use pre or postsynaptic parallelism?
     const bool presynapticParallelism = false;
 
