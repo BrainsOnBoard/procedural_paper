@@ -63,7 +63,7 @@ This is promising for the future but, due to its prototype nature, the availabil
 Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units.
 GPUs use dedicated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
 For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
-Unfortunately, propagating a spike in a spiking neural network simulation is likely to require accessing around \SI{8}{\byte} of memory but perform many fewer than the required 80 instructions. 
+Unfortunately, propagating a spike in a spiking neural network simulation typically requires reading a synaptic weight ($\ge \SI{2}{\byte}$) and postsynaptic index ($\ge \SI{2}{\byte}$) from memory and then writing back the synaptic input ($\ge \SI{4}{\byte}$), while performing many fewer than the corresponding 80 instructions. 
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
 However, individual GPUs do not have enough memory to simulate larger brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, larger GPU clusters suffer from the same communication overheads as any other distributed HPC system.
@@ -136,7 +136,7 @@ The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$.
 
 We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
-Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
+Jetson Xavier NX, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
@@ -158,17 +158,21 @@ Therefore, in GeNN, multiple neuron populations are simulated within each kernel
 %
 \begin{lstlisting}
 void updateNeurons() {
-  if(thread < 100) {
+  if(thread < 128) {
     // Update neuron population A
-  } else if(thread >= 100 && thread < 200) {
+  } else if(thread >= 128 && thread < 256) {
     // Update neuron population B
-  } else if(thread >= 200 && thread < 300) {
+  } else if(thread >= 256 && thread < 384) {
     // Update neuron population C
   }
 }
 \end{lstlisting}
 %
-This works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
+In CUDA, threads are grouped into `thread blocks', within which data can be exchanged via fast local memory.
+However, to maximise performance, the code running on the threads within a thread block should not `diverge'.
+To reduce this, we add `padding' threads around each population of neurons so, in the example, 100 neurons are padded to the next multiple of 32 (assumed to be the size of the thread block in this example).
+This approach is similar to the ``Inter Thread Block fusion'' strategy described by \citet{Wang2010} and works well for a small number of populations.
+However, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 %
 \begin{figure}
@@ -190,7 +194,7 @@ Investigating further, we found that this drop in performance was accompanied by
 These particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020}, which makes sense as we are generating kernels with hundreds of thousands of lines of code.
 %\todo{is more detail required here as to why?}
 
-Several neural modelling tools including Brian2~\citep{Stimberg2014} provide modellers with tools to work with `slices' of neuron populations, allowing models to be defined with fewer populations.
+Several neural modelling tools including Brian2~\citep{Stimberg2019} provide modellers with tools to work with `slices' of neuron populations, allowing models to be defined with fewer populations.
 However, if a model is defined by connecting these slices together, the resulting connectivity is the result of \emph{multiple} simple connection rules of the type discussed in the previous section, making it much more difficult to apply our procedural connectivity approach.
 Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
 
@@ -216,7 +220,7 @@ neuronUpdateGroup[2] = {100, VC};
 where \lstinline{VA} is a pointer to the array containing the state variable `V' of populations `A' and so on.
 In order for a thread to determine which neuron in which population it should simulate, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population:
 \begin{lstlisting}
-unsigned int startThread[3] = {0, 100, 200};
+unsigned int startThread[3] = {0, 128, 256};
 \end{lstlisting}
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance.
@@ -226,8 +230,8 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
         \centering
         \includegraphics{figures/multi_area}
         \captionsetup{width=6.69in}
-        \caption{Results of full-scale multi-area model simulation in ground and resting states. 
-        \textbf{A-F} Raster plots of spiking activity of \SI{3}{\percent} of the neurons in area V1~(A,D), V2~(B,E), and FEF~(C,F).
+        \caption{Results of full-scale multi-area model simulation in ground resting states. 
+        \textbf{A-F} Raster plots from GeNN simulation showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A,D), V2~(B,E), and FEF~(C,F).
         Blue: excitatory neurons, red: inhibitory neurons.
         \textbf{G-L} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
         Solid lines: medians, Dashed lines: Interquartile range.
@@ -275,7 +279,7 @@ One important aspect of large-scale brain simulations not addressed in this work
 As discussed by~\citet{Knight2018}, GeNN supports a wide variety of synaptic plasticity rules.
 In order to modify synaptic weights, they need to be stored in memory rather than generated procedurally.
 However, connectivity could still be generated procedurally, potentially halving the memory requirements of models with synaptic plasticity.
-This would be sufficient for synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron states~\cite{Brader2007,Clopath2010c} but, for many Spike-Timing-Dependent Plasticity~(STDP) rules, access to \emph{postsynaptic} spikes is also required.
+This would be sufficient for synaptic plasticity rules that only require access to presynaptic spikes and postsynaptic neuron states~\citep{Brader2007,Clopath2010c} but, for many Spike-Timing-Dependent Plasticity~(STDP) rules, access to \emph{postsynaptic} spikes is also required.
 GeNN supports such rules by automatically generating a lookup table structure (see~\citet{Knight2018}).
 While this process could be adapted to generate a lookup table from procedural connectivity, this would further erode memory savings.
 However, typically not all synapses in a simulation are plastic and those that are not could be simulated fully procedurally.
