@@ -7,6 +7,7 @@
 
 void modelDefinition(NNmodel &model)
 {
+    GENN_PREFERENCES.enableBitmaskOptimisations = true;
     model.setSeed(1234);
     model.setDT(1.0);
     model.setName("va_benchmark");
