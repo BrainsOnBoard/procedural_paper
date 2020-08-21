@@ -75,6 +75,7 @@ In the following subsections, we first present two recent innovations in our GeN
 We then demonstrate the power of the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
 
 \subsection{Procedural connectivity}
+\label{sec:results/procedural}
 The first crucial innovation that enables large-scale simulations on a GPU is what we call `procedural connectivity'.
 In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
@@ -154,25 +155,30 @@ While the procedural connectivity presented in the previous section allows simul
 GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate separate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
-Therefore, in GeNN, multiple neuron populations are simulated within each kernel, resulting in code of the form shown in the following pseudocode for simulating 3 populations of 100 neurons each in a single kernel:
-%
+Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where multiple neuron populations are simulated within each kernel.
+CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
+To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
+Therefore, in the following pseudocode we simulating 3 populations of 100 neurons each in a single kernel and -- assuming a thread block size of 32 -- we pad each population to 128 threads:
+
 \begin{lstlisting}
 void updateNeurons() {
   if(thread < 128) {
-    // Update neuron population A
+    if(thread < 100) {
+      // Update neuron population A
+    }
   } else if(thread >= 128 && thread < 256) {
-    // Update neuron population B
+    if((thread - 128) < 100) {
+      // Update neuron population B
+    }
   } else if(thread >= 256 && thread < 384) {
-    // Update neuron population C
+    if((thread - 256) < 100) {
+      // Update neuron population C
+    }
   }
 }
 \end{lstlisting}
 %
-In CUDA, threads are grouped into `thread blocks', within which data can be exchanged via fast local memory.
-However, to maximise performance, the code running on the threads within a thread block should not `diverge'.
-To reduce this, we add `padding' threads around each population of neurons so, in the example, 100 neurons are padded to the next multiple of 32 (assumed to be the size of the thread block in this example).
-This approach is similar to the ``Inter Thread Block fusion'' strategy described by \citet{Wang2010} and works well for a small number of populations.
-However, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of \num{1000000} LIF neurons into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
+This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons, stimulated by a Gaussian current input into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 %
 \begin{figure}
@@ -186,7 +192,7 @@ Furthermore, the simulation also runs slower with a large number of populations 
     \label{fig:merging_scaling}
 \end{figure}
 %
-Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
+Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data (\SI{8}{\byte} of neuron state and \SI{24}{\byte} of RNG state) and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
 Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
 However, when the model is partitioned into larger numbers of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e. neither memory \emph{nor} compute are used efficiently.
@@ -198,7 +204,7 @@ Several neural modelling tools including Brian2~\citep{Stimberg2019} provide mod
 However, if a model is defined by connecting these slices together, the resulting connectivity is the result of \emph{multiple} simple connection rules of the type discussed in the previous section, making it much more difficult to apply our procedural connectivity approach.
 Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
 
-To address the issue of too many populations, we developed a new code generator for GeNN which first `merges' the model description, grouping together populations which can be simulated using the same generated code.
+To address the issue of too many populations, we developed a new code generator for GeNN which applies a Single Program Multiple Data~(SPMD) approach and `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
 %
 \begin{lstlisting}
@@ -274,6 +280,7 @@ We have shown that this approach allows us to simulate a cortical model with \nu
 While this represents a significant step forward in terms of making large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
 Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory, with the majority~(\SI{8.5}{\giga\byte}) being used for the circular dendritic delay buffers~(see~\citet{Knight2018}).
 These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to 500 \SI{0.1}{\milli\second} simulation timesteps, the delay buffers become quite large.
+However, for models without large delays such as the balanced random network simulated in section~\ref{sec:results/procedural}, only around \SI{20}{\byte} is required per neuron meaning that, theoretically, over \num{1E9} neurons could be simulated on a \SI{24}{\giga\byte} GPU.
 
 One important aspect of large-scale brain simulations not addressed in this work is synaptic plasticity and its role in learning.
 As discussed by~\citet{Knight2018}, GeNN supports a wide variety of synaptic plasticity rules.
@@ -349,7 +356,7 @@ A GeNN port of the multi-area model is available at \url{https://github.com/newo
 The models used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} are all available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
 
 % Bibliography
-\bibliographystyle{plainnat}
+\bibliographystyle{apalike}
 \bibliography{procedural}
 
 \end{document}
