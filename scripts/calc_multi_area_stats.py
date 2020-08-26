@@ -9,6 +9,10 @@ from os import path
 from six import iteritems
 from sys import argv
 
+def pop_rate(data_array, t_min, t_max, num_neur):
+    hist, _ = np.histogram(data_array[1][data_array[0] > t_min], bins=range(num_neur + 1))
+    return np.divide(hist, (t_max - t_min) / 1000.0, dtype=float)
+
 def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
     """
     Compute the LvR value of the given data_array.
@@ -51,7 +55,7 @@ def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
             LvR = np.append(LvR, 0.0)
     #if len(LvR) < num_neur:
     #    LvR = np.append(LvR, np.zeros(num_neur - len(LvR)))
-    return np.mean(LvR), LvR
+    return LvR
 
 def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     # Get unique neuron ids
@@ -75,15 +79,15 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     cc[np.where(np.isnan(cc))] = 0.
     
     # Return mean correlation coefficient
-    return np.mean(cc)
+    return cc
     
 def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
     # Get list of all data files for this population
     spike_files = list(glob(path.join(data_path, "recordings", "*_%s.npy" % population_name)))
     
-    rates = np.empty(len(spike_files))
-    irregularity = np.empty(len(spike_files))
-    correlation = np.empty(len(spike_files))
+    rates = np.empty(0)
+    irregularity = np.empty(0)
+    correlation = np.empty(0)
     for i, s in enumerate(spike_files):
         # Load spike data
         data = np.load(s)
@@ -95,18 +99,15 @@ def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
 
         # Count neurons
         num_neurons = int(population_sizes[area_name][pop_name])
-
-        # Count spikes that occur after first 500ms
-        num_spikes = np.sum(data[0] > 500.0)
         
         # Calculate rate
-        rates[i] = num_spikes / (num_neurons * (duration_s - 0.5))
+        rates = np.hstack((rates, pop_rate(data, 500.0, duration_s * 1000.0, num_neurons)))
     
         # Calculate irregularity
-        irregularity[i] = pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0]
+        irregularity = np.hstack((irregularity, pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)))
         
         # Calculate correlation coefficient
-        correlation[i] = calc_correlations(data, 500.0, duration_s * 1000.0)
+        correlation = np.hstack((correlation, calc_correlations(data, 500.0, duration_s * 1000.0)))
 
     np.save("genn_rates_%s.npy" % population_name, rates)
     np.save("genn_irregularity_%s.npy" % population_name, irregularity)
