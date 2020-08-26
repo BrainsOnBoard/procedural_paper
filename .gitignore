@@ -9,3 +9,4 @@
 models/**/generator
 models/**/generator.d
 models/**/*_CODE
+models/**/x64

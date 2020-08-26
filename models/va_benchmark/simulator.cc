@@ -21,8 +21,11 @@ int main()
 
     // Open CSV output files
     SpikeRecorder<SpikeWriterTextCached> spikes(&getECurrentSpikes, &getECurrentSpikeCount, "spikes.csv", ",", true);
-    AnalogueRecorder<scalar> voltages("voltages.csv", VE, Parameters::numExcitatory, ",");
 
+    std::ofstream excVoltages;
+    if(Parameters::recordVoltages) {
+        excVoltages.open("voltages.bin", std::ios::binary);
+    }
     double wallClock = 0.0;
     {
         TimerAccumulate a(wallClock);
@@ -37,7 +40,7 @@ int main()
 
             if(Parameters::recordVoltages) {
                 pullVEFromDevice();
-                voltages.record(t);
+                excVoltages.write(reinterpret_cast<const char*>(VE), sizeof(scalar) * Parameters::numExcitatory);
             }
         }
     }
