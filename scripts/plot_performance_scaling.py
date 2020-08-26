@@ -9,9 +9,6 @@ import plot_settings
 from itertools import chain, groupby
 from six import iterkeys, itervalues
 
-def flip(items, ncol):
-    return chain(*[items[i::ncol] for i in range(ncol)])
-
 # Names and algorithms - could extract them from CSV but it's a ball-ache
 devices = ["Jetson TX2", "GeForce MX130", "GeForce GTX 1650", "Titan RTX"]
 algorithms = ["Sparse", "Bitfield", "Procedural"]
@@ -19,36 +16,43 @@ algorithms = ["Sparse", "Bitfield", "Procedural"]
 # Import data
 # **NOTE** np.loadtxt doesn't handle empty entries
 data = np.genfromtxt("scaling_data.csv", delimiter=",", skip_header=1)
-assert data.shape[1] == (2 + (len(devices) * len(algorithms)))
+assert data.shape[1] == (2 + (5 * len(devices) * len(algorithms)))
 
-def plot_line(axis, data, devices, algorithms, pal, show_y_axis_label=True):
-    markers = ["o", "D", "s"]
-    assert len(markers) == len(algorithms)
+def plot_line(axis, data, device_index, algorithms, pal, show_y_axis_label=True):
+    num_repeats = 5
 
-    # Loop through devices
-    for d, _ in enumerate(devices):
-        # Extract the chunk of data associated with this device
-        start_col = 2 + (len(algorithms) * d)
-        end_col = start_col + len(algorithms)
-        device_data = data[:,start_col:end_col]
+    # Extract the chunk of data associated with this device
+    start_col = 2 + (len(algorithms) * device_index * num_repeats)
+    end_col = start_col + (len(algorithms) * num_repeats)
+    device_data = data[:,start_col:end_col]
 
+    # Check shape is as expected
+    assert device_data.shape[1] == (len(algorithms) * num_repeats)
+    
+    # Loop through algorithms
+    for i, a in enumerate(algorithms):
+        # Extract the chunk of data associated with this algorithm
+        start_col = i * num_repeats
+        end_col = start_col + num_repeats
+        algorithm_data = device_data[:,start_col:end_col]
+        
         # Check shape is as expected
-        assert device_data.shape[1] == len(algorithms)
-
-        # Find best algorithms at each point
-        device_best_algorithm = np.nanargmin(device_data, axis=1)
-        device_best = np.nanmin(device_data, axis=1)
-
-        # Plot line through best data points
-        axis.plot(data[:,0], device_best[:], color=pal[d])
-
-        # Loop through groups of best algorithms
-        index = 0
-        for i, (a, group) in enumerate(groupby(device_best_algorithm)):
-            group_size = len(list(group))
-            axis.scatter(data[index:index + group_size,0], device_best[index:index + group_size],
-                         color=pal[d], marker=markers[a], s=15.0)
-            index += group_size
+        assert algorithm_data.shape[1] == num_repeats
+        
+        # Build mask of rows containing all valid data
+        valid_data = np.logical_not(np.any(np.isnan(algorithm_data), axis=1))
+        
+        # Calculate mean of valid data
+        mean_time = np.mean(algorithm_data[valid_data,:], axis=1)
+        
+        # Calculate standard deviations of valid data
+        std = np.std(algorithm_data[valid_data,:], axis=1)
+        
+        # Extract matching subset of neuron counts
+        num_neurons = data[valid_data,0]
+        
+        # Plot
+        axis.errorbar(num_neurons, mean_time, yerr=std, marker="o", markersize=4.0)
 
     # Configure axis
     axis.set_xlabel("Number of neurons")
@@ -56,80 +60,27 @@ def plot_line(axis, data, devices, algorithms, pal, show_y_axis_label=True):
         axis.set_ylabel("Simulation time [s]")
     axis.set_xscale("log")
     axis.set_yscale("log")
-
+    axis.set_ylim((1E-3, 100))
+    
     # Remove axis junk
     sns.despine(ax=axis)
-
-    # Add axis legend
-    legend_actors = [Line2D([], [], marker=m) for m in markers]
-    axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
-
-
-def plot_bars(axis, data, devices, algorithms, pal, show_y_axis_label=True):
-    alphas = [0.0, 0.5, 1.0]
-    assert len(alphas) == len(algorithms)
-
-    time_rows = [0, 2, 4, 6]
-
-    group_size = len(devices) * len(algorithms)
-    num_groups = len(time_rows)
-    num_bars = group_size * num_groups
-    bar_x = np.empty(num_bars)
-    bar_height = np.empty(num_bars)
-
-    bar_width = 0.8
-    group_width = 15.0
-    group_x = np.arange(group_width * 0.5, group_width * (num_groups - 0.49999), group_width)
-
-    # Loop through devices
-    for d, _ in enumerate(devices):
-        # Extract the chunk of data associated with this device
-        start_col = 2 + (len(algorithms) * d)
-        end_col = start_col + len(algorithms)
-        device_data = data[:,start_col:end_col]
-
-        # Check shape is as expected
-        assert device_data.shape[1] == len(algorithms)
-
-        # Loop through algorithms
-        for a, _ in enumerate(algorithms):
-            # Calculate bar positions
-            bar_x = [(group_width * i) + (3.5 * d) + a
-                     for i in range(num_groups)]
-            
-            # Plot bars
-            axis.bar(bar_x, device_data[time_rows, a], width=bar_width, linewidth=0.3,
-                     color=(pal[d][0], pal[d][1], pal[d][2], alphas[a]), ec=(0.0, 0.0, 0.0, 1.0))
-
-    # Configure axis
-    axis.set_xticks(group_x)
-    axis.set_xticklabels(["$10^{%u}$" % np.log10(d) for d in data[time_rows,0]], ha="center")
-    axis.set_yscale("log")
-    axis.set_xlabel("Number of neurons")
-    axis.set_yticks([10 ** i for i in range(5)])
-    if show_y_axis_label:
-        axis.set_ylabel("Simulation time [s]")
-
-    # Remove axis junk
-    sns.despine(ax=axis)
-    axis.xaxis.grid(False)
-
-    # Add axis legend
-    legend_actors = [Rectangle((0, 0), 1, 1, fc=(0.0, 0.0, 0.0, a), ec=(0.0, 0.0, 0.0, 1.0)) for a in alphas]
-    axis.legend(legend_actors, algorithms, frameon=False, loc="upper left")
 
 pal = sns.color_palette()
-fig, axes = plt.subplots(1, 2, sharey=True, 
+fig, axes = plt.subplots(1, len(devices), sharey=True, 
                          figsize=(17.0 * plot_settings.cm_to_inches, 
                                   5.0 * plot_settings.cm_to_inches))
-plot_line(axes[0], data, devices, algorithms, pal)
-plot_bars(axes[1], data, devices, algorithms, pal, False)
 
-axes[0].set_title("A", loc="left")
-axes[1].set_title("B", loc="left")
+# Plot data for each device
+for i, a in enumerate(axes):
+    plot_line(a, data, i, algorithms, pal, i == 0)
+
+# Add axis labels
+for i, a in enumerate(axes):
+    a.set_title(chr(ord("A") + i), loc="left")
+
 # Show figure legend with devices beneath figure
-legend_actors = [Rectangle((0, 0), 1, 1, fc=pal[i]) for i, _ in enumerate(devices)]
-fig.legend(legend_actors, devices, ncol=len(devices), frameon=False, loc="lower center")
+legend_actors = [Line2D([], [], color=p) for _, p in zip(algorithms, pal)]
+fig.legend(legend_actors, algorithms, ncol=len(algorithms), frameon=False, loc="lower center")
 
 plt.tight_layout(pad=0, w_pad=1.0, rect= [0.0, 0.125, 1.0, 1.0])
 if not plot_settings.presentation:
