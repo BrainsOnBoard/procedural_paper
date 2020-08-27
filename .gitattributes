@@ -1,1 +1,2 @@
 **/genn_recordings/*.npy filter=lfs diff=lfs merge=lfs -text
+scripts/**/seed_*/*.npy filter=lfs diff=lfs merge=lfs -text
