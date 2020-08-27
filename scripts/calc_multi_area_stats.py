@@ -9,8 +9,8 @@ from os import path
 from six import iteritems
 from sys import argv
 
-def pop_rate(data_array, t_min, t_max, num_neur):
-    hist, _ = np.histogram(data_array[1][data_array[0] > t_min], bins=range(num_neur + 1))
+def pop_rate(data_array, t_min, t_max, num_neur, start_id=0):
+    hist, _ = np.histogram(data_array[1][data_array[0] > t_min], bins=range(start_id, start_id + num_neur + 1))
     return np.divide(hist, (t_max - t_min) / 1000.0, dtype=float)
 
 def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
@@ -60,7 +60,7 @@ def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
 def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     # Get unique neuron ids
     ids = np.unique(data_array[1])
-    
+
     # Extract spike train i.e. sorted array of spike times for each neuron
     # **NOTE** this is a version of correlation_toolbox.helper.sort_gdf_by_id, 
     # modified to suit our data format
@@ -75,23 +75,23 @@ def calc_correlations(data_array, t_min, t_max, subsample=2000, resolution=1.0):
     bins, hist = ch.instantaneous_spike_count(dat, resolution, tmin=t_min, tmax=t_max)
     rates = ch.strip_binned_spiketrains(hist)[:subsample]
     cc = np.corrcoef(rates)
-    cc = np.extract(1-np.eye(cc[0].size), cc)
+    cc = cc[np.tril_indices_from(cc, k=-1)]
     cc[np.where(np.isnan(cc))] = 0.
-    
+
     # Return mean correlation coefficient
     return cc
-    
+
 def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
     # Get list of all data files for this population
     spike_files = list(glob(path.join(data_path, "recordings", "*_%s.npy" % population_name)))
-    
-    rates = np.empty(0)
-    irregularity = np.empty(0)
-    correlation = np.empty(0)
+
+    rates = []
+    irregularity = []
+    correlation = []
     for i, s in enumerate(spike_files):
         # Load spike data
         data = np.load(s)
-         
+
         # Extract population name
         name_components = path.basename(s).split("_")
         area_name = name_components[0]
@@ -99,28 +99,28 @@ def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
 
         # Count neurons
         num_neurons = int(population_sizes[area_name][pop_name])
-        
-        # Calculate rate
-        rates = np.hstack((rates, pop_rate(data, 500.0, duration_s * 1000.0, num_neurons)))
-    
-        # Calculate irregularity
-        irregularity = np.hstack((irregularity, pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)))
-        
-        # Calculate correlation coefficient
-        correlation = np.hstack((correlation, calc_correlations(data, 500.0, duration_s * 1000.0)))
 
-    np.save("genn_rates_%s.npy" % population_name, rates)
-    np.save("genn_irregularity_%s.npy" % population_name, irregularity)
-    np.save("genn_corr_coeff_%s.npy" % population_name, correlation)
+        # Calculate rate
+        rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons))
+
+        # Calculate irregularity
+        irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
+
+        # Calculate correlation coefficient
+        correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
+
+    np.save("rates_%s.npy" % population_name, np.hstack(rates))
+    np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
+    np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
 
 def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
     # Open file
     data = h5py.File(filename, "r")
-    
+
     rates = []
     irregularity = []
     correlation = []
-    
+
     # Loop through all areas in data
     for area_name, area_data in iteritems(data):
         # If there is data for this processes population in area
@@ -132,28 +132,26 @@ def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
                 # Count neurons
                 num_neurons = int(population_sizes[area_name][pop_name])
 
-                # Count spikes that occur after first 500ms
-                num_spikes = np.sum(data[0] > 500.0)
-                
                 # Calculate rate
-                rates.append(num_spikes / (num_neurons * (duration_s - 0.5)))
-            
+                # **NOTE** don't have any network_gids.txt files so minimum neuron id will have to do
+                rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1]))))
+
                 # Calculate irregularity
-                irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0])
-                
+                irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
+
                 # Calculate correlation coefficient
                 correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
             else:
                 print("WARNING %s:%s data shape %u, %u" % (area_data, pop_name, data.shape[0], data.shape[1]))
-            
-    np.save("nest_rates_%s.npy" % pop_name, np.asarray(rates))
-    np.save("nest_irregularity_%s.npy" % pop_name, np.asarray(irregularity))
-    np.save("nest_corr_coeff_%s.npy" % pop_name, np.asarray(correlation))
+
+    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
+    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
+    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
 
 def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
     # Get list of all data files for this population
     spike_files = list(glob(path.join(data_path, "*_spikes-*-%s-*-*.gdf" % pop_name)))
-    
+
     rates = []
     irregularity = []
     correlation = []
@@ -162,10 +160,10 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
         # **NOTE** we need usecols becauses lines have a trailing delimiter which pandas thinks is another column
         data = read_csv(s, names=["id", "time"], skiprows=0, usecols=[0,1], delimiter="\t", 
                         dtype={"id":np.uint64, "time":np.float64}, engine="c")
-        
+
         # Stack data back into same shape as GeNN
         data = np.vstack((data["time"], data["id"]))
-         
+
         # Extract population name
         name_components = path.basename(s).split("-")
         area_name = name_components[1]
@@ -177,22 +175,23 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
         num_spikes = np.sum(data[0] > 500.0)
         if num_spikes > 0:
             # Calculate rate
-            rates.append(num_spikes / (num_neurons * (duration_s - 0.5)))
-        
+            rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons))
+
             # Calculate irregularity
-            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)[0])
-            
+            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
+
             # Calculate correlation coefficient
             correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
 
-    np.save("nest_rates_%s.npy" % pop_name, np.asarray(rates))
-    np.save("nest_irregularity_%s.npy" % pop_name, np.asarray(irregularity))
-    np.save("nest_corr_coeff_%s.npy" % pop_name, np.asarray(correlation))
-     
-     
+    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
+    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
+    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
+
+
 if __name__ == '__main__':
-    assert len(argv) >= 2
+    assert len(argv) >= 3
     data_path = argv[1]
+    duration_s = float(argv[2])
 
     # Find model description
     custom_data_model_filename = list(glob(path.join(data_path, "custom_Data_Model_*.json")))
@@ -209,32 +208,31 @@ if __name__ == '__main__':
     populations = ["4E", "4I", "5E", "5I", "6E", "6I", "23E", "23I"]
 
     # If a NEST data file is passed
-    if len(argv) > 2:
+    if len(argv) > 3:
         # If data is in HDF5 format
-        if argv[2].endswith(".hdf5"):
-            print("Processing NEST H5 data")
-        
+        if argv[3].endswith(".hdf5"):
+            print("Processing NEST HDF5 data")
+
             # Create processes to calculate stats for each population
-            processes = [Process(target=calc_hdf5_nest_stats, args=(argv[2], 100.5, p, population_sizes)) 
+            processes = [Process(target=calc_hdf5_nest_stats, args=(argv[3], duration_s, p, population_sizes)) 
                          for p in populations]
         else:
             print("Processing NEST GDF data")
-            
+
             # Create processes to calculate stats for each population
-            processes = [Process(target=calc_gdf_nest_stats, args=(argv[2], 100.5, p, population_sizes)) 
+            processes = [Process(target=calc_gdf_nest_stats, args=(argv[3], duration_s, p, population_sizes)) 
                          for p in populations]
     else:
-        print("Processing GeNN H5 data");
-        
+        print("Processing GeNN data");
+
         # Create processes to calculate stats for each population
-        processes = [Process(target=calc_genn_stats, args=(data_path, 100.5, p, population_sizes)) 
+        processes = [Process(target=calc_genn_stats, args=(data_path, duration_s, p, population_sizes)) 
                      for p in populations]
-    
-     
+
     # Start processes
     for p in processes:
         p.start()
-        
+
     # Join processes
     for p in processes:
         p.join()
