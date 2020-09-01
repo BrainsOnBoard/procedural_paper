@@ -31,7 +31,7 @@
 Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
 However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value.
 This amounts to several terabytes of data -- an unrealistic memory requirement for a single desktop machine.
-Large models are therefore typically simulated on distributed supercomputers which is costly and limits large-scale modelling to a few privileged research groups.
+Large models are therefore typically simulated on distributed supercomputers which is costly, places limits on the number and duration of simulations that can be run and typically requires formal procedures to gain access to the necessary resources.
 In this work, we describe extensions to GeNN -- our Graphical Processing Unit~(GPU) accelerated spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
 We find that GPUs are well-suited to this approach because of their raw computational power which, due to memory bandwidth limitations, is often under-utilised when simulating spiking neural networks.
 We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
@@ -100,6 +100,7 @@ This is possible because the outgoing synaptic connections from each neuron are 
         \includegraphics{figures/performance_scaling}
         \captionsetup{width=6.69in}
         \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
+        All points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
         \textbf{A} Jetson TX2.
         \textbf{B} GeForce MX130.
         \textbf{C} GeForce GTX 1650.
