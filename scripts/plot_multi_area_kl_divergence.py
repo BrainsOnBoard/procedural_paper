@@ -89,7 +89,7 @@ errorbar_kwargs = {"linestyle": "None", "marker": "o", "markersize": 0.5,
 # Draw rate KL-divergence bars
 for i, (m, s) in enumerate(zip(rate_kl_mean, rate_kl_std)):
     permutation_actors.append(kl_axes[0].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
-                                                  yerr=s, **errorbar_kwargs)[0])
+                                                  yerr=s, **errorbar_kwargs)[2])
 
 # Draw correlation coefficient KL-divergence bars
 for i, (m, s) in enumerate(zip(corr_coeff_kl_mean, corr_coeff_kl_std)):
