@@ -137,7 +137,7 @@ The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$.
 
 We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
-Jetson Xavier NX, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
+Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
@@ -248,6 +248,17 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
     \end{fullwidth}
 \end{figure}
 %
+\begin{figure}
+    \centering
+    \includegraphics{figures/microcircuit_accuracy_kl}
+    \caption{Comparison of full-scale multi-area model spike statistics between multiple GeNN simulations with different seeds; and NEST simulations.
+    Comparisons calculated using the Kullback-Leibler (KL) divergence.
+    \textbf{A} Neuron firing rates
+    \textbf{B} Pairwise correlation coefficients of spiking activity.
+    \textbf{C} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009}.}
+    \label{fig:microcircuit_accuracy_kl}
+\end{figure}
+%
 \subsection{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
 However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
@@ -257,8 +268,9 @@ The patches are connected together according to inter-area axon tracing data fro
 The synapses are distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004}.
 Individual populations are connected by the fixed number connectors described above.
 For a full description of the multi-area model please see~\citet{Schmidt2018a,Schmidt2018}.
-In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on one rack of an IBM Blue Gene/Q supercomputer~(a \SI{2}{\metre} high enclosure containing \num{1024} compute nodes, weighing over \SI{2}{\tonne} and requiring around \SI{80}{\kilo\watt} of power).
-On this system, initialization of the model took around \SI{5}{\minute} and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
+In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on an IBM Blue Gene/Q supercomputer.
+Because each node of the Blue Gene/Q only has limited memory, these simulation were distributed across an entire \num{1024} compute node rack of the system and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
+On the newer `JURECA' supercomputer -- where each node has \SI{128}{\giga\byte} of memory -- this model can be simulated on as few as \num{11} compute nodes and, on \num{160} compute nodes, simulating \SI{1}{\second} of biological takes only \SI{31}{\second} and initialization requires approximately \SI{8}{\minute}~\citep{VanAlbada2020}.
 
 The multi-area model consists of \num{4.13E6} neurons in \num{254} populations and \num{24.2E9} synapses in \num{64516} projections.
 Without kernel merging, it would therefore be unlikely that the model would compile or simulate at a workable speed using GeNN.
@@ -268,11 +280,14 @@ While a cluster of GPUs connected using NVLink could be built with this much mem
 However, using procedural connectivity, we are able to simulate this model on a single workstation with a Titan RTX GPU.
 
 In order to validate our GeNN simulations, we ran a \SI{10.5}{\second} simulation of the multi-area model in a `ground state' where inter-area connections have the same strength as intra-area connections and a \SI{100.5}{\second} simulation in a `resting state' where inter-area connections are $1.9\times$ stronger.
-Initialization of our model took \SI{6}{\minute} (\SI{3}{\minute} of which was spent generating and compiling code) and simulation of each biological second took \SI{7.7}{\minute} in the ground state and \SI{8.4}{\minute} in the resting state -- \SI{35}{\percent} and \SI{30}{\percent} less than the supercomputer simulation respectively.
+Initialization of our model took \SI{6}{\minute} (\SI{3}{\minute} of which was spent generating and compiling code) and simulation of each biological second took \SI{7.9}{\minute} in the ground state and \SI{8.5}{\minute} in the resting state -- both averaged over 3 simulation runs.
 Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state whereas Fig.~\ref{fig:multi_area}D-F illustrate the characteristic irregular activity and population bursts of the same areas in the resting state.
 Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the same measures obtained from spike trains generated by the supercomputer simulations.
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
-The violin plots in Fig.~\ref{fig:multi_area}G-L show the comparison of the distributions of values obtained from the NEST and GeNN simulations in both states -- which are essentially identical.
+The distributions of these values, obtained from the NEST and GeNN simulations, are shown as violin plots in Fig.~\ref{fig:multi_area}G-L.
+To assess how meaningful the differences between these distributions are, we compared the distributions obtained from 3 GeNN simulations with different random number generator seeds against those obtained from NEST.
+We performed this comparison by computing histograms of the three measures -- using bin sizes determined with the Freedman-Diaconis rule~\citep{Freedman1981} -- and comparing pairs of distributions using the Kullback-Leibler~(KL) divergence $D_\text{KL}$.
+The results of these comparisons are shown in Fig.~\ref{fig:microcircuit_accuracy_kl} and suggest that the influence of the random seeds is comparable to the influence of random seeds and simulator combined -- indicating that the choice of simulator has little effect on the model dynamics.
 %
 \section{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
