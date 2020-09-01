@@ -38,19 +38,37 @@ data_path = argv[1]
 permutations = ["nest_seed_1", "nest_seed_2", "nest_seed_3",
                 "seed_1_seed_2", "seed_1_seed_3", "seed_2_seed_3"]
 
-permutation_names = ["GeNN 1 vs NEST", "GeNN 2 vs NEST", "GeNN 3 vs NEST",
-                     "GeNN 1 vs GeNN 2", "GeNN 1 vs GeNN 3", "GeNN 2 vs GeNN 3"]
+permutation_names = ["GeNN vs NEST", "GeNN vs GeNN"]
 
 # Population names
 populations = ["4E", "4I", "5E", "5I", "6E", "6I", "23E", "23I"]
 
-rate_kl_div = []
-corr_coeff_kl_div = []
-irregularity_div = []
-for p in permutations:
-    rate_kl_div.append(calc_kl_divergence(data_path, p + "_rates", populations))
-    corr_coeff_kl_div.append(calc_kl_divergence(data_path, p + "_corr_coeff", populations))
-    irregularity_div.append(calc_kl_divergence(data_path, p + "_irregularity", populations))
+rate_kl_div = None
+corr_coeff_kl_div = None
+irregularity_kl_div = None
+for i, p in enumerate(permutations):
+    per_rate_kl_div = calc_kl_divergence(data_path, p + "_rates", populations)
+    per_corr_coeff_kl_div = calc_kl_divergence(data_path, p + "_corr_coeff", populations)
+    per_irregularity_kl_div = calc_kl_divergence(data_path, p + "_irregularity", populations)
+    
+    if i == 0:
+        rate_kl_div = per_rate_kl_div
+        corr_coeff_kl_div = per_corr_coeff_kl_div
+        irregularity_kl_div = per_irregularity_kl_div
+    else:
+        rate_kl_div = np.vstack((rate_kl_div, per_rate_kl_div))
+        corr_coeff_kl_div = np.vstack((corr_coeff_kl_div, per_corr_coeff_kl_div))
+        irregularity_kl_div = np.vstack((irregularity_kl_div, per_irregularity_kl_div))
+
+
+rate_kl_mean = [np.mean(rate_kl_div[:3,:], axis=0), np.mean(rate_kl_div[3:,:], axis=0)]
+rate_kl_std = [np.std(rate_kl_div[:3,:], axis=0), np.std(rate_kl_div[3:,:], axis=0)]
+
+corr_coeff_kl_mean = [np.mean(corr_coeff_kl_div[:3,:], axis=0), np.mean(corr_coeff_kl_div[3:,:], axis=0)]
+corr_coeff_kl_std = [np.std(corr_coeff_kl_div[:3,:], axis=0), np.std(corr_coeff_kl_div[3:,:], axis=0)]
+
+irregularity_kl_mean = [np.mean(irregularity_kl_div[:3,:], axis=0), np.mean(irregularity_kl_div[3:,:], axis=0)]
+irregularity_kl_std = [np.std(irregularity_kl_div[:3,:], axis=0), np.std(irregularity_kl_div[3:,:], axis=0)]
 
 # Create second figure to show KL divergence
 kl_fig, kl_axes = plt.subplots(3, frameon=False,
@@ -66,23 +84,26 @@ kl_bar_x = np.arange(0.0, len(populations) * (kl_bar_width + kl_bar_pad), kl_bar
 permutation_actors = []
 
 # Draw rate KL-divergence bars
-for i, r in enumerate(rate_kl_div):
-    permutation_actors.append(kl_axes[0].bar((kl_bar_x * len(permutations)) + (i * kl_bar_width), r, kl_bar_width)[0])
+for i, (m, s) in enumerate(zip(rate_kl_mean, rate_kl_std)):
+    permutation_actors.append(kl_axes[0].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                                              kl_bar_width, yerr=s, linewidth=0)[0])
 
 # Draw correlation coefficient KL-divergence bars
-for i, c in enumerate(corr_coeff_kl_div):
-    kl_axes[1].bar((kl_bar_x * len(permutations)) + (i * kl_bar_width), c, kl_bar_width)
+for i, (m, s) in enumerate(zip(corr_coeff_kl_mean, corr_coeff_kl_std)):
+    kl_axes[1].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                   kl_bar_width, yerr=s, linewidth=0)
 
 # Draw irregularity KL-divergence bars
-for i, g in enumerate(irregularity_div):
-    kl_axes[2].bar((kl_bar_x * len(permutations)) + (i * kl_bar_width), g, kl_bar_width)
+for i, (m, s) in enumerate(zip(irregularity_kl_mean, irregularity_kl_std)):
+    kl_axes[2].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                   kl_bar_width, yerr=s, linewidth=0)
 
 # Set axis labels and titles
 for axis, title in zip(kl_axes, ["A", "B", "C"]):
     remove_junk(axis)
     axis.set_ylabel("$D_{KL}$")
     axis.set_title(title, loc="left")
-    axis.set_xticks((kl_bar_x * len(permutations)) + (kl_bar_width * 2.5))
+    axis.set_xticks((kl_bar_x * 2) + (kl_bar_width * 0.5))
     axis.set_xticklabels(populations, ha="center")
 
 # Fiddle with ticks
