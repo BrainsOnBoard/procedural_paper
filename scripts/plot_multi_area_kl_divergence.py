@@ -83,20 +83,23 @@ kl_bar_x = np.arange(0.0, len(populations) * (kl_bar_width + kl_bar_pad), kl_bar
 # Plot bars
 permutation_actors = []
 
+errorbar_kwargs = {"linestyle": "None", "marker": "o", "markersize": 0.5,
+                   "capsize": 5.0, "elinewidth": 0.5, "capthick": 0.5}
+
 # Draw rate KL-divergence bars
 for i, (m, s) in enumerate(zip(rate_kl_mean, rate_kl_std)):
-    permutation_actors.append(kl_axes[0].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
-                                              kl_bar_width, yerr=s, linewidth=0)[0])
+    permutation_actors.append(kl_axes[0].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                                                  yerr=s, **errorbar_kwargs)[0])
 
 # Draw correlation coefficient KL-divergence bars
 for i, (m, s) in enumerate(zip(corr_coeff_kl_mean, corr_coeff_kl_std)):
-    kl_axes[1].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
-                   kl_bar_width, yerr=s, linewidth=0)
+    kl_axes[1].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                        yerr=s, **errorbar_kwargs)
 
 # Draw irregularity KL-divergence bars
 for i, (m, s) in enumerate(zip(irregularity_kl_mean, irregularity_kl_std)):
-    kl_axes[2].bar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
-                   kl_bar_width, yerr=s, linewidth=0)
+    kl_axes[2].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
+                        yerr=s, **errorbar_kwargs)
 
 # Set axis labels and titles
 for axis, title in zip(kl_axes, ["A", "B", "C"]):
@@ -112,9 +115,9 @@ kl_axes[1].set_yticks([0, 0.002, 0.004])
 kl_axes[2].set_yticks([0, 0.001, 0.002])
 
 kl_fig.legend(permutation_actors, permutation_names,
-              ncol=2, loc="lower center")
+              ncol=2, loc="lower center", frameon=False)
 
-kl_fig.tight_layout(pad=0, rect=(0, 0.225, 1, 1))
+kl_fig.tight_layout(pad=0, rect=(0, 0.125, 1, 1))
 if not plot_settings.presentation:
     kl_fig.savefig("../figures/microcircuit_accuracy_kl.pdf")
 
