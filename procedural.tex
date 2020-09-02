@@ -353,7 +353,7 @@ In the models where there are synaptic connections, they are current-based, i.e.
 \end{align}
 %
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
-The ordinary differential equations~(\ref{eq:lif_neuron})~and~(\ref{eq:exp_neuron_input_current}) are solved with an explicit Euler algorithm with fixed time step $\Delta t = \SI{0.1}{\milli\second}$.
+The ordinary differential equations~(\ref{eq:lif_neuron})~and~(\ref{eq:exp_neuron_input_current}) are solved with an exponential Euler algorithm.
 %The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are separately solved algebraically so that the input currents $I_{\text{syn}_{i}}$ and $I_{\text{ext}_{i}}$ are treated as constants throughout each simulation timestep.
 
 \subsection{Balanced random network model}
@@ -363,11 +363,14 @@ The network consists of $N$ LIF neurons as described in section~\ref{sec:methods
 The neurons are partitioned into one population of $\frac{4N}{5}$ excitatory and a second of $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$ (the highest density at which \citet{Vogels2005} suggests their results hold).
 All excitatory synapses have $\tau_{\text{syn}}=\SI{5}{\milli\second}$ and $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$; and all inhibitory synapses have $\tau_{\text{syn}}=\SI{10}{\milli\second}$ and $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
-Additionally, every cell is depolarized by approximately \SI{10}{\milli\volt} by applying a constant external current $I_{\text{ext}_i}= \SI{0.55}{\nano\ampere}$.
+Additionally, every cell is depolarized by approximately \SI{10}{\milli\volt} by applying a constant external current $I_{\text{ext}_j}= \SI{0.55}{\nano\ampere}$.
+Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Merging model}
 \label{sec:methods/merging}
-This model simply consists of \num{1000000} LIF neurons, as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}, each driven by a Gaussian input current of $I_{\text{ext}_i} \sim \mathcal{N}(1.0, 0.25)\,\SI{}{\nano\ampere}$.
+This model simply consists of \num{1000000} LIF neurons, as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}, each driven by a Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.25)$.
+Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
+
 \subsection{Multi-area model}
 
 \section{Acknowledgements}
