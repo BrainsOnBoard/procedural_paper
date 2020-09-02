@@ -331,13 +331,9 @@ Key components such as the random number generator could be implemented directly
         $R_{\text{m}}$ [\si{\mega\ohm}]                  & 20                        & 20                & 40 \\
         $\tau_{\text{syn}}$ [\si{\milli\second}]       & {$5/10$\textsuperscript{1}} & {---}             & 0.5\\
         $\tau_{\text{ref}}$ [\si{\milli\second}]       & 5                         & 2                 & 2 \\
-        $I_{\text{ext}_j}$ [\si{\nano\ampere}]           & 0.55                      & 1.0 \pm 0.25   & {Poisson\textsuperscript{2}}\\
-        $w_{ij}$ [\si{\nano\ampere}]            & {$\frac{3.2}{N}/\frac{40.8}{N}$\textsuperscript{1}}           & {---}            & {Various\textsuperscript{2}}\\
     \bottomrule
   \end{tabular}
-  \caption{Model parameters. \\
-  \textsuperscript{1}Excitatory/Inhibitory. \\
-  \textsuperscript{2}Please refer to \citet[Table 1,2]{Schmidt2018}}
+  \caption{Model parameters.}
   \label{tab:parameters}
 \end{table}
 \subsection{Neuron model}
@@ -366,7 +362,7 @@ This model was first presented by \citet{Vogels2005} but has subsequently been w
 The network consists of $N$ LIF neurons as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}.
 The neurons are partitioned into one population of $\frac{4N}{5}$ excitatory and a second of $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$ (the highest density at which \citet{Vogels2005} suggests their results hold).
-For all excitatory synapses, $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$ and, for all inhibitory synapses, $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
+All excitatory synapses have $\tau_{\text{syn}}=\SI{5}{\milli\second}$ and $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$; and all inhibitory synapses have $\tau_{\text{syn}}=\SI{10}{\milli\second}$ and $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
 Additionally, every cell is depolarized by approximately \SI{10}{\milli\volt} by applying a constant external current $I_{\text{ext}_j}= \SI{0.55}{\nano\ampere}$.
 
 \subsection{Merging model}
