@@ -117,7 +117,7 @@ We will now discuss two typical examples and how they can be implemented efficie
 One very common connectivity scheme is the `fixed probability connector' for which each neuron in the presynaptic population is connected to each neuron in the postsynaptic population with fixed probability $P_{\text{conn}}$.
 The postsynaptic targets of any presynaptic neuron can hence be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
 One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
-However, for sparse connectivity ($P_{\text{conn}} \ll 1$), it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e. a synapse).
+However, for sparse connectivity ($P_{\text{conn}} \ll 1$), it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e.~a synapse).
 The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
 Note that, if we were to directly draw from the uniform distribution, the sampling for each potential synapse would be independent from any other potential synapse and all these operations could be performed in parallel.
 However, for the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
@@ -197,7 +197,7 @@ Furthermore, the simulation also runs slower with a large number of populations 
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data (\SI{8}{\byte} of neuron state and \SI{24}{\byte} of RNG state) and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
 Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
-However, when the model is partitioned into larger numbers of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e. neither memory \emph{nor} compute are used efficiently.
+However, when the model is partitioned into larger numbers of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e.~neither memory \emph{nor} compute are used efficiently.
 Investigating further, we found that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls~(Fig.~\ref{fig:merging_scaling}D) which are events that prevent the GPU from doing any work during a clock cycle.
 These particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020}, which makes sense as we are generating kernels with hundreds of thousands of lines of code.
 %\todo{is more detail required here as to why?}
@@ -346,7 +346,7 @@ The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 where $\tau_{\text{m}}$ and $R_{\text{m}}$ represent the time constant and resistance of the neuron's cell membrane, $V_{\text{rest}}$ defines the resting potential, $I_{\text{syn}_{i}}$ represents the synaptic input current and $I_{\text{ext}_i}$ represents an external input current.
 When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted, the membrane voltage is reset to $V_{\text{rest}}$ and updating of $V$ is suspended for a refractory period $\tau_{\text{ref}}$.
-In the models where there are synaptic connections, they are current-based, i.e. pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{syn}_{i}}$
+In the models where there are synaptic connections, they are current-based, i.e.~pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{syn}_{i}}$
 %
 \begin{align}
     \tau_{\text{syn}} \frac{dI_{\text{syn}_{i}}}{dt} = & -I_{\text{syn}_{i}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{j}}  \delta(t - t_{j}),\label{eq:exp_neuron_input_current}
