@@ -175,7 +175,8 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
         num_spikes = np.sum(data[0] > 500.0)
         if num_spikes > 0:
             # Calculate rate
-            rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons))
+            # **NOTE** don't have any network_gids.txt files so minimum neuron id will have to do
+            rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1]))))
 
             # Calculate irregularity
             irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
