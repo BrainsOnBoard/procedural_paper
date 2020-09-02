@@ -60,7 +60,7 @@ def plot_line(axis, data, device_index, algorithms, pal, show_y_axis_label=True)
         axis.set_ylabel("Simulation time [s]")
     axis.set_xscale("log")
     axis.set_yscale("log")
-    axis.set_ylim((1E-3, 100))
+    axis.set_yticks([1E-3, 1E0, 1E3])
     
     # Remove axis junk
     sns.despine(ax=axis)
