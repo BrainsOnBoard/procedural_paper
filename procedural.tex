@@ -1,7 +1,10 @@
 % Use the lineno option to display guide line numbers if required.
 \documentclass[9pt,a4paper]{amsart}
 
-\usepackage{amsaddr,amsmath,caption,changepage,enumitem,graphicx,natbib,listings,booktabs,url}
+\usepackage{amsaddr,amsmath,caption,changepage,enumitem,graphicx,listings,booktabs,url}
+
+% Use superscript numerical citations ala Nature
+\usepackage[super,comma]{natbib}
 
 % Automatic formatting of SI units
 \usepackage[binary-units,separate-uncertainty=true]{siunitx}
@@ -135,11 +138,7 @@ Counter-based PRNGs are designed for parallel applications and essentially consi
 In constrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
-For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network initially designed to investigate signal propagation through cortical networks~\citep{Vogels2005} but subsequently widely used as a scalable benchmark~\citep{Brette2007}.
-The network consists of $N$ integrate-and-fire neurons, partitioned into $\frac{4N}{5}$ excitatory and $\frac{N}{5}$ inhibitory neurons.
-The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$.
-
-We ran simulations of this network at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
+For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of current-based Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
@@ -181,7 +180,7 @@ void updateNeurons() {
 }
 \end{lstlisting}
 %
-This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons, stimulated by a Gaussian current input into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
+This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons see section~\ref{sec:methods/merging} for model description) into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 %
 \begin{figure}
@@ -239,8 +238,8 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
         \centering
         \includegraphics{figures/multi_area}
         \captionsetup{width=6.69in}
-        \caption{Results of full-scale multi-area model simulation in ground resting states. 
-        \textbf{A-F} Raster plots from GeNN simulation showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A,D), V2~(B,E), and FEF~(C,F).
+        \caption{Results of full-scale multi-area model simulation in ground and resting states. 
+        \textbf{A-F} Raster plots from GeNN simulation showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A,D), V2~(B,E), and Frontal Eye Field~(C,F).
         Blue: excitatory neurons, red: inhibitory neurons.
         \textbf{G-L} Spiking statistics for each population across all 32 areas simulated using GeNN and NEST shown as split violin plots.
         Solid lines: medians, Dashed lines: Interquartile range.
@@ -273,8 +272,8 @@ Individual populations are connected by the fixed number connectors described ab
 For a full description of the multi-area model please see~\citet{Schmidt2018a,Schmidt2018}.
 In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on an IBM Blue Gene/Q supercomputer.
 Because each Blue Gene/Q compute node only had a small amount of memory, these simulation were distributed across an entire rack (\num{1024} compute nodes) of the system and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
-However, on the newer `JURECA' supercomputer -- where each node has \SI{128}{\giga\byte} of memory -- this model can be simulated on as few as \num{11} compute nodes.
-Furthermore, by distributing the model across \num{160} compute nodes, it can be initialized in approximately \SI{8}{\minute} and simulating \SI{1}{\second} of biological takes only \SI{31}{\second}~\citep{VanAlbada2020}.
+However, on the newer `JURECA' supercomputer (where each node has \SI{128}{\giga\byte} of memory) this model can be simulated on as few as \num{11} compute nodes.
+Furthermore, by distributing the model across \num{160} compute nodes, it can be initialized in approximately \SI{8}{\minute} and simulating \SI{1}{\second} of biological time takes only \SI{31}{\second}~\citep{VanAlbada2020}.
 
 The multi-area model consists of \num{4.13E6} neurons in \num{254} populations and \num{24.2E9} synapses in \num{64516} projections.
 Without kernel merging, it would therefore be unlikely that the model would compile or simulate at a workable speed using GeNN.
@@ -341,7 +340,9 @@ Key components such as the random number generator could be implemented directly
   \textsuperscript{2}Please refer to \citet[Table 1,2]{Schmidt2018}}
   \label{tab:parameters}
 \end{table}
-In all experiments presented in this work, neurons are modelled as leaky integrate-and-fire~(LIF) units with the parameters listed in Table~\ref{tab:parameters}.
+\subsection{Neuron model}
+\label{sec:methods/neuron_model}
+In all experiments presented in this work, neurons are modelled as current-based Leaky Integrate-and-Fire~(LIF) units with the parameters listed in Table~\ref{tab:parameters}.
 The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 \begin{align}
@@ -358,6 +359,20 @@ In the models where there are synaptic connections, pre-synaptic spikes lead to 
 %
 where $\tau_{\text{syn}}$ represents the decay time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
 The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are separately solved algebraically so that the input currents $I_{\text{syn}_{i}}$ and $I_{\text{ext}_{i}}$ are treated as constants throughout each simulation timestep.
+
+\subsection{Balanced random network model}
+\label{sec:methods/va_benchmark}
+This model was first presented by \citet{Vogels2005} but has subsequently been widely used as a scalable benchmark~\citep{Brette2007}.
+The network consists of $N$ LIF neurons as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}.
+The neurons are partitioned into one population of $\frac{4N}{5}$ excitatory and a second of $\frac{N}{5}$ inhibitory neurons.
+The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$ (the highest density at which \citet{Vogels2005} suggests their results hold).
+For all excitatory synapses, $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$ and, for all inhibitory synapses, $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
+Additionally, every cell is depolarized by approximately \SI{10}{\milli\volt} by applying a constant external current $I_{\text{ext}_j}= \SI{0.55}{\nano\ampere}$.
+
+\subsection{Merging model}
+\label{sec:methods/merging}
+This model simply consists of \num{1000000} LIF neurons, as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}, each driven by a Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.25)$.
+\subsection{Multi-area model}
 
 \section{Acknowledgements}
 We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
