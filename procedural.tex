@@ -328,7 +328,8 @@ While this process could be adapted to generate a lookup table from procedural c
 However, typically not all synapses in a simulation are plastic and those that are not could be simulated fully procedurally.
 
 In this work, we have discussed the idea of procedural connectivity in the context of GPU hardware but, we believe that there is also potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
-Key components such as the random number generator could be implemented directly in hardware leading to truly game-changing compute time improvements.
+The latencies of sampling from the random number generator and performing atomic add operations were identified in section~\ref{sec:results/procedural} as the factors currently limiting performance of the procedural connectivity algorithm.
+By dedicating more silicon area to fast on-chip memory -- which would alleviate the need for atomic operations -- and by implementing the random number generator in hardware, these limitations could be overcome, leading to truly game-changing compute time improvements.
 %
 \section{Methods}
 \begin{table}
