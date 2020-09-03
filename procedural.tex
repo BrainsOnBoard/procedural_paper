@@ -341,7 +341,7 @@ In all experiments presented in this work, neurons are modelled as Leaky Integra
 The membrane voltage $V_{i}$ of neuron $i$ is modelled as
 %
 \begin{align}
-    \tau_{\text{m}} \frac{dV_{i}}{dt} = & (V_{i} - V_{\text{rest}}) + R_{\text{m}}(I_{\text{syn}_{i}} + I_{\text{ext}_{i}}), \label{eq:lif_neuron}
+    \tau_{\text{m}} \frac{dV_{i}}{dt} = & (V_{\text{rest}} - V_{i}) + R_{\text{m}}(I_{\text{syn}_{i}} + I_{\text{ext}_{i}}), \label{eq:lif_neuron}
 \end{align}
 %
 where $\tau_{\text{m}}$ and $R_{\text{m}}$ represent the time constant and resistance of the neuron's cell membrane, $V_{\text{rest}}$ defines the resting potential, $I_{\text{syn}_{i}}$ represents the synaptic input current and $I_{\text{ext}_i}$ represents an external input current.
