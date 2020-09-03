@@ -103,7 +103,7 @@ This is possible because the outgoing synaptic connections from each neuron are 
         \includegraphics{figures/performance_scaling}
         \captionsetup{width=6.69in}
         \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
-        All points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
+        All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
         \textbf{A} Jetson TX2.
         \textbf{B} GeForce MX130.
         \textbf{C} GeForce GTX 1650.
@@ -187,6 +187,7 @@ Furthermore, the simulation also runs slower with a large number of populations 
     \centering
     \includegraphics{figures/merging_scaling}
     \caption{Performance of a \SI{1}{\second} simulation of \num{1E6} LIF neurons driven by a Gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
+    All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
     \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
     \textbf{B} Neuron kernel time~($T_{neuron}$) for a \SI{1}{\second} simulation.
     \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler ``Speed of light'' metric.
