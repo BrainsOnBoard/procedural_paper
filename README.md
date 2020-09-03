@@ -31,17 +31,15 @@ We recommend using [python virtualenvs](https://pypi.org/project/virtualenv/) to
 
 ### Windows
 These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in a different way.
-On Windows, installation requires a command prompt with the environment correctly configured for both Visual Studio **and** Anaconda. 
-To create one, launch an "x64 Native Tools Command Prompt" from your chosen version of Visual Studio's start menu folder and _activate_ your chosen version of Anaconda by running the ``activate.bat`` in its ``Scripts`` directory. 
-For example, if your user is called "me" and Anaconda is installed in your home directory, you might run ``c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3``.
-
-1. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git``
-2. Ensure that swig is installed. For example, if you are using Anaconda, run ``conda install swig``.
-3. Ensure that numpy is installed. For example by running ``pip install numpy``.
-4. Ensure that the version of GeNN included in this repository is in the path. For example, if your user is called "me" and this repository is located in Documents, you could run the following in the terminal ``SET "PATH=%PATH%;c:\Users\me\Documents\procedural_paper\genn\bin"``.
-5. From the ``genn`` directory of this repository, build GeNN libraries with ``msbuild genn.sln /t:Build /p:Configuration=Release_DLL``
-6. From the ``genn`` directory of this repository, copy the GeNN libraries into the correct location with ``copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper``
-7. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
+1. Start a command prompt with the correct Visual Studio environment. Typically this is done by selecting ``Start menu -> Visual Studio 2019 -> x64 Native Tools Command Prompt``.
+2. Activate your chosen version of Anaconda. For example, if your user is called "me" and Anaconda is installed in your home directory, you might run ``c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3``.
+3. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git``
+4. Ensure that swig is installed. For example, if you are using Anaconda, run ``conda install swig``.
+5. Ensure that numpy is installed. For example by running ``pip install numpy``.
+6. Ensure that the version of GeNN included in this repository is in the path. For example, if your user is called "me" and this repository is located in Documents, you could run the following in the terminal ``SET "PATH=%PATH%;c:\Users\me\Documents\procedural_paper\genn\bin"``.
+7. From the ``genn`` directory of this repository, build GeNN libraries with ``msbuild genn.sln /t:Build /p:Configuration=Release_DLL``
+8. From the ``genn`` directory of this repository, copy the GeNN libraries into the correct location with ``copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper``
+9. From the ``genn`` directory of this repository, build python extension using ``python setup.py develop``
 
 ### Linux
 1. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git``
