@@ -151,8 +151,12 @@ Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
 Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach or using the standard approach of storing synaptic connections in memory employing two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{post}}$ array of bits where a `1' at position $i$ indicates that there is a connection to postsynaptic neuron $i$ and a `0' that there is not.
+
 None of our devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the procedural approach is competitive with and sometimes better than the standard approach.
+Although, when using the procedural approach, synaptic weights and postsynaptic indices are no longer read from memory, our current implementation still accumulates postsynaptic input using a `fire-and-forget' atomic add operation.
+Atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively high throughput.
+However, profiling using NVIDIA Nsight compute~\citep{NVIDIACorporation2020} suggests that the latency of these operations and lack of Instruction-Level Parallelism within the procedural connectivity algorithm are currently the limiting factor in this benchmark rather than the compute resources of the GPU suggesting that further optimisation could significantly improve performance.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
