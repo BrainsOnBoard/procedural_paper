@@ -31,7 +31,7 @@ We recommend using [python virtualenvs](https://pypi.org/project/virtualenv/) to
 
 ### Windows
 These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in a different way.
-1. Start a command prompt with the correct Visual Studio environment. Typically this is done by selecting ``Start menu -> Visual Studio 2019 -> x64 Native Tools Command Prompt``.
+1. Start a command prompt with the correct Visual Studio environment. For example, if you are using Visual Studio 2019, you would select ``Start -> Visual Studio 2019 -> x64 Native Tools Command Prompt``.
 2. Activate your chosen version of Anaconda. For example, if your user is called "me" and Anaconda is installed in your home directory, you might run ``c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3``.
 3. Clone this repository using ``git clone --recursive https://github.com/BrainsOnBoard/procedural_paper.git``
 4. Ensure that swig is installed. For example, if you are using Anaconda, run ``conda install swig``.
