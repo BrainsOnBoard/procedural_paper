@@ -71,7 +71,12 @@ This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
 However, individual GPUs do not have enough memory to simulate larger brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, larger GPU clusters suffer from the same communication overheads as any other distributed HPC system.
 
-In this work, we present a novel approach that uses the large amount of computational power available on a GPU to reduce both memory and memory bandwidth requirements and enable large-scale brain simulations on a single GPU workstation.
+In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
+The first innovation, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
+Procedural connectivity uses the large amount of computational power available on a GPU to generate synaoptic connectivity `on the fly' -- reducing the memory and memory bandwidth requirements.
+While a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
+While procedural connectivity vastly reduces the memory requirements of large-scale brain simulations, previous GPU code generation strategies do not scale well to models containing large numbers of neural populations and synaptic projections.
+To address this second problem, in section~\ref{sec:results/kernel_merging}, we describe our `kernel merging' code generator and demonstrate how it effectively addresses this issue.
 
 \section{Results}
 In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
@@ -79,7 +84,6 @@ We then demonstrate the power of the new features by simulating a recent model o
 
 \subsection{Procedural connectivity}
 \label{sec:results/procedural}
-The first crucial innovation that enables large-scale simulations on a GPU is what we call `procedural connectivity'.
 In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
 Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
 Before a simulation can be run, its parameters, in particular the state variables and the synaptic connectivity, need to be initialised.
@@ -91,7 +95,6 @@ Here, we are going one step further.
 We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred when fetching its \SI{8}{\byte} of state from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
 This is the concept of procedural connectivity.
 It is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
-Although a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
@@ -151,6 +154,7 @@ All of the synapses in this model have the same synaptic weight meaning that the
 However, if weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
 \subsection{Kernel merging}
+\label{sec:results/kernel_merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
 We call our second innovation `kernel merging' and it relates to the way these kernels are implemented.
 While the procedural connectivity presented in the previous section allows simulating models which would otherwise not fit into the memory of a GPU, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
