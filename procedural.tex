@@ -32,7 +32,7 @@
 \begin{document}
 \begin{abstract}
 Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
-However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value.
+However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically characterized by at least one floating-point value.
 This amounts to several terabytes of data -- an unrealistic memory requirement for a single desktop machine.
 Large models are therefore typically simulated on distributed supercomputers which is costly, places limits on the number and duration of simulations that can be run and typically requires formal procedures to gain access to the necessary resources.
 In this work, we describe extensions to GeNN -- our Graphical Processing Unit~(GPU) accelerated spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
@@ -70,18 +70,19 @@ Unfortunately, propagating a spike in a spiking neural network simulation typica
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
 However, individual GPUs do not have enough memory to simulate larger brain models.
-Small numbers of GPUs can be installed within a single node and connected using high-speed NVLink~\citep{NVIDIACorporation} interconnect, allowing them to communicate with low latency and high bandwidth~\citep{Li2020}.
-However, larger GPU clusters use the same MPI based protocols and network fabric for inter-node communication as CPU based systems hence suffer from similar communication overheads.
+One can install a small number of GPUs within a single node and connect them using high-speed NVLink~\citep{NVIDIACorporation} interconnect, through which they can communicate with low latency and high bandwidth~\citep{Li2020}.
+However, if a larger number of GPUs is required, multiple nodes need to be used which are connected via the same MPI based protocols and network fabric as CPU based systems and hence suffer from similar communication overheads as CPU based clusters.
 
 In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
 The first innovation, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
-Procedural connectivity uses the large amount of computational power available on a GPU to generate synaoptic connectivity `on the fly' -- reducing the memory and memory bandwidth requirements.
+Procedural connectivity uses the large amount of computational power available on a GPU to generate synaptic connectivity `on the fly' -- reducing the memory and memory bandwidth requirements.
 While a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
-While procedural connectivity vastly reduces the memory requirements of large-scale brain simulations, previous GPU code generation strategies do not scale well to models containing large numbers of neural populations and synaptic projections.
-To address this second problem, in section~\ref{sec:results/kernel_merging}, we describe our `kernel merging' code generator and demonstrate how it effectively addresses this issue.
+
+Procedural connectivity vastly reduces the memory requirements of large-scale brain simulations, but previous GPU code generation strategies do also not scale well to models containing large numbers of neural populations and synaptic projections.
+To address this second problem, we have developed a `kernel merging' code generator, described in section~\ref{sec:results/kernel_merging}.
 
 \section{Results}
-In the following subsections, we first present two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
+In the following subsections, we first present the two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
 We then demonstrate the power of the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
 
 \subsection{Procedural connectivity}
@@ -140,7 +141,7 @@ In order to use these parallel initialisation schemes for procedural connectivit
 In principle this could be done with `convential' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
 Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
 Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs a random number.
-In constrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
+In contrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
 For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of current-based Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
@@ -271,7 +272,7 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
 \end{figure}
 %
 \subsection{The multi-area model}
-Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focussed on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
+Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focused on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
 However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling.
 It uses scaled versions of a previous, 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for 32 areas of the macaque visual cortex.
@@ -308,7 +309,7 @@ The results of these comparisons are shown in Fig.~\ref{fig:microcircuit_accurac
 \section{Discussion}
 In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
-While this represents a significant step forward in terms of making large-scale brain modelling tools accesible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
+While this represents a significant step forward in terms of making large-scale brain modelling tools accessible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
 Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory, with the majority~(\SI{8.5}{\giga\byte}) being used for the circular dendritic delay buffers~(see~\citet{Knight2018}).
 These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to 500 simulation timesteps, the delay buffers become quite large.
 However, for models without large delays such as the balanced random network simulated in section~\ref{sec:results/procedural}, only around \SI{20}{\byte} is required per neuron meaning that, theoretically, over \num{1E9} neurons could be simulated on a \SI{24}{\giga\byte} GPU.
@@ -382,7 +383,7 @@ Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Multi-area model}
 
-\section{Acknowledgements}
+\section{Acknowledgments}
 We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
 This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).
 
