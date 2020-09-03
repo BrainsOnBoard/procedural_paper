@@ -138,7 +138,7 @@ Where synaptic weights and delays are not constant across synapses, but are desc
 %'fixed number post' which is like fixed number total without the multinomial and 'fixed number pre' which we can't do easily :)
 
 In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each presynaptic neuron.
-In principle this could be done with `convential' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
+In principle this could be done with `conventional' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
 Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
 Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs a random number.
 In contrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
@@ -151,6 +151,8 @@ Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
 Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach or using the standard approach of storing synaptic connections in memory employing two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{post}}$ array of bits where a `1' at position $i$ indicates that there is a connection to postsynaptic neuron $i$ and a `0' that there is not.
+In order to verify our procedural connectivity algorithm and its implementation, we also recorded membrane voltages from two instantiations of the model with fixed random seeds and both sparse and procedural connectivity.
+We found that, to \SI{32}{\bit} floating point  precision, the membrane voltages of all neurons were identical.
 
 None of our devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the procedural approach is competitive with and sometimes better than the standard approach.
@@ -408,7 +410,7 @@ A GeNN port of the multi-area model is available at \url{https://github.com/newo
 The models used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} are all available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
 
 % Bibliography
-\bibliographystyle{apalike}
+\bibliographystyle{unsrtnat}
 \bibliography{procedural}
 
 \end{document}
