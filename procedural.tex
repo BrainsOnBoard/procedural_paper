@@ -69,7 +69,9 @@ For example, the memory latency of a typical modern GPU can be completely hidden
 Unfortunately, propagating a spike in a spiking neural network simulation typically requires reading a synaptic weight ($\ge \SI{2}{\byte}$) and postsynaptic index ($\ge \SI{2}{\byte}$) from memory and then writing back the synaptic input ($\ge \SI{4}{\byte}$), while performing many fewer than the corresponding 80 instructions. 
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
-However, individual GPUs do not have enough memory to simulate larger brain models and, although small numbers of GPUs can be connected using the high-speed NVLink~\citep{NVIDIACorporation} interconnect, larger GPU clusters suffer from the same communication overheads as any other distributed HPC system.
+However, individual GPUs do not have enough memory to simulate larger brain models.
+Small numbers of GPUs can be installed within a single node and connected using high-speed NVLink~\citep{NVIDIACorporation} interconnect, allowing them to communicate with low latency and high bandwidth~\citep{Li2020}.
+However, larger GPU clusters use the same MPI based protocols and network fabric for inter-node communication as CPU based systems hence suffer from similar communication overheads.
 
 In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
 The first innovation, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
