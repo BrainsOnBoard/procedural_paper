@@ -1,13 +1,6 @@
 # Larger GPU-accelerated brain simulations with procedural connectivity
-Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
-However, even small mammals such as mice have on the order of 1 trillion synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value.
-This amounts to several terabytes of data - an unrealistic memory requirement for a single desktop machine.
-Large models are therefore typically simulated on distributed supercomputers which is costly and limits large-scale modelling to a few privileged research groups.
-In this work, we describe extensions to GeNN - our Graphical Processing Unit (GPU) accelerated spiking neural network simulator - that enable it to 'procedurally' generate connectivity and synaptic weights 'on the go' as spikes are triggered, instead of storing and retrieving them from memory.
-We find that GPUs are well-suited to this approach because of their raw computational power which, due to memory bandwidth limitations, is often under-utilised when simulating spiking neural networks.
-We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of 4.13 million neurons and 24.2 billion synapses.
-Using our new method, it can be simulated on a single GPU - a significant step forward in making large-scale brain modelling accessible to many more researchers.
-Our results match those obtained on a supercomputer and the simulation runs up to 35% faster on a single high-end GPU than previously on over 1000 supercomputer nodes.
+Simulations are an important tool for investigating brain function but large models are needed to faithfully reproduce the statistics and dynamics of brain activity.
+Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems. Here, we present an alternative simulation method we call 'procedural connectivity' where connectivity and synaptic weights are generated 'on the fly' instead of stored and retrieved from memory. This method is particularly well-suited for use on Graphical Processing Units (GPUs)- which are a common fixture in many workstations. Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with 4.13 million neurons and 24.2 billion synapses on a single GPU - a significant step forward in making large-scale brain modelling accessible to more researchers.
 
 ## System requirements
 Although GeNN can be used without a GPU, because this paper focusses on GPU acceleration, an NVIDIA GPU with the Kepler architecture or newer is required.
@@ -84,4 +77,14 @@ Data points can be added to [merging_data.csv](scripts/merging_data.csv) and the
 ### Reproducing figure 3
 Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``
 The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
-Spike trains from the simulations will be saved into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory and can be processed to produce the spiking statistics included in figure 3 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script and then plotted using the [calc_multi_area_stats.py](scripts/plot_multi_area.py) script.
+Both simulations will write spiking data into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory.
+The spiking statistics shown in figure 3 can be calculated from these spike trains or those obtainable from https://doi.org/10.25377/sussex.12912699 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script. For example:
+```python calc_multi_area_stats.py 82d3c0816b0ad1c07ea27e61eb981f7a_seed_1 10.5```
+will calculate both per-neuron and population averaged spike statistics from the GeNN simulation output in the `82d3c0816b0ad1c07ea27e61eb981f7a_seed_1` directory and assume a simulation duration of 10.5 seconds.
+The ``average_pop_XX_YY.npy`` files produced by this script then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
+
+### Reproducing figure 4
+The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are also used to calculate the histograms used as the input for the [plot_multi_area_kl_divergence.py](scripts/plot_multi_area_kl_divergence.py) script used to plot figure 4.
+For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` folder against another in the ``seed_2`` folder``:
+```python calc_pairwise_histograms.py seed_1 seed_2```
+will produce ``seed_1_seed_2_XX.npy`` files for each population.
