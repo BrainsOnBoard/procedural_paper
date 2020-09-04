@@ -76,17 +76,17 @@ Data points can be added to [merging_data.csv](scripts/merging_data.csv) and the
 
 ### Reproducing figure 3
 Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``.
-The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
+The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) script and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py) script.
 Both simulations will write spiking data into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory.
-The spiking statistics shown in figure 3 can be calculated from these spike trains or those obtainable from https://doi.org/10.25377/sussex.12912699 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script. For example:
+The spiking statistics shown in figure 3 can be calculated from these spike trains or those downloaded from https://doi.org/10.25377/sussex.12912699 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script. For example:
 ```
 python calc_multi_area_stats.py 82d3c0816b0ad1c07ea27e61eb981f7a_seed_1 10.5
 ```
 will calculate both per-neuron and population averaged spike statistics from the GeNN simulation output in the `82d3c0816b0ad1c07ea27e61eb981f7a_seed_1` directory, based on a simulation duration of 10.5 seconds.
-The ``average_pop_XX_YY.npy`` files produced by this script can then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
+The population averaged spike statistics produced by this script can then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
 
 ### Reproducing figure 4
-The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are also used as the input to the [calc_pairwise_histograms.py](scripts/calc_pairwise_histograms.py) script which is used to calculate the histograms used for this figure. For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` directory against another in the ``seed_2`` directory``:
+The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are used as the input to the [calc_pairwise_histograms.py](scripts/calc_pairwise_histograms.py) script which  calculates the histograms used for this figure. For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` directory against another in the ``seed_2`` directory``:
 ```
 python calc_pairwise_histograms.py seed_1 seed_2
 ```
