@@ -1,6 +1,6 @@
 # Larger GPU-accelerated brain simulations with procedural connectivity
 Simulations are an important tool for investigating brain function but large models are needed to faithfully reproduce the statistics and dynamics of brain activity.
-Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems. Here, we present an alternative simulation method we call 'procedural connectivity' where connectivity and synaptic weights are generated 'on the fly' instead of stored and retrieved from memory. This method is particularly well-suited for use on Graphical Processing Units (GPUs)- which are a common fixture in many workstations. Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with 4.13 million neurons and 24.2 billion synapses on a single GPU - a significant step forward in making large-scale brain modelling accessible to more researchers.
+Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems. Here, we present an alternative simulation method we call 'procedural connectivity' where connectivity and synaptic weights are generated 'on the fly' instead of stored and retrieved from memory. This method is particularly well-suited for use on Graphical Processing Units (GPUs) - which are a common fixture in many workstations. Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with 4.13 million neurons and 24.2 billion synapses on a single GPU - a significant step forward in making large-scale brain modelling accessible to more researchers.
 
 ## System requirements
 Although GeNN can be used without a GPU, because this paper focusses on GPU acceleration, an NVIDIA GPU with the Kepler architecture or newer is required.
@@ -50,14 +50,14 @@ This should take less than 2 minutes on a standard PC.
 ### Windows
 1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
 2. Build the project runner executable with ``msbuild ..\userprojects.sln /t:generate_potjans_microcircuit_runner /p:Configuration=Release``
-3. Build and simulate the project with ``generate_run test`` where "test" is the name of the folder to save the model output.
-4. Plot results with ``python plot.py test`` where "test" is again the name of the folder to save the model output.
+3. Build and simulate the project with ``generate_run test`` where "test" is the name of the directory to save the model output.
+4. Plot results with ``python plot.py test`` where "test" is again the name of the directory to save the model output.
 
 ### Linux
 1. Navigate to the ``genn/userproject/PotjansMicrocircuit_project`` directory of this repository.
 2. Build the project runner executable with ``make``
-3. Build and simulate the project with ``./generate_run test`` where "test" is the name of the folder to save the model output.
-4. Plot results with ``python plot.py test`` where "test" is again the name of the folder to save the model output.
+3. Build and simulate the project with ``./generate_run test`` where "test" is the name of the directory to save the model output.
+4. Plot results with ``python plot.py test`` where "test" is again the name of the directory to save the model output.
 
 A raster plot resembling this one should then be displayed:
 ![Microcircuit output](microcircuit_demo.png)
@@ -75,16 +75,19 @@ Instructions for simulating model are included in a seperate [readme](models/neu
 Data points can be added to [merging_data.csv](scripts/merging_data.csv) and then plotted using [plot_merging_scaling.py](scripts/plot_merging_scaling.py).
 
 ### Reproducing figure 3
-Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``
+Install additional python dependencies using ``pip install -r models/multi-area-model/requirements.txt``.
 The "ground state" simulation can be run using the [run_example_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_fullscale.py) and the "resting state" simulation using [run_example_1_9_fullscale.py](https://github.com/neworderofjamie/multi-area-model/blob/master/run_example_1_9_fullscale.py).
 Both simulations will write spiking data into the [simulations](https://github.com/neworderofjamie/multi-area-model/blob/master/simulations) directory.
 The spiking statistics shown in figure 3 can be calculated from these spike trains or those obtainable from https://doi.org/10.25377/sussex.12912699 using the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script. For example:
-```python calc_multi_area_stats.py 82d3c0816b0ad1c07ea27e61eb981f7a_seed_1 10.5```
-will calculate both per-neuron and population averaged spike statistics from the GeNN simulation output in the `82d3c0816b0ad1c07ea27e61eb981f7a_seed_1` directory and assume a simulation duration of 10.5 seconds.
-The ``average_pop_XX_YY.npy`` files produced by this script then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
+```
+python calc_multi_area_stats.py 82d3c0816b0ad1c07ea27e61eb981f7a_seed_1 10.5
+```
+will calculate both per-neuron and population averaged spike statistics from the GeNN simulation output in the `82d3c0816b0ad1c07ea27e61eb981f7a_seed_1` directory, based on a simulation duration of 10.5 seconds.
+The ``average_pop_XX_YY.npy`` files produced by this script can then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
 
 ### Reproducing figure 4
-The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are also used to calculate the histograms used as the input for the [plot_multi_area_kl_divergence.py](scripts/plot_multi_area_kl_divergence.py) script used to plot figure 4.
-For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` folder against another in the ``seed_2`` folder``:
-```python calc_pairwise_histograms.py seed_1 seed_2```
-will produce ``seed_1_seed_2_XX.npy`` files for each population.
+The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are also used as the input to the [calc_pairwise_histograms.py](scripts/calc_pairwise_histograms.py) script which is used to calculate the histograms used for this figure. For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` directory against another in the ``seed_2`` directory``:
+```
+python calc_pairwise_histograms.py seed_1 seed_2
+```
+will produce ``seed_1_seed_2_XX.npy`` files for each population which can be plotted using the [plot_multi_area_kl_divergence.py](scripts/plot_multi_area_kl_divergence.py) script.
