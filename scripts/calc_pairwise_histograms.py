@@ -5,19 +5,18 @@ from os import path
 from scipy.stats import iqr
 
 if __name__ == '__main__':
-    assert len(argv) >= 4
-    data_path = argv[1]
-    ground_truth_folder = argv[2]
-    comparison_folder = argv[3]
+    assert len(argv) >= 3
+    ground_truth_folder = argv[1]
+    comparison_folder = argv[2]
 
     # Loop through numpy files in ground truth path
-    for s in glob(path.join(data_path, ground_truth_folder, "*.npy")):
+    for s in glob(path.join(ground_truth_folder, "*.npy")):
         # Get name
         name = path.basename(s)
         print(name)
 
         # Get path to corresponding file in comparison path
-        comparison_path = path.join(data_path, comparison_folder, name)
+        comparison_path = path.join(comparison_folder, name)
         if path.exists(comparison_path):
             # Load both data files
             ground_truth_data = np.load(s)
@@ -37,7 +36,7 @@ if __name__ == '__main__':
             comparison_hist,_ = np.histogram(comparison_data, bins=bin_x)
  
             # Write bins and histograms to disk
-            with open(ground_truth_folder + "_" + comparison_folder + "_" + name, "wb") as f:
+            with open(path.basename(ground_truth_folder) + "_" + path.basename(comparison_folder) + "_" + name, "wb") as f:
                 np.save(f, bin_x)
                 np.save(f, ground_truth_hist)
                 np.save(f, comparison_hist)
