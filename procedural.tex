@@ -99,21 +99,6 @@ We implemented procedural connectivity in GeNN by repurposing our previously dev
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
 This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
 
-\begin{figure}
-    \begin{fullwidth}
-        \centering
-        \includegraphics{figures/performance_scaling}
-        \captionsetup{width=6.69in}
-        \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
-        All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
-        \textbf{A} Jetson TX2.
-        \textbf{B} GeForce MX130.
-        \textbf{C} GeForce GTX 1650.
-        \textbf{D} Titan RTX.}
-        \label{fig:performance_scaling}
-    \end{fullwidth}
-\end{figure}
-
 In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
 We will now discuss two typical examples and how they can be implemented efficiently on a GPU.
 One very common connectivity scheme is the `fixed probability connector' for which each neuron in the presynaptic population is connected to each neuron in the postsynaptic population with fixed probability $P_{\text{conn}}$.
@@ -132,6 +117,21 @@ Where synaptic weights and delays are not constant across synapses, but are desc
 %
 %Other typical connectivity schemes are described in the GeNN documentation\ref{}\todo{Uhm ... are they? Or should we gloss over this ...}
 %'fixed number post' which is like fixed number total without the multinomial and 'fixed number pre' which we can't do easily :)
+
+\begin{figure}
+    \begin{fullwidth}
+        \centering
+        \includegraphics{figures/performance_scaling}
+        \captionsetup{width=6.69in}
+        \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
+        All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
+        \textbf{A} Jetson TX2.
+        \textbf{B} GeForce MX130.
+        \textbf{C} GeForce GTX 1650.
+        \textbf{D} Titan RTX.}
+        \label{fig:performance_scaling}
+    \end{fullwidth}
+\end{figure}
 
 In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each presynaptic neuron.
 In principle this could be done with `conventional' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
@@ -159,6 +159,18 @@ However, profiling using NVIDIA Nsight compute~\citep{NVIDIACorporation2020} sug
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 However, if weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
+\begin{figure}
+    \centering
+    \includegraphics{figures/merging_scaling}
+    \caption{Performance of a \SI{1}{\second} simulation of \num{1E6} LIF neurons driven by a Gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
+    All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
+    \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
+    \textbf{B} Neuron kernel time~($T_{neuron}$) for a \SI{1}{\second} simulation.
+    \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler ``Speed of light'' metric.
+    \textbf{D} Number of ``No instruction'' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
+    \label{fig:merging_scaling}
+\end{figure}
+%
 \subsection{Kernel merging}
 \label{sec:results/kernel_merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
@@ -171,7 +183,7 @@ Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where mult
 CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
 To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
 Therefore, in the following pseudocode we simulating 3 populations of 100 neurons each in a single kernel and -- assuming a thread block size of 32 -- we pad each population to 128 threads:
-
+%
 \begin{lstlisting}
 void updateNeurons() {
   if(thread < 128) {
@@ -192,19 +204,7 @@ void updateNeurons() {
 %
 This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons see section~\ref{sec:methods/merging} for model description) into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
-%
-\begin{figure}
-    \centering
-    \includegraphics{figures/merging_scaling}
-    \caption{Performance of a \SI{1}{\second} simulation of \num{1E6} LIF neurons driven by a Gaussian input current, partitioned into varying numbers~($N_{pop}$) of populations and running on a workstation equipped with a Titan RTX GPU.
-    All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.
-    \textbf{A} Compilation time~($T_{comp}$) using GCC 7.5.0.
-    \textbf{B} Neuron kernel time~($T_{neuron}$) for a \SI{1}{\second} simulation.
-    \textbf{C} Memory throughput~($K_{mem}$) reported by NVIDIA Nsight compute profiler ``Speed of light'' metric.
-    \textbf{D} Number of ``No instruction'' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
-    \label{fig:merging_scaling}
-\end{figure}
-%
+
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data (\SI{8}{\byte} of neuron state and \SI{24}{\byte} of RNG state) and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
 Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
@@ -241,8 +241,6 @@ In order for a thread to determine which neuron in which population it should si
 \begin{lstlisting}
 unsigned int startThread[3] = {0, 128, 256};
 \end{lstlisting}
-Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.
-As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance. Interestingly, the additional overhead of a binary search does not affect the performance even for a large number of populations as the kernel execution is generally memory bound.
 %
 \begin{figure}
     \begin{fullwidth}
@@ -268,6 +266,9 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
     \label{fig:microcircuit_accuracy_kl}
 \end{figure}
 %
+Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.
+As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance. Interestingly, the additional overhead of a binary search does not affect the performance even for a large number of populations as the kernel execution is generally memory bound.
+
 \subsection{The multi-area model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focused on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
 However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
