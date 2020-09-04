@@ -288,10 +288,10 @@ Even if we assume that \SI{16}{\bit} floating-point would provide sufficient wei
 While a cluster of GPUs connected using NVLink could be built with this much memory, it is more than any single GPU has available.
 However, using procedural connectivity, we are able to simulate this model on a single workstation with a Titan RTX GPU.
 
-In order to validate our GeNN simulations, we ran a \SI{10.5}{\second} simulation of the multi-area model in a `ground state' where inter-area connections have the same strength as intra-area connections and a \SI{100.5}{\second} simulation in a `resting state' where inter-area connections are $1.9\times$ stronger.
+In order to test our implementation of the multi-area model in GeNN, we ran a \SI{10.5}{\second} simulation of the model in a `ground state' where inter-area connections have the same strength as intra-area connections and a \SI{100.5}{\second} simulation in a `resting state' where inter-area connections are $1.9\times$ stronger.
 Initialization of our model took \SI{6}{\minute} (\SI{3}{\minute} of which was spent generating and compiling code) and simulation of each biological second took \SI{7.9}{\minute} in the ground state and \SI{8.5}{\minute} in the resting state (averaged over 3 simulation runs).
 While this is significantly faster than the older Blue Gene/Q supercomputer, it is around $15\times$ slower than the newer JURECA system.
-However, because individual synapses simulated using procedural connectivity do not require initialization, in shorter simulations this large performance difference can be somewhat overcome by the faster initialisation time of the GeNN simulations.
+However, because individual synapses simulated using procedural connectivity do not require initialization, in shorter simulations this large performance difference can be somewhat offset by the faster initialisation time of the GeNN simulations.
 For example a \SI{1}{\second} simulation would take just under \SI{11}{\minute} using GeNN (if the model is not recompiled) and around \SI{8.5}{\minute} using \num{160} JURECA nodes -- only \SI{2.5}{\minute} faster.
 
 Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state whereas Fig.~\ref{fig:multi_area}G-I illustrate the characteristic irregular activity and population bursts of the same areas in the resting state.
