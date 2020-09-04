@@ -164,12 +164,12 @@ def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
             else:
                 print("WARNING %s:%s data shape %u, %u" % (area_data, pop_name, data.shape[0], data.shape[1]))
 
-    np.save("rates_%s.npy" % population_name, np.hstack(rates))
-    np.save("average_pop_rates_%s.npy" % population_name, np.asarray(average_pop_rates))
-    np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
-    np.save("average_pop_irregularity_%s.npy" % population_name, np.asarray(average_pop_irregularity))
-    np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
-    np.save("average_pop_corr_coeff_%s.npy" % population_name, np.asarray(average_pop_correlation))
+    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
+    np.save("average_pop_rates_%s.npy" % pop_name, np.asarray(average_pop_rates))
+    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
+    np.save("average_pop_irregularity_%s.npy" % pop_name, np.asarray(average_pop_irregularity))
+    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
+    np.save("average_pop_corr_coeff_%s.npy" % pop_name, np.asarray(average_pop_correlation))
 
 
 def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
@@ -218,12 +218,12 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
             correlation.append(pop_correlation)
             average_pop_correlation.append(np.average(pop_correlation))
 
-    np.save("rates_%s.npy" % population_name, np.hstack(rates))
-    np.save("average_pop_rates_%s.npy" % population_name, np.asarray(average_pop_rates))
-    np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
-    np.save("average_pop_irregularity_%s.npy" % population_name, np.asarray(average_pop_irregularity))
-    np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
-    np.save("average_pop_corr_coeff_%s.npy" % population_name, np.asarray(average_pop_correlation))
+    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
+    np.save("average_pop_rates_%s.npy" % pop_name, np.asarray(average_pop_rates))
+    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
+    np.save("average_pop_irregularity_%s.npy" % pop_name, np.asarray(average_pop_irregularity))
+    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
+    np.save("average_pop_corr_coeff_%s.npy" % pop_name, np.asarray(average_pop_correlation))
 
 
 if __name__ == '__main__':
