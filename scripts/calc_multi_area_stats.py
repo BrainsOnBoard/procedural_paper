@@ -9,11 +9,11 @@ from os import path
 from six import iteritems
 from sys import argv
 
-def pop_rate(data_array, t_min, t_max, num_neur, start_id=0):
+def calc_rate(data_array, t_min, t_max, num_neur, start_id=0):
     hist, _ = np.histogram(data_array[1][data_array[0] > t_min], bins=range(start_id, start_id + num_neur + 1))
     return np.divide(hist, (t_max - t_min) / 1000.0, dtype=float)
 
-def pop_LvR(data_array, t_ref, t_min, t_max, num_neur):
+def calc_LvR(data_array, t_ref, t_min, t_max, num_neur):
     """
     Compute the LvR value of the given data_array.
     See Shinomoto et al. 2009 for details.
@@ -86,8 +86,11 @@ def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
     spike_files = list(glob(path.join(data_path, "recordings", "*_%s.npy" % population_name)))
 
     rates = []
+    average_pop_rates = []
     irregularity = []
+    average_pop_irregularity = []
     correlation = []
+    average_pop_correlation = []
     for i, s in enumerate(spike_files):
         # Load spike data
         data = np.load(s)
@@ -101,27 +104,38 @@ def calc_genn_stats(data_path, duration_s, population_name, population_sizes):
         num_neurons = int(population_sizes[area_name][pop_name])
 
         # Calculate rate
-        rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons))
+        pop_rates = calc_rate(data, 500.0, duration_s * 1000.0, num_neurons)
+        rates.append(pop_rates)
+        average_pop_rates.append(np.average(pop_rates))
 
         # Calculate irregularity
-        irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
+        pop_LvR = calc_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)
+        irregularity.append(pop_LvR)
+        average_pop_irregularity.append(np.average(pop_LvR))
 
         # Calculate correlation coefficient
-        correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
+        pop_correlation = calc_correlations(data, 500.0, duration_s * 1000.0)
+        correlation.append(pop_correlation)
+        average_pop_correlation.append(np.average(pop_correlation))
 
     np.save("rates_%s.npy" % population_name, np.hstack(rates))
+    np.save("average_pop_rates_%s.npy" % population_name, np.asarray(average_pop_rates))
     np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
+    np.save("average_pop_irregularity_%s.npy" % population_name, np.asarray(average_pop_irregularity))
     np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
+    np.save("average_pop_corr_coeff_%s.npy" % population_name, np.asarray(average_pop_correlation))
 
 def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
     # Open file
     data = h5py.File(filename, "r")
 
-    rates = []
-    irregularity = []
-    correlation = []
-
     # Loop through all areas in data
+    rates = []
+    average_pop_rates = []
+    irregularity = []
+    average_pop_irregularity = []
+    correlation = []
+    average_pop_correlation = []
     for area_name, area_data in iteritems(data):
         # If there is data for this processes population in area
         if pop_name in area_data:
@@ -134,27 +148,40 @@ def calc_hdf5_nest_stats(filename, duration_s, pop_name, population_sizes):
 
                 # Calculate rate
                 # **NOTE** don't have any network_gids.txt files so minimum neuron id will have to do
-                rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1]))))
+                pop_rates = calc_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1])))
+                rates.append(pop_rates)
+                average_pop_rates.append(np.average(pop_rates))
 
                 # Calculate irregularity
-                irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
+                pop_LvR = calc_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)
+                irregularity.append(pop_LvR)
+                average_pop_irregularity.append(np.average(pop_LvR))
 
                 # Calculate correlation coefficient
-                correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
+                pop_correlation = calc_correlations(data, 500.0, duration_s * 1000.0)
+                correlation.append(pop_correlation)
+                average_pop_correlation.append(np.average(pop_correlation))
             else:
                 print("WARNING %s:%s data shape %u, %u" % (area_data, pop_name, data.shape[0], data.shape[1]))
 
-    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
-    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
-    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
+    np.save("rates_%s.npy" % population_name, np.hstack(rates))
+    np.save("average_pop_rates_%s.npy" % population_name, np.asarray(average_pop_rates))
+    np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
+    np.save("average_pop_irregularity_%s.npy" % population_name, np.asarray(average_pop_irregularity))
+    np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
+    np.save("average_pop_corr_coeff_%s.npy" % population_name, np.asarray(average_pop_correlation))
+
 
 def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
     # Get list of all data files for this population
     spike_files = list(glob(path.join(data_path, "*_spikes-*-%s-*-*.gdf" % pop_name)))
 
     rates = []
+    average_pop_rates = []
     irregularity = []
+    average_pop_irregularity = []
     correlation = []
+    average_pop_correlation = []
     for i, s in enumerate(spike_files):
         # Load spike data using pandas to improve performance
         # **NOTE** we need usecols becauses lines have a trailing delimiter which pandas thinks is another column
@@ -176,17 +203,27 @@ def calc_gdf_nest_stats(data_path, duration_s, pop_name, population_sizes):
         if num_spikes > 0:
             # Calculate rate
             # **NOTE** don't have any network_gids.txt files so minimum neuron id will have to do
-            rates.append(pop_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1]))))
+            pop_rates = calc_rate(data, 500.0, duration_s * 1000.0, num_neurons, int(np.amin(data[1])))
+            rates.append(pop_rates)
+            average_pop_rates.append(np.average(pop_rates))
+
 
             # Calculate irregularity
-            irregularity.append(pop_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons))
-
+            pop_LvR = calc_LvR(data, 2.0, 500.0, duration_s * 1000.0, num_neurons)
+            irregularity.append(pop_LvR)
+            average_pop_irregularity.append(np.average(pop_LvR))
+            
             # Calculate correlation coefficient
-            correlation.append(calc_correlations(data, 500.0, duration_s * 1000.0))
+            pop_correlation = calc_correlations(data, 500.0, duration_s * 1000.0)
+            correlation.append(pop_correlation)
+            average_pop_correlation.append(np.average(pop_correlation))
 
-    np.save("rates_%s.npy" % pop_name, np.hstack(rates))
-    np.save("irregularity_%s.npy" % pop_name, np.hstack(irregularity))
-    np.save("corr_coeff_%s.npy" % pop_name, np.hstack(correlation))
+    np.save("rates_%s.npy" % population_name, np.hstack(rates))
+    np.save("average_pop_rates_%s.npy" % population_name, np.asarray(average_pop_rates))
+    np.save("irregularity_%s.npy" % population_name, np.hstack(irregularity))
+    np.save("average_pop_irregularity_%s.npy" % population_name, np.asarray(average_pop_irregularity))
+    np.save("corr_coeff_%s.npy" % population_name, np.hstack(correlation))
+    np.save("average_pop_corr_coeff_%s.npy" % population_name, np.asarray(average_pop_correlation))
 
 
 if __name__ == '__main__':
