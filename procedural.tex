@@ -382,7 +382,7 @@ Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 \subsection{Merging model}
 \label{sec:methods/merging}
 This model simply consists of \num{1000000} LIF neurons, again modelled using the approach described in section~\ref{sec:methods/neuron_model} and configured with the parameters shown in table~\ref{tab:parameters}. 
-Each neuron is driven by an independent Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.0625)$.
+Each neuron is driven by an independent Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.25^2)$.
 Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Multi-area model}
