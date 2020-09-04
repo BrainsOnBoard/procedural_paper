@@ -313,9 +313,15 @@ We have shown that this approach allows us to simulate a cortical model with \nu
 While this represents a significant step forward in terms of making large-scale brain modelling tools accessible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
 Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory, with the majority~(\SI{8.5}{\giga\byte}) being used for the circular dendritic delay buffers~(see~\citet{Knight2018}).
 These are a per-neuron (rather than per-synapse) data structure but, because the inter-area connections in the model have delays of up to 500 simulation timesteps, the delay buffers become quite large.
-However, for models without large delays such as the balanced random network simulated in section~\ref{sec:results/procedural}, only around \SI{20}{\byte} is required per neuron meaning that, theoretically, over \num{1E9} neurons could be simulated on a \SI{24}{\giga\byte} GPU.
+However, for models without large delays such as the balanced random network simulated in section~\ref{sec:results/procedural}, only around \SI{20}{\byte} is required per neuron meaning that, theoretically, over \num{1E9} neurons (over $10\times$ more than a mouse brain) could be simulated on a \SI{24}{\giga\byte} GPU.
 
-One important aspect of large-scale brain simulations not addressed in this work is synaptic plasticity and its role in learning.
+One additional benefit of procedural connectivity not explored in this work is that parameters such as connection density or weight variance can be changed at runtime with minimal overhead.
+%Structural plasticity has previously been used to tune the connectivity of large-scale brain model to achieve a desired level of activity~\citep{Diaz-Pier2016} and, while the procedural connectivity framework presented in this work would not allow full structural plasticity to be implemented, 
+Furthermore, these modifications could be driven by the state of the network to implement a primitive form of structural plasticity.
+% -- previously been used to tune the connectivity of large-scale brain model to achieve a desired level of activity~\citep{Diaz-Pier2016}.
+%By modifying connectivity at runtime using a structural plasticity rule, \citet{Diaz-Pier2016} 
+%Although the procedural connectivity framework presented in this work would not support the type of structural plasticity employed by \citet{Diaz-Pier2016} to tune the connectivity of large-scale brain model to achieve a desired level of activity, 
+More generally, synaptic plasticity and learning are both important aspects of large-scale brain simulation not addressed in this work.
 As discussed by~\citet{Knight2018}, GeNN supports a wide variety of synaptic plasticity rules.
 In order to modify synaptic weights, they need to be stored in memory rather than generated procedurally.
 However, connectivity could still be generated procedurally, potentially halving the memory requirements of models with synaptic plasticity.
