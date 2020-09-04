@@ -273,9 +273,7 @@ However, recent data~\citep{Belitski2008} has shown that cortical activity has d
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling.
 It uses scaled versions of a previous, 4 layer microcircuit model~\citep{Potjans2012} to implement \SI{1}{\milli\meter\squared} `patches' for 32 areas of the macaque visual cortex.
 The patches are connected together according to inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
-The synapses are distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004}.
-Individual populations are connected by the fixed number connectors described above.
-For a full description of the multi-area model please see~\citet{Schmidt2018a,Schmidt2018}.
+The synapses are distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004} (see section~\ref{sec:methods/multi_area_model} for model description).
 In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on an IBM Blue Gene/Q supercomputer.
 Because each Blue Gene/Q compute node only had a small amount of memory, these simulation were distributed across an entire rack (\num{1024} compute nodes) of the system and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 However, on the newer `JURECA' supercomputer (where each node has \SI{128}{\giga\byte} of memory) this model can be simulated on as few as \num{11} compute nodes.
@@ -337,7 +335,7 @@ By dedicating more silicon area to fast on-chip memory -- which would alleviate 
         {Parameter}                             & {Procedural connectivity} & {Merging}         & {Multi-area} \\
                                                 & {benchmark}               & {benchmark}       & {model} \\
     \midrule
-        $\tau_{\text{m}}$ [\si{\milli\second}]         & 20                        & 20                & 2 \\
+        $\tau_{\text{m}}$ [\si{\milli\second}]         & 20                        & 20                & 10 \\
         $V_{\text{rest}}$ [\si{\milli\volt}]           & -60.0                     & -70.0             & -65 \\
        
         $V_{\text{th}}$ [\si{\milli\volt}]         & -50.0                     & -51.0             & -50 \\
@@ -386,6 +384,17 @@ Each neuron is driven by an independent Gaussian input current of $I_{\text{ext}
 Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Multi-area model}
+For a full description of the model, please refer to tables 2 and 3 in \citet{Schmidt2018}.
+In our implementation, neurons are modelled using the approach described in section~\ref{sec:methods/neuron_model} and configured with the parameters shown in table~\ref{tab:parameters}.
+Background Poisson input is delivered to each neuron via $I_{\text{ext}_{i}}$ with
+%
+\begin{align}
+    \tau_{\text{ext}} \frac{dI_{\text{ext}_{i}}}{dt} = & -I_{\text{ext}_{i}} + \text{Poisson}( \frac{\nu_{\text{ext}} \Delta t}{1000}),
+\end{align}
+%
+where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$ and $\nu_{\text{ext}}$ is calculated as described in table 2 of \citet{Schmidt2018}.
+Individual populations are connected by the fixed number connectors described in section~\ref{sec:results/procedural}.
+Simulations were run with a time step $\Delta t = \SI{0.1}{\milli\second}$.
 
 \section{Acknowledgments}
 We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
