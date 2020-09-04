@@ -31,15 +31,11 @@
 
 \begin{document}
 \begin{abstract}
-Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains.
-However, even small mammals such as mice have on the order of \num{1E12} synaptic connections which, in simulations, are each typically characterized by at least one floating-point value.
-This amounts to several terabytes of data -- an unrealistic memory requirement for a single desktop machine.
-Large models are therefore typically simulated on distributed supercomputers which is costly, places limits on the number and duration of simulations that can be run and typically requires formal procedures to gain access to the necessary resources.
-In this work, we describe extensions to GeNN -- our Graphical Processing Unit~(GPU) accelerated spiking neural network simulator -- that enable it to `procedurally' generate connectivity and synaptic weights `on the go' as spikes are triggered, instead of storing and retrieving them from memory.
-We find that GPUs are well-suited to this approach because of their raw computational power which, due to memory bandwidth limitations, is often under-utilised when simulating spiking neural networks.
-We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of \num{4.13E6} neurons and \num{24.2E9} synapses.
-Using our new method, it can be simulated on a single GPU -- a significant step forward in making large-scale brain modelling accessible to many more researchers.
-%Our results match those obtained on a supercomputer and the simulation runs up to \SI{35}{\percent} faster on a single high-end GPU than previously on over 1000 supercomputer nodes.
+Simulations are an important tool for investigating brain function but large models are needed to faithfully reproduce the statistics and dynamics of brain activity.
+Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems.
+Here, we present an alternative simulation method we call `procedural connectivity' where connectivity and synaptic weights are generated ‘on the fly' instead of stored and retrieved from memory.
+This method is particularly well-suited for use on Graphical Processing Units~(GPUs)-- which are a common fixture in many workstations.
+Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU -- a significant step forward in making large-scale brain modelling accessible to more researchers.
 \end{abstract}
 \maketitle
 \section{Introduction}
@@ -265,8 +261,8 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
 \begin{figure}
     \centering
     \includegraphics{figures/microcircuit_accuracy_kl}
-    \caption{Comparison of full-scale multi-area model spike statistics between multiple GeNN simulations with different seeds; and between GeNN and NEST simulations. Comparisons calculated as the Kullback-Leibler (KL) divergence between the type of distributions displayed in Fig.~\ref{fig:multi_area}D-F,J-L. Bullets mark the mean and whiskers indicate the standard deviation of observed KL divergences across different pairs of compared distributions.
-    \textbf{A,B} Neuron firing rates for ground state (A) and resting state (B)
+    \caption{Comparison of full-scale multi-area model spike statistics between multiple GeNN simulations with different seeds; and between GeNN and NEST simulations. Comparisons calculated as the Kullback-Leibler (KL) divergence between the types of distribution displayed in Fig.~\ref{fig:multi_area}D-F,J-L. Bullets mark the mean and whiskers indicate the standard deviation of observed KL divergences across different pairs of compared distributions.
+    \textbf{A,B} Neuron firing rates for ground state~(A) and resting state~B)
     \textbf{C,D} Pairwise correlation coefficients of spiking activity.
     \textbf{E,F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009}.}
     \label{fig:microcircuit_accuracy_kl}
