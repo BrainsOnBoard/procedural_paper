@@ -86,8 +86,8 @@ will calculate both per-neuron and population averaged spike statistics from the
 The population averaged spike statistics produced by this script can then be plotted using the [plot_multi_area.py](scripts/plot_multi_area.py) script.
 
 ### Reproducing figure 4
-The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are used as the input to the [calc_pairwise_histograms.py](scripts/calc_pairwise_histograms.py) script which  calculates the histograms used for this figure. For example to generate histograms suitable for comparing the stats of a simulation in the ``seed_1`` directory against another in the ``seed_2`` directory``:
+The per-neuron spike statistics produced by the [calc_multi_area_stats.py](scripts/calc_multi_area_stats.py) script are used as the input to the [calc_pairwise_histograms.py](scripts/calc_pairwise_histograms.py) script which calculates the histograms used for this figure. For example:
 ```
 python calc_pairwise_histograms.py seed_1 seed_2
 ```
-will produce ``seed_1_seed_2_XX.npy`` files for each population which can be plotted using the [plot_multi_area_kl_divergence.py](scripts/plot_multi_area_kl_divergence.py) script.
+will calculate histograms suitable for comparing the stats of a simulation in the ``seed_1`` directory against another in the ``seed_2`` directory and produce ``seed_1_seed_2_XX.npy`` files for each population which can be plotted using the [plot_multi_area_kl_divergence.py](scripts/plot_multi_area_kl_divergence.py) script.
