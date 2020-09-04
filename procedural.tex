@@ -41,17 +41,17 @@ Extending our GeNN software with procedural connectivity and a second technical 
 \section{Introduction}
 The brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
-In computer simulations of spiking neural networks, propagating spikes involves  adding the synaptic input from each spiking presynaptic neuron to the postsynaptic neurons.
+In computer simulations of spiking neural networks, propagating spikes involves  adding the weighted synaptic input from each spiking presynaptic neuron to the postsynaptic neurons.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
 The information describing which neurons are synaptically connected and with what weight is typically generated before a simulation is run and stored in large arrays. 
 For large-scale brain models this creates high memory requirements, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
 By careful design, these simulators can keep the memory requirements for each node almost constant, even when a simulation is distributed across tens of thousands of nodes~\citep{Jordan2018}.
-However, high performance computer~(HPC) systems are bulky, expensive and consume a lot of power and are hence typically shared resources, only accessible to a limited number of researchers and for time-limited investigations.
+However, high performance computer~(HPC) systems are bulky, expensive and consume a lot of power so are typically shared resources, only accessible to a limited number of researchers for time-limited investigations.
 
 Neuromorphic systems~\citep{Frenkel2018,Furber2014,Merolla2014,Qiao2015,Schemmel2017} take inspiration from the brain and have been developed specifically for simulating large spiking neural networks more efficiently.
 One particular relevant feature of the brain is that its memory elements -- the synapses -- are co-located with the computing elements -- the neurons.
 In neuromorphic systems, this often translates to dedicating a large proportion of each chip to memory.
-This allows some classes of spiking neural networks to be simulated very efficiently, but reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
+This allows some classes of spiking neural networks to be simulated very efficiently but, reducing the degree of connectivity to fit within the constraints of current neuromorphic systems inevitably changes the dynamics of brain simulations~\citep{VanAlbada2015}.
 However, while such on-chip memory is fast, it can only be fabricated at relatively low density so that many of these systems economize -- either by reducing the maximum number of synapses per neuron to as few as \num{256} or by reducing the precision of the synaptic weights to \SI{6}{\bit}~\citep{Schemmel2017}, \SI{4}{\bit}~\citep{Frenkel2018} or even \SI{1}{\bit}~\citep{Merolla2014}.
 Unlike most other neuromorphic systems, the SpiNNaker~\citep{Furber2014} neuromorphic supercomputer is fully programmable and combines large on-chip and external memories, distributed across the system, which enables real-time simulation of large-scale models~\citep{Rhodes2019}.
 This is promising for the future but, due to its prototype nature, the availability of SpiNNaker hardware is limited and even moderately-sized simulations still require a physically large system (9 boards for a model with around \num{100E3} neurons and \num{300E6} synapses~\citep{Rhodes2019}).
@@ -71,16 +71,13 @@ However, if a larger number of GPUs is required, multiple nodes need to be used 
 
 In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
 The first innovation, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
-Procedural connectivity uses the large amount of computational power available on a GPU to generate synaptic connectivity `on the fly' -- reducing the memory and memory bandwidth requirements.
+Procedural connectivity uses the large amount of computational power available on a GPU to generate synaptic connectivity `on the fly' -- reducing memory and memory bandwidth requirements.
 While a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
-
-Procedural connectivity vastly reduces the memory requirements of large-scale brain simulations, but previous GPU code generation strategies do also not scale well to models containing large numbers of neural populations and synaptic projections.
+Procedural connectivity vastly reduces the memory requirements of large-scale brain simulations but, previous GPU code generation strategies do not scale well to models containing large numbers of neural populations and synaptic projections.
 To address this second problem, we have developed a `kernel merging' code generator, described in section~\ref{sec:results/kernel_merging}.
+In section~\ref{sec:results/multi_area_model} we then demonstrate the power of these new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
 
 \section{Results}
-In the following subsections, we first present the two recent innovations in our GeNN simulator~\citep{Yavuz2016} which enable simulations of very large models on a GPU.
-We then demonstrate the power of the new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
-
 \subsection{Procedural connectivity}
 \label{sec:results/procedural}
 In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
@@ -96,7 +93,7 @@ This is the concept of procedural connectivity.
 It is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
-Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the identified connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
+Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the generated connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
 This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
 
 In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
@@ -110,7 +107,7 @@ Note that, if we were to directly draw from the uniform distribution, the sampli
 However, for the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
 
 Another common scheme for defining connectivity is the `fixed total number connector' in which a fixed total number $N_{\text{syn}}$ of synapses is placed between randomly chosen partners from the pre- and postsynaptic populations.
-In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{P_{n}, P_{n}, \ldots, P_{n}\}]$, where $P_{n} = \frac{1}{N_{\text{pre}}}$, on the host CPU up front because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
+In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the multinomial distribution $\text{Mult}[N_{\text{syn}}, \{\frac{1}{N_{\text{pre}}}, \frac{1}{N_{\text{pre}}}, \ldots, \frac{1}{N_{\text{pre}}}\}]$ up front on the host CPU because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
 However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$ where $N_{\text{post}}$ is the size of the postsynaptic population.
 Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other presynaptic neuron.
 Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
@@ -140,12 +137,12 @@ Counter-based PRNGs are designed for parallel applications and essentially consi
 In contrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
-For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of current-based Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
+For an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
 and Titan RTX, a high-end workstation GPU with \SI{24}{\giga\byte}.
-Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach or using the standard approach of storing synaptic connections in memory employing two different data structures.
+Fig.~\ref{fig:performance_scaling} shows the duration of these simulations using our new procedural approach and the standard approach of storing synaptic connections in memory employing two different data structures.
 Both data structures are described in more detail in our previous work~\citep{Knight2018} but briefly, in the `sparse' data structure, a presynaptic neuron's postsynaptic targets are represented as an array of indices whereas, in the `bitfield' data structure, they are represented as a $N_{\text{post}}$ array of bits where a `1' at position $i$ indicates that there is a connection to postsynaptic neuron $i$ and a `0' that there is not.
 In order to verify our procedural connectivity algorithm and its implementation, we also recorded membrane voltages from two instantiations of the model with fixed random seeds and both sparse and procedural connectivity.
 We found that, to \SI{32}{\bit} floating point  precision, the membrane voltages of all neurons were identical.
@@ -175,7 +172,7 @@ However, if weights vary across synapses, the `bitfield' cannot be used and the 
 \label{sec:results/kernel_merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
 We call our second innovation `kernel merging' and it relates to the way these kernels are implemented.
-While the procedural connectivity presented in the previous section allows simulating models which would otherwise not fit into the memory of a GPU, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
+While the procedural connectivity presented in the previous section allows models which would not otherwise fit into the memory of a GPU to be simulated, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
 GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate separate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
 However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
@@ -202,7 +199,7 @@ void updateNeurons() {
 }
 \end{lstlisting}
 %
-This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons see section~\ref{sec:methods/merging} for model description) into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
+This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons (see section~\ref{sec:methods/merging} for model description) into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data (\SI{8}{\byte} of neuron state and \SI{24}{\byte} of RNG state) and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
@@ -270,6 +267,7 @@ Each thread performs a simple binary search within this array to find the index 
 As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance. Interestingly, the additional overhead of a binary search does not affect the performance even for a large number of populations as the kernel execution is generally memory bound.
 
 \subsection{The multi-area model}
+\label{sec:results/multi_area_model}
 Due to lack of computing power and sufficiently detailed connectivity data, previous models of the cortex have either focused on modelling individual local microcircuits at the level of individual cells~\citep{Izhikevich2008,Potjans2012} or modelling multiple connected areas at a higher level of abstraction~\citep{Cabral2014}.
 However, recent data~\citep{Belitski2008} has shown that cortical activity has distinct features at both the global and local levels which can only be captured by modelling interconnected microcircuits at the level of individual cells.
 The recent multi-area model~\citep{Schmidt2018a,Schmidt2018} is an example of such multi-scale modeling.
@@ -296,12 +294,12 @@ While this is significantly faster than the older Blue Gene/Q supercomputer, it 
 However, because individual synapses simulated using procedural connectivity do not require initialization, in shorter simulations this large performance difference can be somewhat overcome by the faster initialisation time of the GeNN simulations.
 For example a \SI{1}{\second} simulation would take just under \SI{11}{\minute} using GeNN (if the model is not recompiled) and around \SI{8.5}{\minute} using \num{160} JURECA nodes -- only \SI{2.5}{\minute} faster.
 
-Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state whereas Fig.~\ref{fig:multi_area}D-F illustrate the characteristic irregular activity and population bursts of the same areas in the resting state.
+Fig.~\ref{fig:multi_area}A-C shows some example spike rasters from three of the modelled areas, illustrating the asynchronous irregular nature of the model's ground state whereas Fig.~\ref{fig:multi_area}G-I illustrate the characteristic irregular activity and population bursts of the same areas in the resting state.
 Next, we calculated the per-layer distributions of rates, spike-train irregularity and cross-correlation coefficients across all areas (disregarding the first \SI{500}{\milli\second} of simulation) and compared them to the same measures obtained from spike trains generated by the supercomputer simulations.
 We calculated irregularity using the revised local variation LvR~\citep{Shinomoto2009}, averaged over a subsample of \num{2000} neurons and cross-correlation from spike histograms with \SI{1}{\milli\second} bins, calculated from a subset of \num{2000} non-silent neurons.
-The distributions of these values, obtained from the NEST and GeNN simulations, are shown as violin plots in Fig.~\ref{fig:multi_area}G-L.
-Upon visual inspection, the distributions are very similar but, to assess how meaningful the differences between these distributions are, we compared the distributions obtained from 3 GeNN simulations with different random number generator seeds against those obtained from NEST.
-We performed this comparison by computing histograms of the three measures -- using bin sizes determined with the Freedman-Diaconis rule~\citep{Freedman1981} -- and comparing pairs of distributions using the Kullback-Leibler divergence $D_\text{KL}$.
+The distributions of these values -- obtained from the NEST and GeNN simulations -- are shown as violin plots in Fig.~\ref{fig:multi_area}D-F and Fig.~\ref{fig:multi_area}J-L.
+Upon visual inspection, the distributions are very similar but, to assess how meaningful the differences between these distributions are, we compared the distributions obtained from 3 GeNN simulations with different random number generator seeds to those obtained from NEST simulations.
+We performed this comparison by computing histograms of the three measures (using bin sizes determined with the Freedman-Diaconis rule~\citep{Freedman1981}) and comparing pairs of distributions using the Kullback-Leibler divergence $D_\text{KL}$.
 The results of these comparisons are shown in Fig.~\ref{fig:microcircuit_accuracy_kl} and suggest that the influence of the random seeds is comparable to the influence of random seeds and simulator combined -- indicating that the choice of simulator has little effect on the model dynamics.
 %
 \section{Discussion}
@@ -374,7 +372,7 @@ The ordinary differential equations~(\ref{eq:lif_neuron})~and~(\ref{eq:exp_neuro
 \subsection{Balanced random network model}
 \label{sec:methods/va_benchmark}
 This model was first presented by \citet{Vogels2005} but has subsequently been widely used as a scalable benchmark~\citep{Brette2007}.
-The network consists of $N$ LIF neurons as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}.
+The network consists of $N$ LIF neurons, modelled using the approach described in section~\ref{sec:methods/neuron_model} and configured with the parameters shown in table~\ref{tab:parameters}.
 The neurons are partitioned into one population of $\frac{4N}{5}$ excitatory and a second of $\frac{N}{5}$ inhibitory neurons.
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$ (the highest density at which \citet{Vogels2005} suggests their results hold).
 All excitatory synapses have $\tau_{\text{syn}}=\SI{5}{\milli\second}$ and $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$; and all inhibitory synapses have $\tau_{\text{syn}}=\SI{10}{\milli\second}$ and $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
@@ -383,7 +381,8 @@ Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Merging model}
 \label{sec:methods/merging}
-This model simply consists of \num{1000000} LIF neurons, as described in section~\ref{sec:methods/neuron_model} with parameters shown in table~\ref{tab:parameters}, each driven by a Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.25)$.
+This model simply consists of \num{1000000} LIF neurons, again modelled using the approach described in section~\ref{sec:methods/neuron_model} and configured with the parameters shown in table~\ref{tab:parameters}. 
+Each neuron is driven by an independent Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1.0, 0.0625)$.
 Simulations were run with a time step $\Delta t = \SI{1.0}{\milli\second}$.
 
 \subsection{Multi-area model}
@@ -400,10 +399,10 @@ J.K. performed the experiments and the analysis of the results that are presente
 
 \section{Data availability}
 The raw data used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling}; and the pre-processed data used to produce Fig.~\ref{fig:multi_area} are available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
-The raw spiking data from the multi-area model simulations is available upon request.
+The raw spiking data from the GeNN simulations of the multi-area model are available at \url{https://doi.org/10.25377/sussex.12912699}.
 
 \section{Code availability}
-All experiments were carried out using the GeNN 4.3.0, available at \url{https://github.com/genn-team/genn/releases/tag/4.3.0}.
+All experiments were carried out using the GeNN 4.3.3, available at \url{https://github.com/genn-team/genn/releases/tag/4.3.3}.
 A GeNN port of the multi-area model is available at \url{https://github.com/neworderofjamie/multi-area-model}.
 The models used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} are all available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
 
