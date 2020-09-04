@@ -390,7 +390,7 @@ In our implementation, neurons are modelled using the approach described in sect
 Background Poisson input is delivered to each neuron via $I_{\text{ext}_{i}}$ with
 %
 \begin{align}
-    \tau_{\text{ext}} \frac{dI_{\text{ext}_{i}}}{dt} = & -I_{\text{ext}_{i}} + \text{Poisson}( \frac{\nu_{\text{ext}} \Delta t}{1000}),
+    \tau_{\text{ext}} \frac{dI_{\text{ext}_{i}}}{dt} = & -I_{\text{ext}_{i}} + \text{Poisson}\left( \frac{\nu_{\text{ext}} \Delta t}{1000}\right),
 \end{align}
 %
 where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$ and $\nu_{\text{ext}}$ is calculated as described in table 2 of \citet{Schmidt2018}.
