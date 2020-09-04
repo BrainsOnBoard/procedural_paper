@@ -390,10 +390,10 @@ In our implementation, neurons are modelled using the approach described in sect
 Background Poisson input is delivered to each neuron via $I_{\text{ext}_{i}}$ with
 %
 \begin{align}
-    \tau_{\text{ext}} \frac{dI_{\text{ext}_{i}}}{dt} = & -I_{\text{ext}_{i}} + \text{Poisson}\left( \frac{\nu_{\text{ext}} \Delta t}{1000}\right),
+    \tau_{\text{ext}} \frac{dI_{\text{ext}_{i}}}{dt} = & -I_{\text{ext}_{i}} + J \text{Poisson}(\nu_{\text{ext}} \Delta t),
 \end{align}
 %
-where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$ and $\nu_{\text{ext}}$ is calculated as described in table 2 of \citet{Schmidt2018}.
+where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$; and the rate $\nu_{\text{ext}}$ and weight $J$ are calculated as described in tables 2 and 3 in \citet{Schmidt2018}.
 Individual populations are connected by the fixed number connectors described in section~\ref{sec:results/procedural}.
 Simulations were run with a time step $\Delta t = \SI{0.1}{\milli\second}$.
 
