@@ -246,7 +246,7 @@ In order for a thread to determine which neuron in which population it should si
 unsigned int startThread[3] = {0, 128, 256};
 \end{lstlisting}
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.
-As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance.
+As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issues with compilation time and simulation performance. Interestingly, the additional overhead of a binary search does not affect the performance even for a large number of populations as the kernel execution is generally memory bound.
 %
 \begin{figure}
     \begin{fullwidth}
@@ -254,15 +254,10 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
         \includegraphics{figures/multi_area}
         \captionsetup{width=6.69in}
         \caption{Results of full-scale multi-area model simulation. 
-        \textbf{A-C} Raster plots from GeNN ground state simulation showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A), V2~(B), and Frontal Eye Field~(C).
-        \textbf{G-I} Raster plots from GeNN resting state simulation showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A), V2~(B), and Frontal Eye Field~(C).
-        Blue: excitatory neurons, red: inhibitory neurons.
-        \textbf{D-F} Spiking statistics for each population across all 32 areas simulated in ground state using GeNN and NEST shown as split violin plots.
-        \textbf{J-L} Spiking statistics for each population across all 32 areas simulated in resting state using GeNN and NEST shown as split violin plots.
-        Solid lines: medians, Dashed lines: Interquartile range.
-        \textbf{D,J} Population-averaged firing rates.
-        \textbf{E,K} Average pairwise correlation coefficients of spiking activity. 
-        \textbf{F,L} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons.}
+        \textbf{A-C} Raster plots from ground state simulation in GeNN, showing spiking activity of \SI{3}{\percent} of the neurons in area V1~(A), V2~(B), and the Frontal Eye Field (FEF)~(C). Blue: excitatory neurons, red: inhibitory neurons.        
+        \textbf{D-F} Spiking statistics across all 32 areas for each population for ground state simulations, using GeNN (orange) and NEST (blue), shown as split violin plots. Population-averaged firing rates (D), Average pairwise correlation coefficients of spiking activity (E) and Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} averaged across neurons (F). Solid lines in violins: medians, Dashed lines: Interquartile range.
+                \textbf{G-I} Raster plots as in (A-C) but for resting state simulation in GeNN.
+        \textbf{J-L} Same spiking statistics as (D-F) but for resting state simulation.}
         \label{fig:multi_area}
     \end{fullwidth}
 \end{figure}
@@ -270,11 +265,10 @@ As Fig.~\ref{fig:merging_scaling} shows, this approach solves the observed issue
 \begin{figure}
     \centering
     \includegraphics{figures/microcircuit_accuracy_kl}
-    \caption{Comparison of full-scale multi-area model spike statistics between multiple GeNN simulations with different seeds; and NEST simulations.
-    Comparisons calculated using the Kullback-Leibler (KL) divergence.
-    \textbf{A} Neuron firing rates
-    \textbf{B} Pairwise correlation coefficients of spiking activity.
-    \textbf{C} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009}.}
+    \caption{Comparison of full-scale multi-area model spike statistics between multiple GeNN simulations with different seeds; and between GeNN and NEST simulations. Comparisons calculated as the Kullback-Leibler (KL) divergence between the type of distributions displayed in Fig.~\ref{fig:multi_area}D-F,J-L. Bullets mark the mean and whiskers indicate the standard deviation of observed KL divergences across different pairs of compared distributions.
+    \textbf{A,B} Neuron firing rates for ground state (A) and resting state (B)
+    \textbf{C,D} Pairwise correlation coefficients of spiking activity.
+    \textbf{E,F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009}.}
     \label{fig:microcircuit_accuracy_kl}
 \end{figure}
 %
