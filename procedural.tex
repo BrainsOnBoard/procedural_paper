@@ -4,7 +4,7 @@
 \usepackage{amsaddr,amsmath,caption,changepage,enumitem,graphicx,listings,booktabs,url}
 
 % Use superscript numerical citations ala Nature
-\usepackage[super,comma]{natbib}
+\usepackage[super,comma,compress]{natbib}
 
 % Automatic formatting of SI units
 \usepackage[binary-units,separate-uncertainty=true]{siunitx}
@@ -33,7 +33,7 @@
 \begin{abstract}
 Simulations are an important tool for investigating brain function but large models are needed to faithfully reproduce the statistics and dynamics of brain activity.
 Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems.
-Here, we present an alternative simulation method we call `procedural connectivity' where connectivity and synaptic weights are generated ‘on the fly' instead of stored and retrieved from memory.
+Here, we present an alternative simulation method we call `procedural connectivity' where connectivity and synaptic weights are generated `on the fly' instead of stored and retrieved from memory.
 This method is particularly well-suited for use on Graphical Processing Units~(GPUs)-- which are a common fixture in many workstations.
 Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU -- a significant step forward in making large-scale brain modelling accessible to more researchers.
 \end{abstract}
@@ -41,7 +41,7 @@ Extending our GeNN software with procedural connectivity and a second technical 
 \section{Introduction}
 The brain of a mouse has around \num{70E6} neurons, but this number is dwarfed by the \num{1E12} synapses which connect them~\citep{Herculano-Houzel2010}.
 %While simulating synaptic plasticity -- the family of mechanisms believed to be %responsible for learning -- represents a further challenge, in a large-scale model, it is unlikely that learning would be enabled on \emph{all} synapses so efficiently simulating the remaining static synapses is a key challenge for large-scale brain simulation.\todo{has this been at all quantified in mice?}
-In computer simulations of spiking neural networks, propagating spikes involves  adding the weighted synaptic input from each spiking presynaptic neuron to the postsynaptic neurons.
+In computer simulations of spiking neural networks, propagating spikes involves  applying the weighted synaptic input from each spiking presynaptic neuron to the postsynaptic neurons.
 %Because typical EPSP shaping functions are linear, they can then be subsequently applied to the `histogram' resulting from this process.~\todo{presumably someone first had this intuition so cite}.
 The information describing which neurons are synaptically connected and with what weight is typically generated before a simulation is run and stored in large arrays. 
 For large-scale brain models this creates high memory requirements, so that they can typically only be simulated on large distributed computer systems using software such as NEST~\citep{Gewaltig2007} or NEURON~\citep{carnevale2006neuron}.
@@ -137,7 +137,7 @@ Counter-based PRNGs are designed for parallel applications and essentially consi
 In contrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
 %\todo{do we need some more explanation of how you get from this to a network simulation?}
 
-To verify our procedural connectivity algorithm and its implementation and for an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
+To verify our procedural connectivity algorithm and its implementation; and for an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
 Geforce GTX 1650, a low-end desktop GPU with \SI{4}{\giga\byte};
