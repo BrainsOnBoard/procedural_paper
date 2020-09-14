@@ -18,7 +18,7 @@ voltages_proc = voltages_proc.astype(np.float64)
 voltage_err = voltages_sparse - voltages_proc
 voltage_err = np.sqrt(np.sum(voltage_err * voltage_err) / len(voltages_sparse))
 
-print("RMSE:%f" % voltage_err)
+print("RMSE:%.32f" % voltage_err)
 
 # Load spikes
 spikes_post = np.loadtxt("spikes_post.csv", delimiter=",", skiprows=1,
