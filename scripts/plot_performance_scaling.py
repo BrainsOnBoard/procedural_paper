@@ -75,8 +75,8 @@ for i, a in enumerate(axes):
     plot_line(a, data, i, algorithms, pal, i == 0)
 
 # Add axis labels
-for i, a in enumerate(axes):
-    a.set_title(chr(ord("A") + i), loc="left")
+for i, (a, d) in enumerate(zip(axes, devices)):
+    a.set_title(chr(ord("A") + i) + ": " + d, loc="left")
 
 # Show figure legend with devices beneath figure
 legend_actors = [Line2D([], [], color=p) for _, p in zip(algorithms, pal)]
