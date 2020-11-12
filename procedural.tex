@@ -125,7 +125,7 @@ Having removed the bottleneck of reading synaptic weights and postsynaptic indic
 However, our current implementation still accumulates postsynaptic input using a `fire-and-forget' atomic add operation.
 Even though atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively low latency, profiling using NVIDIA Nsight compute~\citep{NVIDIACorporation2020} suggests that the latency of these operations, combined with those incurred when sampling from the PRNG and calculating logarithms are currently the limiting factor in this benchmark rather than the compute resources of the GPU. This suggests that additional optimisations might allow for further significant performance improvements in the future.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
-If weights vary across synapses, this can be accommodate while the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
+If weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 %
 \begin{figure}
     \centering
@@ -150,7 +150,7 @@ However, GPUs can only run a small number of kernels -- which are equivalent to 
 Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where multiple neuron populations are simulated within each kernel.
 CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
 To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
-Therefore, in the following pseudocode we simulating 3 populations of 100 neurons each in a single kernel and -- assuming a thread block size of 32 -- we pad each population to 128 threads:
+Therefore, in the following pseudocode we simulate 3 populations of 100 neurons each in a single kernel and -- assuming a thread block size of 32 -- we pad each population to 128 threads:
 %
 \begin{lstlisting}
 void updateNeurons() {
@@ -246,7 +246,7 @@ It uses scaled versions of a previous, 4 layer microcircuit model~\citep{Potjans
 The patches are connected together according to inter-area axon tracing data from the CoCoMac~\citep{Bakker2012} database, further refined using additional anatomical data~\citep{Markov2014} and heuristics~\citep{Ercsey-Ravasz2013} to obtain estimates for the number of synapses between areas.
 The synapses are distributed between populations in the source and target area using layer-specific tracing data~\citep{Markov2014b} and cell-type-specific dendritic densities~\citep{Binzegger2004} (see section~\ref{sec:methods/multi_area_model} for model description).
 In 2018, this model was simulated using NEST~\citep{Gewaltig2007} on an IBM Blue Gene/Q supercomputer.
-Because each Blue Gene/Q compute node only had a small amount of memory, these simulation were distributed across an entire rack (\num{1024} compute nodes) of the system and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
+Because each Blue Gene/Q compute node only had a small amount of memory, these simulations were distributed across an entire rack (\num{1024} compute nodes) of the system and simulating \SI{1}{\second} of biological time took approximately \SI{12}{\minute}~\citep{Schmidt2018}.
 On the newer `JURECA' supercomputer (where each node has \SI{128}{\giga\byte} of memory) this model can be simulated on as few as \num{11} compute nodes and,
 when using \num{160} compute nodes, it can be initialized in approximately \SI{8}{\minute} and simulating \SI{1}{\second} of biological time takes only \SI{31}{\second}~\citep{VanAlbada2020}.
 
