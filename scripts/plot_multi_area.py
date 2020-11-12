@@ -59,6 +59,8 @@ def plot_area(name, axis, data_path):
     # Loop through area spike files and population names
     start_id = 0
     layer_counts = np.zeros(len(pop_names) // 2, dtype=int)
+    excitatory_actor = None
+    inhibitory_actor = None
     for i, (s, n)  in enumerate(zip(area_spikes, pop_names)):
         data = np.load(s)
         
@@ -73,9 +75,15 @@ def plot_area(name, axis, data_path):
 
         # Plot spikes
         is_inhibitory = n[-1] == "I"
-        axis.scatter(data[0][indices] / 1000.0, data[1][indices] + start_id, s=2,
-                     rasterized=True, edgecolors="none", 
-                     color="firebrick" if is_inhibitory else "navy")
+        actor = axis.scatter(data[0][indices] / 1000.0, data[1][indices] + start_id, s=2,
+                             rasterized=True, edgecolors="none", 
+                             color="firebrick" if is_inhibitory else "navy")
+
+        # Store actors
+        if is_inhibitory:
+            inhibitory_actor = actor
+        else:
+            excitatory_actor = actor
 
         # Update offset
         start_id += num
@@ -89,6 +97,8 @@ def plot_area(name, axis, data_path):
     axis.set_xlim((3.0, 3.5))
     axis.set_ylim((0.0, np.sum(layer_counts)))
     axis.set_xlabel("Time [s]")
+    
+    return excitatory_actor, inhibitory_actor
 
 def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
     # Combine GeNN and NEST rates
@@ -182,7 +192,7 @@ fig.add_subplot(corr_coeff_1_9_violin_axis)
 fig.add_subplot(irregularity_1_9_violin_axis)
 
 # Plot example GeNN raster plots
-plot_area("V1", v1_1_0_axis, "chi_1_0")
+excitatory_actor, inhibitory_actor = plot_area("V1", v1_1_0_axis, "chi_1_0")
 plot_area("V2", v2_1_0_axis, "chi_1_0")
 plot_area("FEF", fef_1_0_axis, "chi_1_0")
 plot_area("V1", v1_1_9_axis, "chi_1_9")
@@ -233,10 +243,21 @@ rate_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(100.0))
 corr_coeff_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(0.25))
 irregularity_1_9_violin_axis.yaxis.set_minor_locator(MultipleLocator(1.0))
 
+
 # Show figure legend with devices beneath figure
 pal = sns.color_palette()
 fig.legend([Rectangle((0, 0), 1, 1, fc=pal[0]), Rectangle((0, 0), 1, 1, fc=pal[1])],
            ["NEST", "GeNN"], ncol=2, frameon=False, bbox_to_anchor=(0.875, 0.0), loc="lower center")
+
+# Increase size of markers in spike actors
+excitatory_actor.set_sizes([10])
+inhibitory_actor.set_sizes([10])
+
+# Show second figure legend with inhibitory and excitatory spikes
+fig.legend([excitatory_actor, inhibitory_actor],
+           ["Excitatory", "Inhibitory"], ncol=2, frameon=False, bbox_to_anchor=(0.333, 0.0), loc="lower center")
+
+
 fig.align_ylabels([rate_1_0_violin_axis, corr_coeff_1_0_violin_axis, irregularity_1_0_violin_axis,
                    rate_1_9_violin_axis, corr_coeff_1_9_violin_axis, irregularity_1_9_violin_axis])
 fig.tight_layout(pad=0, w_pad=2.0, rect= [0.0, 0.035, 1.0, 1.0])
