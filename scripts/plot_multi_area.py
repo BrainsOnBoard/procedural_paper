@@ -7,6 +7,7 @@ from matplotlib.ticker import MultipleLocator
 import json
 import numpy as np
 import seaborn as sns
+from copy import copy
 from os import path
 from six import iteritems
 from sys import argv
@@ -98,7 +99,7 @@ def plot_area(name, axis, data_path):
     axis.set_ylim((0.0, np.sum(layer_counts)))
     axis.set_xlabel("Time [s]")
     
-    return excitatory_actor, inhibitory_actor
+    return copy(excitatory_actor), copy(inhibitory_actor)
 
 def plot_violin(nest_data, genn_data, axis, vertical, label, lim):
     # Combine GeNN and NEST rates
