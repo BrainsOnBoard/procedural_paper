@@ -94,26 +94,7 @@ It is applicable whenever synapses are static -- plastic synapses which change t
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the generated connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
-This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as we shall see from typical examples below.
-
-In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
-We will now discuss two typical examples and how they can be implemented efficiently on a GPU.
-One very common connectivity scheme is the `fixed probability connector' for which each neuron in the presynaptic population is connected to each neuron in the postsynaptic population with fixed probability $P_{\text{conn}}$.
-The postsynaptic targets of any presynaptic neuron can hence be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
-One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
-However, for sparse connectivity ($P_{\text{conn}} \ll 1$), it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e.~a synapse).
-The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
-Note that, if we were to directly draw from the uniform distribution, the sampling for each potential synapse would be independent from any other potential synapse and all these operations could be performed in parallel.
-However, for the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
-
-Another common scheme for defining connectivity is the `fixed total number connector' in which a fixed total number $N_{\text{syn}}$ of synapses is placed between randomly chosen partners from the pre- and postsynaptic populations.
-In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the $N_{\text{pre}}$-category multinomial distribution $\text{Mult}[N_{\text{syn}}, \{\frac{1}{N_{\text{pre}}}, \frac{1}{N_{\text{pre}}}, \ldots, \frac{1}{N_{\text{pre}}}\}]$ up front on the host CPU because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
-However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$ where $N_{\text{post}}$ is the size of the postsynaptic population.
-Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other presynaptic neuron.
-Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
-%
-%Other typical connectivity schemes are described in the GeNN documentation\ref{}\todo{Uhm ... are they? Or should we gloss over this ...}
-%'fixed number post' which is like fixed number total without the multinomial and 'fixed number pre' which we can't do easily :)
+This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as shown in the two example algorithms described in section~\ref{sec:methods/procedural_connectivity}.
 
 \begin{figure}
     \begin{fullwidth}
@@ -129,13 +110,6 @@ Where synaptic weights and delays are not constant across synapses, but are desc
         \label{fig:performance_scaling}
     \end{fullwidth}
 \end{figure}
-
-In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each presynaptic neuron.
-In principle this could be done with `conventional' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
-Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
-Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs a random number.
-In contrast to convential PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
-%\todo{do we need some more explanation of how you get from this to a network simulation?}
 
 To verify our procedural connectivity algorithm and its implementation; and for an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
@@ -367,6 +341,34 @@ In the models where there are synaptic connections, they are current-based, i.e.
 where $\tau_{\text{syn}}$ represents the synaptic time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
 The ordinary differential equations~(\ref{eq:lif_neuron})~and~(\ref{eq:exp_neuron_input_current}) are solved with an exponential Euler algorithm.
 %The continuous terms of the Eq.~\ref{eq:lif_neuron}~and~\ref{eq:exp_neuron_input_current} are separately solved algebraically so that the input currents $I_{\text{syn}_{i}}$ and $I_{\text{ext}_{i}}$ are treated as constants throughout each simulation timestep.
+
+\subsection{Procedural connectivity algorithms}
+\label{sec:methods/procedural_connectivity}
+In the absence of knowledge of the exact microscopic connectivity in the brain, there are a number of typical connectivity schemes that are used in brain models.
+In this section we discuss two typical examples and how they can be implemented efficiently on a GPU.
+One very common connectivity scheme is the `fixed probability connector' for which each neuron in the presynaptic population is connected to each neuron in the postsynaptic population with fixed probability $P_{\text{conn}}$.
+The postsynaptic targets of any presynaptic neuron can hence be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
+One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
+However, for sparse connectivity ($P_{\text{conn}} \ll 1$), it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e.~a synapse).
+The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
+Note that, if we were to directly draw from the uniform distribution, the sampling for each potential synapse would be independent from any other potential synapse and all these operations could be performed in parallel.
+However, for the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
+
+Another common scheme for defining connectivity is the `fixed total number connector' in which a fixed total number $N_{\text{syn}}$ of synapses is placed between randomly chosen partners from the pre- and postsynaptic populations.
+In order to initialise this connectivity in parallel, the number of synapses that originate from each of the $N_{\text{pre}}$ presynaptic neurons must first be calculated by sampling from the $N_{\text{pre}}$-category multinomial distribution $\text{Mult}[N_{\text{syn}}, \{\frac{1}{N_{\text{pre}}}, \frac{1}{N_{\text{pre}}}, \ldots, \frac{1}{N_{\text{pre}}}\}]$ up front on the host CPU because these numbers need to add to $N_{\text{syn}}$ and are hence not independent.
+However, once the numbers of outgoing synapses are determined, the postsynaptic targets for a presynaptic neuron can be generated very efficiently in parallel by sampling from the discrete uniform distribution $\text{Unif}[0, N_{\text{post}}]$ where $N_{\text{post}}$ is the size of the postsynaptic population.
+Note, that this can only be done because the targets of each presynaptic neuron are independent from those of any other presynaptic neuron.
+Where synaptic weights and delays are not constant across synapses, but are described by some statistical distribution, they can also be sampled independently from each other and hence in parallel.
+%
+%Other typical connectivity schemes are described in the GeNN documentation\ref{}\todo{Uhm ... are they? Or should we gloss over this ...}
+%'fixed number post' which is like fixed number total without the multinomial and 'fixed number pre' which we can't do easily :)
+
+In order to use these parallel initialisation schemes for procedural connectivity, we require reproducible pseudorandom numbers that can be generated independently for each presynaptic neuron.
+In principle this could be done with `conventional' pseudorandom  number generators~(PRNGs), but each presynaptic neuron would need to maintain its own PRNG state which would lead to a significant memory overhead.
+Instead, we use the `counter-based' Philox4$\times$32-10 PRNG~\citep{Salmon2011}.
+Counter-based PRNGs are designed for parallel applications and essentially consist of a pseudo-random bijective function which takes a counter as an input (for Philox4$\times$32-10 a \SI{128}{\bit} number) and outputs a random number.
+In contrast to conventional PRNGs, this means that generating the $n^\text{th}$ random number in a stream has exactly the same cost as generating the `next' random number, allowing us to trivially divide up the random number stream between multiple parallel processes (in this case presynaptic neurons).
+%\todo{do we need some more explanation of how you get from this to a network simulation?}
 
 \subsection{Balanced random network model}
 \label{sec:methods/va_benchmark}
