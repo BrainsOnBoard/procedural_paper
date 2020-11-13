@@ -105,7 +105,7 @@ It is applicable whenever synapses are static -- plastic synapses which change t
 
 We implemented procedural connectivity in GeNN by repurposing our previously developed parallel initialisation methods.
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the generated connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
-This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as shown in the two example algorithms described in section~\ref{sec:methods/procedural_connectivity}.
+This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as demonstrated by the two example connectivity generation algorithms described in section~\ref{sec:methods/procedural_connectivity}.
 
 To verify our procedural connectivity algorithm and its implementation; and for an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
@@ -185,7 +185,7 @@ Several neural modelling tools including Brian2~\citep{Stimberg2019} provide mod
 However, if a model is defined by connecting these slices together, the resulting connectivity is the result of \emph{multiple} simple connection rules of the type discussed in the previous section, making it much more difficult to apply our procedural connectivity approach.
 Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
 
-To address the issue of too many populations, we developed a new code generator for GeNN which applies a Single Program Multiple Data~(SPMD) approach and `merges' the model description, grouping together populations which can be simulated using the same generated code.
+To address the issue of too many populations, we developed a new code generator for GeNN which employs a Single Program Multiple Data~(SPMD) approach and `merges' the model description, grouping together populations which can be simulated using the same generated code.
 From this merged description, structures are generated to store the pointers to state variables and the values of parameters if they differ between merged populations.
 %
 %\begin{lstlisting}
