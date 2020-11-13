@@ -76,6 +76,17 @@ While a similar approach was used by Eugene Izhikevich for simulating an extreme
 Procedural connectivity vastly reduces the memory requirements of large-scale brain simulations but previous GPU code generation strategies also do not scale well to models containing large numbers of neural populations and synaptic projections.
 To address this second problem, we have developed a `kernel merging' code generator, described in section~\ref{sec:results/kernel_merging}.
 In section~\ref{sec:results/multi_area_model} we then demonstrate the power of these new features by simulating a recent model of the Macaque visual cortex~\citep{Schmidt2018} with \num{4.13E6} neurons and \num{24.2E9} synapses.
+\vfill
+\begin{figure}
+    \begin{fullwidth}
+        \centering
+        \includegraphics{figures/performance_scaling}
+        \captionsetup{width=6.69in}
+        \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
+        All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.}
+        \label{fig:performance_scaling}
+    \end{fullwidth}
+\end{figure}
 
 \section{Results}
 \subsection{Procedural connectivity}
@@ -96,17 +107,6 @@ We implemented procedural connectivity in GeNN by repurposing our previously dev
 Instead of running them once for all synapses at the beginning of the simulation, we rerun the methods during the simulation to regenerate the outgoing synapses of each neuron that fires a spike and immediately use the generated connections and weights to run the post-synaptic code which calculates the effect of the spike onto other neurons.
 This is possible because the outgoing synaptic connections from each neuron are typically largely independent from those of other neurons as shown in the two example algorithms described in section~\ref{sec:methods/procedural_connectivity}.
 
-\begin{figure}
-    \begin{fullwidth}
-        \centering
-        \includegraphics{figures/performance_scaling}
-        \captionsetup{width=6.69in}
-        \caption{Scaling of \SI{1}{\second} balanced random network simulation using different algorithms on a range of modern GPUs. 
-        All data points represent the mean of 5 simulations and standard deviations are smaller than line width so not shown.}
-        \label{fig:performance_scaling}
-    \end{fullwidth}
-\end{figure}
-
 To verify our procedural connectivity algorithm and its implementation; and for an initial demonstration of the performance and scalability of procedural connectivity, we simulated a balanced random network of Leaky Integrate-and-Fire~(LIF) neurons (see section~\ref{sec:methods/va_benchmark} for model description) at scales ranging from \num{1E3} to \num{1E6} neurons (\num{100E3} to \num{100E9} synapses respectively) on a representative selection of NVIDIA GPU hardware:
 Jetson TX2, a low-power embedded system with \SI{8}{\giga\byte} (shared memory);
 Geforce MX130, a laptop GPU with \SI{2}{\giga\byte};
@@ -126,7 +126,7 @@ However, our current implementation still accumulates postsynaptic input using a
 Even though atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively low latency, profiling using NVIDIA Nsight compute~\citep{NVIDIACorporation2020} suggests that the latency of these operations, combined with those incurred when sampling from the PRNG and calculating logarithms are currently the limiting factor in this benchmark rather than the compute resources of the GPU. This suggests that additional optimisations might allow for further significant performance improvements in the future.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 If weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
-%
+
 \begin{figure}
     \centering
     \includegraphics{figures/merging_scaling}
@@ -138,7 +138,7 @@ If weights vary across synapses, the `bitfield' cannot be used and the memory co
     \textbf{D} Number of ``No instruction'' stalls reported by NVIDIA Nsight compute profiler~($N_{stall}$).}
     \label{fig:merging_scaling}
 \end{figure}
-%
+
 \subsection{Kernel merging}
 \label{sec:results/kernel_merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
@@ -186,29 +186,29 @@ However, if a model is defined by connecting these slices together, the resultin
 Furthermore, such an approach places the responsibility for structuring a model in such a way that it can be simulated efficiently onto the modellers, who often prefer to concentrate on the science and organise populations according to anatomy or physiology.
 
 To address the issue of too many populations, we developed a new code generator for GeNN which applies a Single Program Multiple Data~(SPMD) approach and `merges' the model description, grouping together populations which can be simulated using the same generated code.
-From this merged description, structures are generated to store the pointers to state variables and parameter values which are still allowed to differ between merged populations:
+From this merged description, structures are generated to store the pointers to state variables and the values of parameters if they differ between merged populations.
 %
-\begin{lstlisting}
-struct NeuronUpdateGroup {
-  unsigned int numNeurons;
-  float* V;
-};
-\end{lstlisting}
+%\begin{lstlisting}
+%struct NeuronUpdateGroup {
+%  unsigned int numNeurons;
+%  float* V;
+%};
+%\end{lstlisting}
 %
-An array of these structures is then declared for each merged population and each element is initialised with pointers to state variables and parameter values:
+An array of these structures is then declared for each merged population and each element is initialised with pointers to state variables and parameter values.
 %
-\begin{lstlisting}
-NeuronUpdateGroup neuronUpdateGroup[3];
-neuronUpdateGroup[0] = {100, VA};
-neuronUpdateGroup[1] = {100, VB};
-neuronUpdateGroup[2] = {100, VC};
-\end{lstlisting}
+%\begin{lstlisting}
+%NeuronUpdateGroup neuronUpdateGroup[3];
+%neuronUpdateGroup[0] = {100, VA};
+%neuronUpdateGroup[1] = {100, VB};
+%neuronUpdateGroup[2] = {100, VC};
+%\end{lstlisting}
 %
-where \lstinline{VA} is a pointer to the array containing the state variable `V' of populations `A' and so on.
-In order for a thread to determine which neuron in which population it should simulate, we generate an additional data structure -- an array containing a cumulative sum of threads used for each population:
-\begin{lstlisting}
-unsigned int startThread[3] = {0, 128, 256};
-\end{lstlisting}
+%where \lstinline{VA} is a pointer to the array containing the state variable `V' of %populations `A' and so on.
+In order for a thread to determine which neuron in which population it should simulate, we generate an additional array containing a cumulative sum of threads used for each population.
+%\begin{lstlisting}
+%unsigned int startThread[3] = {0, 128, 256};
+%\end{lstlisting}
 %
 \begin{figure}
     \begin{fullwidth}
