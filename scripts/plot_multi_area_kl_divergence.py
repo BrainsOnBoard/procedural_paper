@@ -58,7 +58,7 @@ kl_bar_x = np.arange(0.0, len(populations) * (kl_bar_width + kl_bar_pad), kl_bar
 permutation_actors = []
 
 errorbar_kwargs = {"linestyle": "None", "marker": "o", "markersize": 1.0,
-                   "capsize": 5.0, "elinewidth": 0.75, "capthick": 0.75}
+                   "capsize": 5.0, "elinewidth": 0.75, "capthick": 0.75, "clip_on": False}
 
 # Loop through datasets
 max_axis_value = np.empty((3,2))
@@ -95,20 +95,20 @@ for j, d in enumerate(["chi_1_0", "chi_1_9"]):
         permutation_actors.append(kl_axes[0, j].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
                                                          yerr=s, **errorbar_kwargs)[2])
                                                          
-        max_axis_value[0, j] = np.amax(m + s)
+        max_axis_value[0, j] = np.amax(m + s) + 0.0005
 
     # Draw correlation coefficient KL-divergence bars
     for i, (m, s) in enumerate(zip(corr_coeff_kl_mean, corr_coeff_kl_std)):
         kl_axes[1, j].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
                                yerr=s, **errorbar_kwargs)
         
-        max_axis_value[1, j] = np.amax(m + s)
+        max_axis_value[1, j] = np.amax(m + s) + 0.001
 
     # Draw irregularity KL-divergence bars
     for i, (m, s) in enumerate(zip(irregularity_kl_mean, irregularity_kl_std)):
         kl_axes[2, j].errorbar((kl_bar_x * 2.0) + (i * kl_bar_width), m, 
                                        yerr=s, **errorbar_kwargs)
-        max_axis_value[2, j] = np.amax(m + s)
+        max_axis_value[2, j] = np.amax(m + s) + 0.0005
         
 # Configure x-axis on bottom row
 label_populations(kl_axes[2, 0], populations, kl_bar_x, kl_bar_width)
@@ -137,6 +137,7 @@ max_grid_row_overflow = np.maximum(0.0, np.amax(axis_grid_overflow, axis=1))
 for i in range(3):
     for j in range(2):
         ax = kl_axes[i, j]
+
         ax.set_title(chr(ord("A") + (i * 2) + j), loc="left")
         ax.set_ylabel("$D_{KL}$")
         
