@@ -66,7 +66,7 @@ Unfortunately, propagating a spike in a spiking neural network simulation typica
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
 However, individual GPUs do not have enough memory to simulate larger brain models.
-One can install a small number of GPUs within a single node and connect them using high-speed NVLink~\citep{NVIDIACorporation} interconnect, through which they can communicate with low latency and high bandwidth~\citep{Li2020}.
+One can install a small number of GPUs within a single node and connect them using high-speed NVLink interconnect, through which they can communicate with low latency and high bandwidth~\citep{Li2020}.
 However, if a larger number of GPUs is required, multiple nodes need to be used which are connected via the same MPI based protocols and network fabric as CPU based systems and hence suffer from similar communication overheads as CPU based clusters.
 
 In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
@@ -123,7 +123,7 @@ None of our devices have enough memory to store the \num{100E9} synapses require
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the procedural approach is competitive with and sometimes better than the standard approach.
 Having removed the bottleneck of reading synaptic weights and postsynaptic indices from memory, one might have expected even higher performance. 
 However, our current implementation still accumulates postsynaptic input using a `fire-and-forget' atomic add operation.
-Even though atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively low latency, profiling using NVIDIA Nsight compute~\citep{NVIDIACorporation2020} suggests that the latency of these operations, combined with those incurred when sampling from the PRNG and calculating logarithms are currently the limiting factor in this benchmark rather than the compute resources of the GPU. This suggests that additional optimisations might allow for further significant performance improvements in the future.
+Even though atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively low latency, profiling using NVIDIA Nsight compute suggests that the latency of these operations, combined with those incurred when sampling from the PRNG and calculating logarithms are currently the limiting factor in this benchmark rather than the compute resources of the GPU. This suggests that additional optimisations might allow for further significant performance improvements in the future.
 All of the synapses in this model have the same synaptic weight meaning that they can be hard-coded into the procedural connectivity kernels.
 If weights vary across synapses, the `bitfield' cannot be used and the memory constraints for the `sparse' representation become even more severe.
 
@@ -146,7 +146,7 @@ We call our second innovation `kernel merging' and it relates to the way these k
 While the procedural connectivity presented in the previous section allows models which would not otherwise fit into the memory of a GPU to be simulated, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
 GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate separate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
-However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs~\citep[p278]{NVIDIACorporation2019}).
+However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs.
 Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where multiple neuron populations are simulated within each kernel.
 CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
 To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
@@ -174,11 +174,11 @@ This approach works well for a small number of populations but, as Fig.~\ref{fig
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 
 Normally, we would expect this model to be memory bound as each thread in the model reads \SI{32}{\byte} of data (\SI{8}{\byte} of neuron state and \SI{24}{\byte} of RNG state) and, as discussed above, hiding the latency of these memory accesses would require approximately 320 arithmetic operations -- many more than required to sample an input current from the normal distribution and update a LIF neuron.
-Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler~\citep{NVIDIACorporation2020} -- shows that this is true for small numbers of populations.
+Fig.~\ref{fig:merging_scaling}C -- obtained using data from the NVIDIA Nsight compute profiler -- shows that this is true for small numbers of populations.
 In this case, the memory system is around \SI{90}{\percent} utilised.
 However, when the model is partitioned into larger numbers of smaller populations, the memory is used less efficiently and the kernel becomes latency bound, i.e.~neither memory \emph{nor} compute are used efficiently.
 Investigating further, we found that this drop in performance was accompanied by an increasing number of ``No instruction'' stalls~(Fig.~\ref{fig:merging_scaling}D) which are events that prevent the GPU from doing any work during a clock cycle.
-These particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code''~\citep[p47]{NVIDIACorporation2020}, which makes sense as we are generating kernels with hundreds of thousands of lines of code.
+These particular events are likely to be caused by ``Excessively jumping across large blocks of assembly code'', which makes sense as we are generating kernels with hundreds of thousands of lines of code.
 %\todo{is more detail required here as to why?}
 
 Several neural modelling tools including Brian2~\citep{Stimberg2019} provide modellers with tools to work with `slices' of neuron populations, allowing models to be defined with fewer populations.
