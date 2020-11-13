@@ -225,13 +225,16 @@ In order for a thread to determine which neuron in which population it should si
 \end{figure}
 %
 \begin{figure}
-    \centering
-    \includegraphics{figures/microcircuit_accuracy_kl}
-    \caption{Comparison of full-scale multi-area model spike statistics between three GeNN simulations with different seeds; and between the three GeNN simulations and a NEST simulations. Comparisons calculated as the Kullback-Leibler (KL) divergence between the types of distributions displayed in Fig.~\ref{fig:multi_area}D-F,J-L. Bullets mark the mean and whiskers indicate the standard deviation of observed KL divergences across different pairs of compared distributions.
-    \textbf{A,B} Neuron firing rates for ground state~(A) and resting state~(B)
-    \textbf{C,D} Pairwise correlation coefficients of spiking activity.
-    \textbf{E,F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009}.}
-    \label{fig:microcircuit_accuracy_kl}
+    \begin{fullwidth}
+        \centering
+        \includegraphics{figures/microcircuit_accuracy_kl}
+        \captionsetup{width=6.69in}
+        \caption{Comparison of full-scale multi-area model spike statistics between three GeNN simulations with different seeds; and between the three GeNN simulations and a NEST simulations. Comparisons calculated as the Kullback-Leibler (KL) divergence between the types of distributions displayed in Fig.~\ref{fig:multi_area}D-F,J-L. Bullets mark the mean and whiskers indicate the standard deviation of observed KL divergences across different pairs of compared distributions.
+        \textbf{A,B} Neuron firing rates for ground~(A) and resting~(B) state.
+        \textbf{C,D} Pairwise correlation coefficients of spiking activity in ground~(C) and resting~(D) state.
+        \textbf{E,F} Irregularity measured by revised local variation LvR~\citep{Shinomoto2009} in ground~(E) and resting~(F) state.}
+        \label{fig:microcircuit_accuracy_kl}
+    \end{fullwidth}
 \end{figure}
 %
 Each thread performs a simple binary search within this array to find the index of the neuron and population it should simulate.

@@ -8,7 +8,7 @@ from os import path
 import plot_settings
 
 def remove_junk(axis):
-    sns.despine(ax=axis, left=True, bottom=True)
+    sns.despine(ax=axis, left=True)
     axis.xaxis.grid(False)
 
 def label_populations(axis, populations, kl_bar_x, kl_bar_width):
@@ -42,7 +42,7 @@ permutations = ["nest_seed_1", "nest_seed_2", "nest_seed_3",
 permutation_names = ["GeNN vs NEST", "GeNN vs GeNN"]
 
 # Population names
-populations = ["4E", "4I", "5E", "5I", "6E", "6I", "23E", "23I"]
+populations = ["23E", "23I", "4E", "4I", "5E", "5I", "6E", "6I"]
 
 # Create second figure to show KL divergence
 kl_fig, kl_axes = plt.subplots(3, 2, frameon=False, sharex="col",
@@ -57,7 +57,7 @@ kl_bar_x = np.arange(0.0, len(populations) * (kl_bar_width + kl_bar_pad), kl_bar
 # Plot bars
 permutation_actors = []
 
-errorbar_kwargs = {"linestyle": "None", "marker": "o", "markersize": 1.0,
+errorbar_kwargs = {"linestyle": "None", "marker": "o", "markersize": 1.0, "zorder": 10,
                    "capsize": 5.0, "elinewidth": 0.75, "capthick": 0.75, "clip_on": False}
 
 # Loop through datasets
