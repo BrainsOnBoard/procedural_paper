@@ -58,9 +58,10 @@ def plot_line(axis, data, device_index, algorithms, pal, show_y_axis_label=True)
     axis.set_xlabel("Number of neurons")
     if show_y_axis_label:
         axis.set_ylabel("Simulation time [s]")
+        axis.set_yscale("log")
+        axis.set_yticks([1E-3, 1E0, 1E3])
+        axis.set_ylim((1E-3, None))
     axis.set_xscale("log")
-    axis.set_yscale("log")
-    axis.set_yticks([1E-3, 1E0, 1E3])
     
     # Remove axis junk
     sns.despine(ax=axis)
