@@ -150,26 +150,9 @@ However, GPUs can only run a small number of kernels -- which are equivalent to 
 Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where multiple neuron populations are simulated within each kernel.
 CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
 To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
-Therefore, in the following pseudocode we simulate 3 populations of 100 neurons each in a single kernel and -- assuming a thread block size of 32 -- we pad each population to 128 threads:
-%
-\begin{lstlisting}
-void updateNeurons() {
-  if(thread < 128) {
-    if(thread < 100) {
-      // Update neuron population A
-    }
-  } else if(thread >= 128 && thread < 256) {
-    if((thread - 128) < 100) {
-      // Update neuron population B
-    }
-  } else if(thread >= 256 && thread < 384) {
-    if((thread - 256) < 100) {
-      // Update neuron population C
-    }
-  }
-}
-\end{lstlisting}
-%
+For example, if simulating 3 populations of \num{100} neurons using a thread block size of 32, each population would be padded to \num{128} threads. 
+The update code for the first neuron population would then be conditioned on \lstinline{thread < 128} and the second on \lstinline{thread >= 128 && thread < 256} etc.
+
 This approach works well for a small number of populations but, as Fig.~\ref{fig:merging_scaling}A illustrates, when we partition a model consisting of a single population of \num{1000000} LIF neurons (see section~\ref{sec:methods/merging} for model description) into an increasingly large number of ever smaller populations, compilation time increases super-linearly and quickly becomes impractical.
 Furthermore, the simulation also runs slower with a large number of populations (Fig.~\ref{fig:merging_scaling}B).
 
