@@ -283,7 +283,18 @@ However, typically not all synapses in a simulation are plastic and those that a
 In this work, we have discussed the idea of procedural connectivity in the context of GPU hardware but, we believe that there is also potential for developing new types of neuromorphic hardware built from the ground up for procedural connectivity.
 The latencies of sampling from the random number generator and performing atomic add operations were identified in section~\ref{sec:results/procedural} as the factors currently limiting performance of the procedural connectivity algorithm.
 By dedicating more silicon area to fast on-chip memory -- which would alleviate the need for atomic operations -- and by implementing the random number generator in hardware, these limitations could be overcome, leading to potentially game-changing compute time improvements.
-%
+
+\section{Acknowledgments}
+We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
+JK and TN were funded by the EPSRC (Brains on Board project, grant number EP/P006094/1).
+TN was also funded by the the European Union’s Horizon 2020 research and innovation program under Grant Agreements 785907 (HBP SGA2) and 945539 (HBP SGA3).
+
+\section{Author contributions}
+J.K. and T.N. wrote the paper.
+T.N. is the original developer of GeNN.
+J.K. is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.
+J.K. performed the experiments and the analysis of the results that are presented in this work.
+
 \section{Methods}
 \begin{table}
   \centering
@@ -332,7 +343,7 @@ One very common connectivity scheme is the `fixed probability connector' for whi
 The postsynaptic targets of any presynaptic neuron can hence be sampled from a Bernoulli process with success probability $P_{\text{conn}}$.
 One simple way of sampling from the Bernoulli process is to repeatedly draw samples from the uniform distribution $\text{Unif}[0, 1]$ and generate a synapse if the sample is less than $P_{\text{conn}}$.
 However, for sparse connectivity ($P_{\text{conn}} \ll 1$), it is much more efficient to sample from the geometric distribution $\text{Geom}[P_{\text{conn}}]$ which governs the number of Bernoulli trials until the next success (i.e.~a synapse).
-The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep[p499]{DevroyeLuc2013}.
+The geometric distribution can be sampled in constant time by inverting the cumulative density function of the equivalent continuous distribution (the exponential distribution) to obtain $\frac{log(\text{Unif}[0, 1])}{log(1 - P_{\text{conn}})}$~\citep{Devroye2013}.
 Note that, if we were to directly draw from the uniform distribution, the sampling for each potential synapse would be independent from any other potential synapse and all these operations could be performed in parallel.
 However, for the more efficient `geometric sampling' employed here, the sampling for the post-synaptic targets of a presynaptic neuron must be done serially, but is still independent from the sampling for any other presynaptic neuron.
 
@@ -381,16 +392,6 @@ Background Poisson input is delivered to each neuron via $I_{\text{ext}_{i}}$ wi
 where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$; and the rate $\nu_{\text{ext}}$ and weight $J$ are calculated as described in tables 2 and 3 in \citet{Schmidt2018}.
 Individual populations are connected by the fixed number connectors described in section~\ref{sec:results/procedural}.
 Simulations were run with a time step $\Delta t = \SI{0.1}{\milli\second}$.
-
-\section{Acknowledgments}
-We would like to thank Jari Pronold, Sacha van Albada, Agnes Korcsak-Gorzo and Maximilian Schmidt for their help with the multi-area model data; and Dan Goodman and Mantas Mikaitis for their feedback on the manuscript.
-This work was funded by the EPSRC (Brains on Board project, grant number EP/P006094/1) and the the European Union’s Horizon 2020 research and innovation program under Grant Agreements 785907 (HBP SGA2) and 945539 (HBP SGA3).
-
-\section{Author contributions}
-J.K. and T.N. wrote the paper.
-T.N. is the original developer of GeNN.
-J.K. is currently the primary GeNN developer and was responsible for extending the code generation approach to the procedural simulation of synaptic connectivity.
-J.K. performed the experiments and the analysis of the results that are presented in this work.
 
 \section{Data availability}
 The raw data used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling}; and the pre-processed data used to produce Fig.~\ref{fig:multi_area} are available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
