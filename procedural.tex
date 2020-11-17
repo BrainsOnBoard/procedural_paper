@@ -121,6 +121,8 @@ We found that, to \SI{32}{\bit} floating point precision, the membrane voltages 
 To measure performance, Fig.~\ref{fig:performance_scaling} shows the duration of all simulations using our new procedural approach and the standard approach with sparse and bitfield connectivities. 
 None of our devices have enough memory to store the \num{100E9} synapses required for the largest scale using either data structure but, at the \num{100E3} neuron scale, the bitfield data structure allows the model to fit into the memory of several devices it otherwise would not.
 However, not only is the new procedural approach the \emph{only} way of simulating models at the largest scales but, as Fig.~\ref{fig:performance_scaling} illustrates, even at smaller scales the performance of the procedural approach is competitive with and sometimes better than the standard approach.
+As all of the spike propagation algorithms are event-driven, their performance is unaffected by the simulation timestep.
+However, the time spent simulating the neural dynamics scales inversely with the simulation timestep, effecting the overall simulation time.
 Having removed the bottleneck of reading synaptic weights and postsynaptic indices from memory, one might have expected even higher performance. 
 However, our current implementation still accumulates postsynaptic input using a `fire-and-forget' atomic add operation.
 Even though atomic operations are entirely handled within the L2 cache of modern GPUs and thus have relatively low latency, profiling using NVIDIA Nsight compute suggests that the latency of these operations, combined with those incurred when sampling from the PRNG and calculating logarithms are currently the limiting factor in this benchmark rather than the compute resources of the GPU. This suggests that additional optimisations might allow for further significant performance improvements in the future.
@@ -371,13 +373,13 @@ The neurons are partitioned into one population of $\frac{4N}{5}$ excitatory and
 The two populations of neurons are connected to each other and with themselves with fixed probability $P_{\text{conn}}=\SI{10}{\percent}$ (the highest density at which \citet{Vogels2005} suggests their results hold).
 All excitatory synapses have $\tau_{\text{syn}}=\SI{5}{\milli\second}$ and $w_{ij}=\frac{3.2}{N}\si{\nano\ampere}$; and all inhibitory synapses have $\tau_{\text{syn}}=\SI{10}{\milli\second}$ and $w_{ij}=\frac{40.8}{N}\si{\nano\ampere}$.
 Additionally, every cell is depolarized by approximately \SI{10}{\milli\volt} by applying a constant external current $I_{\text{ext}_j}= \SI{0.55}{\nano\ampere}$.
-Simulations were run with a time step $\Delta t = \SI{1}{\milli\second}$.
+Simulations were run with a timestep $\Delta t = \SI{1}{\milli\second}$.
 
 \subsection{Merging model}
 \label{sec:methods/merging}
 This model simply consists of \num{1000000} LIF neurons, again modelled using the approach described in section~\ref{sec:methods/neuron_model} and configured with the parameters shown in table~\ref{tab:parameters}. 
 Each neuron is driven by an independent Gaussian input current of $I_{\text{ext}_j} \sim \mathcal{N}(1, 0.25^2)\SI{}{\nano\ampere}$.
-Simulations were run with a time step $\Delta t = \SI{1}{\milli\second}$.
+Simulations were run with a timestep $\Delta t = \SI{1}{\milli\second}$.
 
 \subsection{Multi-area model}
 \label{sec:methods/multi_area_model}
@@ -391,7 +393,7 @@ Background Poisson input is delivered to each neuron via $I_{\text{ext}_{i}}$ wi
 %
 where $\tau_{\text{syn}}=\SI{0.5}{\milli\second}$; and the rate $\nu_{\text{ext}}$ and weight $J$ are calculated as described in tables 2 and 3 in \citet{Schmidt2018}.
 Individual populations are connected by the fixed number connectors described in section~\ref{sec:results/procedural}.
-Simulations were run with a time step $\Delta t = \SI{0.1}{\milli\second}$.
+Simulations were run with a timestep $\Delta t = \SI{0.1}{\milli\second}$.
 
 \section{Data availability}
 The raw data used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling}; and the pre-processed data used to produce Fig.~\ref{fig:multi_area} are available at \url{https://github.com/BrainsOnBoard/procedural_paper}.
