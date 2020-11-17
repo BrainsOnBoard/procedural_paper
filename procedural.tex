@@ -32,7 +32,7 @@
 \begin{document}
 \begin{abstract}
 Simulations are an important tool for investigating brain function but large models are needed to faithfully reproduce the statistics and dynamics of brain activity.
-Simulating large spiking neural network models has, until now, required so much memory for storing synaptic connections that it could only be done on high performance computer systems.
+Simulating large spiking neural network models has, until now, needed so much memory for storing synaptic connections that it required high performance computer systems.
 Here, we present an alternative simulation method we call `procedural connectivity' where connectivity and synaptic weights are generated `on the fly' instead of stored and retrieved from memory.
 This method is particularly well-suited for use on Graphical Processing Units~(GPUs)-- which are a common fixture in many workstations.
 Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU -- a significant step forward in making large-scale brain modelling accessible to more researchers.
