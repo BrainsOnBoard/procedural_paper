@@ -146,7 +146,7 @@ We call our second innovation `kernel merging' and it relates to the way these k
 While the procedural connectivity presented in the previous section allows models which would not otherwise fit into the memory of a GPU to be simulated, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
 GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate separate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
-However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs.
+However, GPUs can only run a small number of kernels -- which are equivalent to modules in this context --  simultaneously (128 on the latest NVIDIA GPUs).
 Therefore, GeNN employs a ``Kernel Fusion'' approach~\citep{Wang2010} where multiple neuron populations are simulated within each kernel.
 CUDA threads are grouped into `thread blocks' and to maximise performance, the code running on  threads within a thread block should not `diverge'.
 To minimise this divergence, we add `padding' threads around each population of neurons so population and block boundaries are aligned.
