@@ -35,7 +35,7 @@ Simulations are an important tool for investigating brain function but large mod
 Simulating large spiking neural network models has, until now, needed so much memory for storing synaptic connections that it required high performance computer systems.
 Here, we present an alternative simulation method we call `procedural connectivity' where connectivity and synaptic weights are generated `on the fly' instead of stored and retrieved from memory.
 This method is particularly well-suited for use on Graphical Processing Units~(GPUs)-- which are a common fixture in many workstations.
-Extending our GeNN software with procedural connectivity and a second technical innovation for GPU code generation, we can simulate a recent model of the Macaque visual cortex with \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU -- a significant step forward in making large-scale brain modelling accessible to more researchers.
+Using procedural connectivity and an additional GPU code generation optimisation, we can simulate a recent model of the Macaque visual cortex with \num{4.13E6} neurons and \num{24.2E9} synapses on a single GPU -- a significant step forward in making large-scale brain modelling accessible to more researchers.
 \end{abstract}
 \maketitle
 \section{Introduction}
@@ -59,9 +59,9 @@ This is promising for the future but, due to its prototype nature, the availabil
 %A next generation SpiNNaker system is currently under development~\citep{Mayr2019} and, by employing a newer fabrication technology (\SI{22}{\nano\meter} rather than \SI{130}{\nano\meter}), a single chip of the new system will offer equivalent performance to 48 of the current chips.
 %Nonetheless, large-scale brain simulations will still require a large multi-chip system.
 
-Modern GPUs have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units.
+Modern Graphical Processing Units~(GPUs) have relatively little on-chip memory and, instead, dedicate the majority of their silicon area to arithmetic logic units.
 GPUs use dedicated hardware to rapidly switch between tasks so that the latency of accessing external memory can be `hidden' behind computation, as long as there is sufficient computation to be performed.
-For example, the memory latency of a typical modern GPU can be completely hidden if each CUDA core performs approximately 10 arithmetic operations per byte of data accessed from memory.
+For example, the memory latency of a typical modern GPU can be completely hidden if each compute thread performs approximately 10 arithmetic operations per byte of data accessed from memory.
 Unfortunately, propagating a spike in a spiking neural network simulation typically requires reading a synaptic weight ($\ge \SI{2}{\byte}$) and postsynaptic index ($\ge \SI{2}{\byte}$) from memory and then writing back the synaptic input ($\ge \SI{4}{\byte}$), while performing many fewer than the corresponding 80 instructions. 
 This makes spike propagation highly memory bound.
 Nonetheless, we have shown in previous work~\citep{Knight2018} that, as GPUs have significantly higher total memory bandwidth than even the fastest CPU, moderately sized models of around \num{100E3} neurons and \num{1E9} synapses can be simulated on a single GPU with competitive speed and energy consumption.
@@ -69,8 +69,8 @@ However, individual GPUs do not have enough memory to simulate larger brain mode
 One can install a small number of GPUs within a single node and connect them using high-speed NVLink interconnect, through which they can communicate with low latency and high bandwidth~\citep{Li2020}.
 However, if a larger number of GPUs is required, multiple nodes need to be used which are connected via the same MPI based protocols and network fabric as CPU based systems and hence suffer from similar communication overheads as CPU based clusters.
 
-In this work, we present two innovations which enable large-scale brain simulations on a single GPU workstation.
-The first innovation, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
+In this work, we present two methods which enable large-scale brain simulations on a single GPU workstation.
+The first method, which we describe in section~\ref{sec:results/procedural}, we call `procedural connectivity'.
 Procedural connectivity uses the large amount of computational power available on a GPU to generate synaptic connectivity `on the fly' -- reducing memory and memory bandwidth requirements.
 While a similar approach was used by Eugene Izhikevich for simulating an extremely large thalamo-cortical model with \num{1E11} neurons and \num{1E15} synapses on a modest PC cluster in 2005~\citep{Izhikevich2005} -- an incredible achievement -- it has not been subsequently applied to modern hardware.
 Procedural connectivity vastly reduces the memory requirements of large-scale brain simulations but previous GPU code generation strategies also do not scale well to models containing large numbers of neural populations and synaptic projections.
@@ -92,13 +92,14 @@ In section~\ref{sec:results/multi_area_model} we then demonstrate the power of t
 \subsection{Procedural connectivity}
 \label{sec:results/procedural}
 In a brain simulation, neurons and synapses can be described by a variety of mathematical models but these are eventually all translated into time or event-driven update algorithms~\citep{Brette2007}.
-Our GeNN simulator~\citep{Yavuz2016} uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
+In previous works~\citep{Yavuz2016, Knight2018} we presented our GeNN simulator which uses code generation to convert neuron and synapse update algorithms -- described using `snippets' of C-like code -- into CUDA code for efficient GPU simulation.
 Before a simulation can be run, its parameters, in particular the state variables and the synaptic connectivity, need to be initialised.
 Traditionally, this is done by running initialisation algorithms on the main CPU prior to the simulation.
 The results are stored in CPU memory, uploaded to GPU memory and then used during the simulation.
 We have recently extended GeNN to use code generation from code snippets to also generate efficient, parallel code for model initialisation~\citep{Knight2018}.
 Offloading initialisation to the GPU in this way made it around $20\times$ faster on a desktop PC~\citep{Knight2018}, demonstrating that initialisation algorithms are well-suited for GPU acceleration.
-Here, we are going one step further.
+
+In this paper, we are going one step further.
 We realised that, if each synaptic connection can be re-initialised in less than the 80 operations required to hide the latency incurred when fetching its \SI{8}{\byte} of state from memory, it could be faster and vastly more memory efficient to regenerate synaptic connections on demand rather than storing them in memory.
 This is the concept of procedural connectivity.
 It is applicable whenever synapses are static -- plastic synapses which change their weights during a simulation will have to be simulated in the traditional way.
@@ -144,7 +145,7 @@ If weights vary across synapses, the `bitfield' cannot be used and the memory co
 \subsection{Kernel merging}
 \label{sec:results/kernel_merging}
 NVIDIA GPUs are typically programmed in CUDA using a Single Instruction Multiple Thread~(SIMT) paradigm where programmers write `kernel' functions containing serial C-like code which is then executed in parallel across many virtual threads.
-We call our second innovation `kernel merging' and it relates to the way these kernels are implemented.
+We call our second method `kernel merging' and it relates to the way these kernels are implemented.
 While the procedural connectivity presented in the previous section allows models which would not otherwise fit into the memory of a GPU to be simulated, there are additional problems when using code generation for models with a large number of neuron and synapse populations.
 GeNN and other SNN simulators which use code generation to generate all of their simulation code~\citep{Blundell2018} (as opposed to, for example NESTML~\citep{Plotnikov2016}, which uses code generation only to generate neuron simulation code) generate separate pieces of code for each population of neurons and synapses.
 This allows optimizations such as hard-coding constant parameters and, although generating code for models with many populations will result in large code size, C++ CPU code can easily be divided between multiple modules and compiled in parallel, minimizing the effects on build time.
@@ -260,7 +261,7 @@ We performed this comparison by computing histograms of the three measures (usin
 The results of these comparisons are shown in Fig.~\ref{fig:microcircuit_accuracy_kl} and suggest that the influence of the random seeds is comparable to the influence of random seeds and simulator combined -- indicating that the choice of simulator has little effect on the model dynamics.
 %
 \section{Discussion}
-In this work we have presented a novel approach for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
+In this work we have presented two methods for large-scale brain simulation on GPU devices which entirely removes the need to store connectivity data in memory.
 We have shown that this approach allows us to simulate a cortical model with \num{4.13E6} neurons and \num{24.2E9} synapses~\citep{Schmidt2018a,Schmidt2018} on a single modern GPU.
 While this represents a significant step forward in terms of making large-scale brain modelling tools accessible to a large community of brain researchers, this model still has around $20\times$ fewer neurons and $40\times$ fewer synapses than the brain of even a small mammal such as a mouse~\citep{Herculano-Houzel2010}.
 Our implementation of the multi-area model requires a little over \SI{12}{\giga\byte} of GPU memory, with the majority~(\SI{8.5}{\giga\byte}) being used for the circular dendritic delay buffers~(see~\citet{Knight2018}).
@@ -330,7 +331,7 @@ When the membrane voltage crosses a threshold~$V_{\text{th}}$ a spike is emitted
 In the models where there are synaptic connections, they are current-based, i.e.~pre-synaptic spikes lead to exponentially-decaying input currents $I_{\text{syn}_{i}}$
 %
 \begin{align}
-    \tau_{\text{syn}} \frac{dI_{\text{syn}_{i}}}{dt} = & -I_{\text{syn}_{i}} + \sum_{i=0}^{n} w_{ij} \sum_{t_{j}}  \delta(t - t_{j}),\label{eq:exp_neuron_input_current}
+    \tau_{\text{syn}} \frac{dI_{\text{syn}_{i}}}{dt} = & -I_{\text{syn}_{i}} + \sum_{j=0}^{n} w_{ij} \sum_{t_{j}}  \delta(t - t_{j}),\label{eq:exp_neuron_input_current}
 \end{align}
 %
 where $\tau_{\text{syn}}$ represents the synaptic time constant and $t_{j}$ are the arrival times of incoming spikes from $n$ presynaptic neurons.
@@ -397,13 +398,16 @@ Simulations were run with a timestep $\Delta t = \SI{0.1}{\milli\second}$.
 
 \section{Data availability}
 The raw data~\citep{Knight2020c} used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling}; and the pre-processed data used to produce Fig.~\ref{fig:multi_area} are available at \url{https://doi.org/10.5281/zenodo.4277749}.
+Furthermore, the raw data used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} are also available with this manuscript.
 The raw spiking data from the GeNN simulations of the multi-area model~\citep{Knight2020b} are available at \url{https://doi.org/10.25377/sussex.12912699}.
-The raw spiking data from the NEST simulations run by \citet{Schmidt2018} are available from the original authors upon request.
+\citet{Schmidt2018} hold the copyright for the raw spiking data from their
+NEST simulations and the data is available from them upon request.
 
 \section{Code availability}
 All experiments were carried out using the GeNN 4.3.3~\citep{Knight2020}, available at \url{https://doi.org/10.5281/zenodo.4022384}.
 A GeNN port of the multi-area model~\citep{VanAlbada2020b} is available at \url{https://doi.org/10.5281/zenodo.4271816}.
-The models used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} are all available at \url{https://doi.org/10.5281/zenodo.4277749}.
+The models used to produce Fig.~\ref{fig:performance_scaling} and Fig.~\ref{fig:merging_scaling} as well as the code to produce all figures are available at \url{https://doi.org/10.5281/zenodo.4277749}.
+The latest version of the code used for this paper is also availalble at \url{https://github.com/BrainsOnBoard/procedural_paper/}.
 
 % Bibliography
 \bibliographystyle{unsrtnat}
