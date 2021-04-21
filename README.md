@@ -21,6 +21,7 @@ The version of GeNN included in this repository has been tested with:
 
 ## Installation guide
 Installation should take less than 5 minutes on a standard PC.
+The preprocessed data for plotting figures 3 and 4 included in this repository is stored using [Git LFS](https://git-lfs.github.com/) so ensure that this is installed before checking out the repository.
 We recommend using [python virtualenvs](https://pypi.org/project/virtualenv/) to prevent conflicts between installed python package versions.
 
 ### Windows
